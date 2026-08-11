@@ -26,6 +26,7 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <proc>none</proc>
                 </configuration>
             </plugin>
             <plugin>
