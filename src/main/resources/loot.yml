@@ -1,0 +1,220 @@
+config-version: 2
+
+# Every entry has a non-zero chance in every chest tier. Higher tiers only change probability.
+categories:
+  consumable:
+    tier-weights: [60, 40, 25]
+  equipment:
+    tier-weights: [30, 40, 40]
+  upgrade:
+    tier-weights: [10, 20, 35]
+
+spear:
+  bonus-damage:
+    one-star: [1.0, 8.0]
+    two-star: [1.0, 12.0]
+    three-star: [1.0, 16.0]
+
+entries:
+  cooked-beef:
+    material: COOKED_BEEF
+    amount: [4, 10]
+    tier-weights: [28, 18, 10]
+  cooked-porkchop:
+    material: COOKED_PORKCHOP
+    amount: [4, 10]
+    tier-weights: [25, 17, 10]
+  golden-carrot:
+    material: GOLDEN_CARROT
+    amount: [2, 7]
+    tier-weights: [18, 17, 14]
+  baked-potato:
+    material: BAKED_POTATO
+    amount: [5, 12]
+    tier-weights: [22, 14, 8]
+  cooked-chicken:
+    material: COOKED_CHICKEN
+    amount: [4, 10]
+    tier-weights: [22, 14, 8]
+  bread:
+    material: BREAD
+    amount: [4, 10]
+    tier-weights: [22, 14, 8]
+  golden-apple:
+    material: GOLDEN_APPLE
+    amount: [1, 3]
+    tier-weights: [14, 20, 24]
+  enchanted-golden-apple:
+    material: ENCHANTED_GOLDEN_APPLE
+    amount: [1, 1]
+    tier-weights: [1, 3, 8]
+  ender-pearl:
+    material: ENDER_PEARL
+    amount: [1, 4]
+    tier-weights: [18, 22, 22]
+  wind-charge:
+    material: WIND_CHARGE
+    amount: [2, 8]
+    tier-weights: [18, 20, 20]
+
+  totem:
+    material: TOTEM_OF_UNDYING
+    amount: [1, 1]
+    tier-weights: [2, 6, 12]
+  shield:
+    material: SHIELD
+    amount: [1, 1]
+    limited-durability: [12, 28]
+    tier-weights: [8, 10, 12]
+  elytra:
+    material: ELYTRA
+    amount: [1, 1]
+    limited-durability: [18, 40]
+    tier-weights: [1, 4, 8]
+
+  wooden-spear:
+    material: WOODEN_SPEAR
+    amount: [1, 1]
+    limited-durability: [9, 16]
+    tier-weights: [20, 8, 3]
+  stone-spear:
+    material: STONE_SPEAR
+    amount: [1, 1]
+    limited-durability: [9, 16]
+    tier-weights: [18, 11, 4]
+  copper-spear:
+    material: COPPER_SPEAR
+    amount: [1, 1]
+    limited-durability: [9, 16]
+    tier-weights: [15, 15, 7]
+  iron-spear:
+    material: IRON_SPEAR
+    amount: [1, 1]
+    limited-durability: [9, 16]
+    tier-weights: [10, 18, 14]
+  golden-spear:
+    material: GOLDEN_SPEAR
+    amount: [1, 1]
+    limited-durability: [9, 16]
+    tier-weights: [6, 7, 5]
+  diamond-spear:
+    material: DIAMOND_SPEAR
+    amount: [1, 1]
+    limited-durability: [9, 16]
+    tier-weights: [3, 13, 24]
+  netherite-spear:
+    material: NETHERITE_SPEAR
+    amount: [1, 1]
+    limited-durability: [9, 16]
+    tier-weights: [1, 5, 20]
+
+  leather-armor:
+    material-group: LEATHER_ARMOR
+    amount: [1, 1]
+    random-durability: true
+    tier-weights: [20, 7, 2]
+  golden-armor:
+    material-group: GOLDEN_ARMOR
+    amount: [1, 1]
+    random-durability: true
+    tier-weights: [17, 9, 3]
+  chainmail-armor:
+    material-group: CHAINMAIL_ARMOR
+    amount: [1, 1]
+    random-durability: true
+    tier-weights: [16, 12, 5]
+  copper-armor:
+    material-group: COPPER_ARMOR
+    amount: [1, 1]
+    random-durability: true
+    tier-weights: [13, 16, 9]
+  iron-armor:
+    material-group: IRON_ARMOR
+    amount: [1, 1]
+    random-durability: true
+    tier-weights: [9, 20, 15]
+  diamond-armor:
+    material-group: DIAMOND_ARMOR
+    amount: [1, 1]
+    random-durability: true
+    tier-weights: [4, 15, 25]
+  netherite-armor:
+    material-group: NETHERITE_ARMOR
+    amount: [1, 1]
+    random-durability: true
+    tier-weights: [1, 4, 20]
+
+  healing-potion:
+    item-type: HEALING_POTION
+    amount: [1, 2]
+    tier-weights: [16, 19, 20]
+  regeneration-potion:
+    item-type: REGENERATION_POTION
+    amount: [1, 2]
+    tier-weights: [12, 17, 20]
+  strength-potion:
+    item-type: STRENGTH_POTION
+    amount: [1, 1]
+    tier-weights: [7, 12, 17]
+  swiftness-potion:
+    item-type: SWIFTNESS_POTION
+    amount: [1, 2]
+    tier-weights: [12, 14, 16]
+  invisibility-potion:
+    item-type: INVISIBILITY_POTION
+    amount: [1, 1]
+    tier-weights: [4, 8, 13]
+  fire-resistance-potion:
+    item-type: FIRE_RESISTANCE_POTION
+    amount: [1, 1]
+    tier-weights: [6, 9, 11]
+  slow-falling-potion:
+    item-type: SLOW_FALLING_POTION
+    amount: [1, 1]
+    tier-weights: [5, 8, 11]
+
+  damage-upgrade:
+    item-type: DAMAGE_UPGRADE
+    amount: [1, 1]
+    tier-weights: [5, 11, 20]
+  healing-upgrade:
+    item-type: HEALING_UPGRADE
+    amount: [1, 1]
+    tier-weights: [5, 11, 20]
+  next-kill-upgrade:
+    item-type: NEXT_KILL_UPGRADE
+    amount: [1, 1]
+    tier-weights: [4, 9, 17]
+  random-armor-enchant:
+    item-type: ARMOR_ENCHANT
+    amount: [1, 1]
+    tier-weights: [6, 14, 24]
+  sharpness-book:
+    item-type: WEAPON_ENCHANT
+    enchantment: SHARPNESS
+    amount: [1, 1]
+    tier-weights: [8, 16, 25]
+  breach-book:
+    item-type: WEAPON_ENCHANT
+    enchantment: BREACH
+    amount: [1, 1]
+    tier-weights: [6, 14, 23]
+  density-book:
+    item-type: WEAPON_ENCHANT
+    enchantment: DENSITY
+    amount: [1, 1]
+    tier-weights: [6, 14, 23]
+  wind-burst-book:
+    item-type: WEAPON_ENCHANT
+    enchantment: WIND_BURST
+    amount: [1, 1]
+    tier-weights: [5, 12, 21]
+  unbreaking-book:
+    item-type: WEAPON_ENCHANT
+    enchantment: UNBREAKING
+    amount: [1, 1]
+    tier-weights: [8, 16, 24]
+  kill-mending-book:
+    item-type: KILL_MENDING
+    amount: [1, 1]
+    tier-weights: [5, 12, 21]

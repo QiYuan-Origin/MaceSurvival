@@ -1,1 +1,2 @@
 up-Version: false
+auto-Upload-github: true

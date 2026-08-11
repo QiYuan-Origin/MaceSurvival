@@ -1,0 +1,160 @@
+config-version: 3
+
+prefix: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>MACE</shadow></color> <dark_gray>>></dark_gray> </font>'
+
+general:
+  no-permission: '<red>You do not have permission to do that.</red>'
+  player-only: '<red>This command can only be used by a player.</red>'
+  unknown-command: '<red>Unknown command. Use <white>/{label} help</white>.</red>'
+  unknown-command-hidden: '<red>Unknown command.</red>'
+  player-or-invitation-not-found: '<red>That player or invitation could not be found.</red>'
+  config-reloaded: '<green>Configuration files reloaded and missing defaults restored.</green>'
+  config-reload-failed: '<red>Reload failed. Check the console for details.</red>'
+
+command:
+  team-usage: '<yellow>Usage: <white>/{label} team <invite|accept|decline|leave|kick|transfer|list> [player]</white></yellow>'
+  stats-usage: '<yellow>Usage: <white>/{label} stats <player></white></yellow>'
+
+help:
+  header: '<font:minecraft:uniform><color:#ff6464>MACE SURVIVAL</color> <dark_gray>-</dark_gray> <white>COMMANDS</white></font>'
+  team: '<gray>/{label} team</gray> <dark_gray>-</dark_gray> <white>Open and manage team controls</white>'
+  loadout: '<gray>/{label} loadout</gray> <dark_gray>-</dark_gray> <white>Arrange starting weapon slots</white>'
+  stats: '<gray>/{label} stats [player]</gray> <dark_gray>-</dark_gray> <white>View lifetime statistics</white>'
+  admin-start: '<red>/{label} start</red> <dark_gray>-</dark_gray> <white>Force the normal start flow</white>'
+  admin-stop: '<red>/{label} stop</red> <dark_gray>-</dark_gray> <white>Stop the current match</white>'
+  admin-reload: '<red>/{label} reload</red> <dark_gray>-</dark_gray> <white>Reload configuration files</white>'
+  admin-setlobby: '<red>/{label} setlobby</red> <dark_gray>-</dark_gray> <white>Set the lobby spawn</white>'
+
+admin:
+  start-requested: '<green>The match start flow has been forced.</green>'
+  start-failed: '<yellow>The match cannot be started from its current state.</yellow>'
+  stop-complete: '<green>The active match has been stopped.</green>'
+  stop-none: '<yellow>There is no active match to stop.</yellow>'
+  setlobby-player-only: '<red>The lobby can only be set by a player.</red>'
+  setlobby-complete: '<green>The waiting lobby spawn has been updated.</green>'
+
+stats:
+  unavailable: '<red>Statistics are unavailable because their data service is not connected.</red>'
+  player-not-found: '<red>No statistics were found for <white>{player}</white>.</red>'
+  view:
+    - '<font:minecraft:uniform><color:#ff6464>{player}</color> <dark_gray>-</dark_gray> <white>STATISTICS</white></font>'
+    - '<gray>Games <white>{games}</white>  Wins <green>{wins}</green>  Win rate <aqua>{win_rate}%</aqua></gray>'
+    - '<gray>Kills <white>{kills}</white>  Deaths <red>{deaths}</red>  K/D <yellow>{kd}</yellow></gray>'
+    - '<gray>Lifetime kill rank <white>#{rank}</white></gray>'
+
+lobby:
+  joined: '<gray>You entered the waiting lobby.</gray>'
+  countdown-cancelled: '<yellow>The countdown was cancelled because too few players remain.</yellow>'
+  settings-locked: '<red>Team and loadout settings are locked after deployment.</red>'
+  loadout-reset: '<green>Starting weapon slots restored to default.</green>'
+  loadout-no-slot: '<red>No free hotbar slot is available.</red>'
+  hotbar:
+    team:
+      name: '<font:minecraft:uniform><aqua>[ Team ]</aqua></font>'
+      lore: '<gray>Manage invitations and teammates.</gray>'
+    loadout:
+      name: '<font:minecraft:uniform><red>[ Loadout Layout ]</red></font>'
+      lore: '<gray>Set the four permanent weapon slots.</gray>'
+    visibility:
+      shown-name: '<font:minecraft:uniform><green>[ Players: Shown ]</green></font>'
+      shown-lore: '<gray>Click to hide non-team players.</gray>'
+      hidden-name: '<font:minecraft:uniform><gray>[ Players: Hidden ]</gray></font>'
+      hidden-lore: '<gray>Your teammates remain visible.</gray>'
+
+team:
+  created: '<green>Your team was created.</green>'
+  disbanded: '<yellow>Your team was disbanded.</yellow>'
+  done: '<green>Team settings updated.</green>'
+  unknown-action: '<red>Unknown team action.</red>'
+  invite-sent: '<green>Invitation sent to <white>{player}</white>.</green>'
+  invite-received: '<white>{player}</white> <gray>invited you to a team.</gray>'
+  invite-expired: '<yellow>That team invitation has expired.</yellow>'
+  invite-declined: '<yellow>Invitation declined.</yellow>'
+  joined: '<green>You joined the team.</green>'
+  member-joined: '<white>{player}</white> <green>joined your team.</green>'
+  left: '<yellow>You left the team.</yellow>'
+  kicked: '<red>You were removed from the team.</red>'
+  member-kicked: '<white>{player}</white> <yellow>was removed from your team.</yellow>'
+  leader-transferred: '<green><white>{player}</white> is now the team leader.</green>'
+  you-are-leader: '<green>You are now the team leader.</green>'
+  list: '<gray>Team <white>{size}/{max}</white>: <aqua>{members}</aqua></gray>'
+  full: '<red>Teams can contain at most four players.</red>'
+  friendly-hit: '<gray>Friendly attacks deal no damage.</gray>'
+  result:
+    locked: '<red>Team settings are locked after deployment begins.</red>'
+    not-leader: '<red>Only the team leader can do that.</red>'
+    not-in-team: '<yellow>You are not currently in a team.</yellow>'
+    not-a-member: '<red>That player is not in your team.</red>'
+    team-full: '<red>Your team already has four players.</red>'
+    target-already-in-team: '<red>That player is already in another team.</red>'
+    already-member: '<yellow>That player is already in your team.</yellow>'
+    cannot-target-self: '<red>You cannot target yourself.</red>'
+    invitation-not-found: '<red>That invitation no longer exists.</red>'
+
+game:
+  countdown: '<gray>Deployment begins in <white>{seconds}s</white>.</gray>'
+  stopped: '<red>The match was stopped by an administrator.</red>'
+  reconnect-restored: '<green>Your match state has been restored.</green>'
+  reconnect-expired: '<red>Your reconnect window expired. You are now spectating.</red>'
+  deployment-jump: '<yellow>Your leader jumped. The team is deploying.</yellow>'
+  deployment-forced: '<red>Forced deployment.</red>'
+  border-moving: '<red>The safe zone is moving.</red>'
+  eliminated: '<red>You were eliminated.</red>'
+  winner: '<white>{winner}</white> <green>won Mace Survival.</green>'
+  draw: '<gray>No players survived.</gray>'
+
+title:
+  victory: '<font:minecraft:uniform><green><shadow:#153d20:1>VICTORY</shadow></green></font>'
+  victory-subtitle: '<gray>Your team survived.</gray>'
+  defeat: '<font:minecraft:uniform><red><shadow:#401818:1>ELIMINATED</shadow></red></font>'
+  defeat-subtitle: '<gray>Spectating the remaining players.</gray>'
+
+death:
+  mace: '<{killer_color}>{killer}</{killer_color}> <gray>crushed</gray> <{victim_color}>{victim}</{victim_color}> <gray>with a mace.</gray>'
+  sword: '<{killer_color}>{killer}</{killer_color}> <gray>cut down</gray> <{victim_color}>{victim}</{victim_color}><gray>.</gray>'
+  axe: '<{killer_color}>{killer}</{killer_color}> <gray>split through</gray> <{victim_color}>{victim}</{victim_color}><gray>.</gray>'
+  spear: '<{killer_color}>{killer}</{killer_color}> <gray>ran through</gray> <{victim_color}>{victim}</{victim_color}><gray>.</gray>'
+  generic: '<{victim_color}>{victim}</{victim_color}> <gray>was eliminated.</gray>'
+
+combat:
+  enchant-applied: '<font:minecraft:uniform><gray>Applied <aqua>{enchantment} {level}</aqua>.</gray></font>'
+  armor-equipped: '<font:minecraft:uniform><gray>Equipped <aqua>{item}</aqua>.</gray></font>'
+  durability-combined: '<font:minecraft:uniform><green>Durability combined.</green></font>'
+  weapon-absorbed: '<font:minecraft:uniform><light_purple>Weapon upgrades absorbed.</light_purple></font>'
+  armor-enchanted: '<font:minecraft:uniform><gray>Armor gained <aqua>{enchantment} {level}</aqua>.</gray></font>'
+  boost-damage: '<font:minecraft:uniform><red>Permanent damage +{percent}%</red></font>'
+  boost-healing: '<font:minecraft:uniform><green>Permanent healing +{percent}%</green></font>'
+  boost-next-kill: '<font:minecraft:uniform><aqua>Your next kill is empowered.</aqua></font>'
+  boost-triggered: '<font:minecraft:uniform><aqua>Hunter''s Boon:</aqua> {boost}</font>'
+  boost-triggered-damage: '<red>+{percent}% damage</red>'
+  boost-triggered-healing: '<green>+{percent}% healing</green>'
+  boost-item:
+    damage:
+      name: '<font:minecraft:uniform><red>Brutality</red></font>'
+      lore: '<gray>Permanently increases damage.</gray>'
+    healing:
+      name: '<font:minecraft:uniform><green>Vitality</green></font>'
+      lore: '<gray>Permanently increases healing.</gray>'
+    next-kill:
+      name: '<font:minecraft:uniform><aqua>Hunter''s Boon</aqua></font>'
+      lore: '<gray>Your next kill grants a permanent boost.</gray>'
+  bundle-name: '<aqua>Reserve Bundle</aqua>'
+  bundle-capacity: '<gray>{count}/{capacity} equipment</gray>'
+  bundle-eject: '<dark_gray>Right click to throw out the last item.</dark_gray>'
+  bundle-stored: '<aqua>Extra equipment moved to your Reserve Bundle.</aqua>'
+
+chat:
+  format: '<{color}>{player}</{color}> <dark_gray>:</dark_gray> <white>{message}</white>'
+
+scoreboard:
+  title: '<font:minecraft:uniform><white><shadow:#404040:1>MACE SURVIVAL</shadow></white></font>'
+  time-border: '<font:minecraft:uniform><gray>TIME <white>{time}</white>  BORDER <white>{border}m</white></gray></font>'
+  time-border-moving: '<font:minecraft:uniform><gray>TIME <white>{time}</white>  BORDER <red>{border}m</red></gray></font>'
+  alive: '<font:minecraft:uniform><gray>ALIVE <white>{alive}</white></gray></font>'
+  kills: '<font:minecraft:uniform><gray>KILLS <white>{kills}</white> <dark_gray>#{rank}</dark_gray></gray></font>'
+  team-kills: '<font:minecraft:uniform><gray>TEAM <white>{kills}</white> <dark_gray>#{rank}</dark_gray></gray></font>'
+  teammates: '<font:minecraft:uniform><gray>TEAMMATES</gray></font>'
+  teammate: '<font:minecraft:uniform><gray>{direction}</gray> <{color}>{name}</{color}> <dark_gray>{distance}m</dark_gray></font>'
+  teammate-unknown: '<font:minecraft:uniform><dark_gray>-</dark_gray> <{color}>{name}</{color}> <dark_gray>--m</dark_gray></font>'
+  teammate-dead: '<font:minecraft:uniform><red><strikethrough>{name}</strikethrough></red></font>'
+  server: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>mcqi.top</shadow></color></font>'

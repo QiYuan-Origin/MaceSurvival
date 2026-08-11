@@ -1,6 +1,52 @@
 name: MaceSurvival
-version: '1.0.0'
-main: org.MaceSurvival
-api-version: '1.21'
-authors: [ bzd ]
-description: 依旧AI写的神秘mod
+version: '${version}'
+main: club.mcqi.macesurvival.MaceSurvivalPlugin
+load: STARTUP
+api-version: '1.21.11'
+authors: [xiaoqiewe-dot]
+website: https://github.com/QiYuan-Origin/MaceSurvival
+description: A dedicated-server mace battle royale for mcqi.top.
+softdepend: [PlaceholderAPI, LuckPerms]
+
+commands:
+  macesurvival:
+    description: MaceSurvival main command
+    usage: /macesurvival help
+    aliases: [ms, mace]
+
+permissions:
+  macesurvival.use:
+    description: Access player commands and lobby menus
+    default: true
+  macesurvival.team:
+    description: Create and manage a lobby team
+    default: true
+  macesurvival.spectate:
+    description: Use spectator controls
+    default: true
+  macesurvival.stats:
+    description: View lifetime MaceSurvival statistics
+    default: true
+  macesurvival.stats.others:
+    description: View another player's lifetime MaceSurvival statistics
+    default: true
+  macesurvival.admin:
+    description: Access administrative commands
+    default: op
+    children:
+      macesurvival.admin.start: true
+      macesurvival.admin.stop: true
+      macesurvival.admin.reload: true
+      macesurvival.admin.setlobby: true
+  macesurvival.admin.start:
+    description: Force a match to start below the minimum player count
+    default: op
+  macesurvival.admin.stop:
+    description: Stop the active match
+    default: op
+  macesurvival.admin.reload:
+    description: Reload and repair plugin configuration files
+    default: op
+  macesurvival.admin.setlobby:
+    description: Set the lobby spawn
+    default: op

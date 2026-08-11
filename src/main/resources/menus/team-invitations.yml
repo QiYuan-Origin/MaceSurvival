@@ -1,0 +1,64 @@
+config-version: 1
+title: '<font:minecraft:uniform><white><shadow:#404040:1>TEAM INVITATIONS</shadow></white></font>'
+size: 54
+open-sound: 'block.enchantment_table.use'
+
+content-slots: [10-16, 19-25, 28-34, 37-43]
+
+sounds:
+  accept: 'block.beacon.activate'
+  decline: 'entity.item.break'
+  return: 'item.book.page_turn'
+  error: 'entity.villager.no'
+
+items:
+  edge:
+    material: GRAY_STAINED_GLASS_PANE
+    name: '<dark_gray>You are looking at the frame.</dark_gray>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
+  corner:
+    material: CYAN_STAINED_GLASS_PANE
+    name: '<aqua>You are looking at the frame.</aqua>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [0, 8, 45, 53]
+  header:
+    material: PAPER
+    slot: 4
+    slots: [4]
+    name: '<aqua><bold>TEAM INVITATIONS</bold></aqua>'
+    lore:
+      - '<gray>Page <white>{page}/{pages}</white></gray>'
+      - '<dark_gray>Each invitation remains valid for 30 seconds.</dark_gray>'
+  invitation:
+    material: PLAYER_HEAD
+    name: '<yellow>{player}</yellow>'
+    lore:
+      - '<green>Left click <gray>to join this team.</gray></green>'
+      - '<red>Right click <gray>to decline this invitation.</gray></red>'
+  empty:
+    material: GRAY_DYE
+    slot: 22
+    name: '<gray>[ No Invitations ]</gray>'
+    lore:
+      - '<dark_gray>You have no active team invitations.</dark_gray>'
+  previous:
+    material: ARROW
+    slot: 47
+    name: '<yellow>[ Previous Page ]</yellow>'
+    lore:
+      - '<gray>View the previous invitations.</gray>'
+  next:
+    material: ARROW
+    slot: 51
+    name: '<yellow>[ Next Page ]</yellow>'
+    lore:
+      - '<gray>View more invitations.</gray>'
+  return:
+    material: SPECTRAL_ARROW
+    slot: 49
+    name: '<aqua>[ Return ]</aqua>'
+    lore:
+      - '<gray>Return to team management.</gray>'

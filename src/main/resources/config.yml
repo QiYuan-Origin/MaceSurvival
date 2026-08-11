@@ -1,0 +1,106 @@
+# Configuration schema version. Missing values are restored on /macesurvival reload.
+config-version: 1
+
+server:
+  address: mcqi.top
+  language: en
+  shutdown-after-match: true
+  shutdown-delay-seconds: 8
+
+text:
+  prefix: '<gradient:#FF5A5A:#FF8A5A><shadow:#3A1010:1>MACE >></shadow></gradient> <white>'
+  default-font: 'minecraft:default'
+  scoreboard-title: '<font:minecraft:uniform><gradient:#FFFFFF:#FFFFFF><shadow:#404040:1>MACE SURVIVAL</shadow></gradient></font>'
+
+lobby:
+  world: world
+  spawn:
+    x: 0.5
+    y: 65.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+  void-return-y: 0.0
+  hide-players-over: 20
+  menu:
+    root-close-is-return: false
+    root-return-command: 'menu'
+
+match:
+  world-prefix: macesurvival_match
+  generator: AMPLIFIED
+  random-seed: true
+  seed: 0
+  hard-radius: 5000
+  min-players: 100
+  max-players: 0
+  waiting-countdown-seconds: 120
+  forced-countdown-seconds: 5
+  duration-seconds: 1500
+  disconnect-grace-seconds: 240
+  pvp-during-deployment: false
+  block-breaking: false
+  block-placing: false
+  natural-mob-spawning: false
+
+teams:
+  max-size: 4
+  invite-timeout-seconds: 30
+  friendly-damage: false
+  friendly-knockback: true
+
+deployment:
+  blackout-ticks: 40
+  altitude-above-surface: 220
+  minimum-altitude: 300
+  team-separation-blocks: 400
+  voluntary-jump-seconds: 15
+  forced-jump-seconds: 30
+  horizontal-speed: 0.9
+  fixed-vertical-start-speed: -1.1
+  fall-damage-immunity-ticks-after-landing: 60
+
+starting-loadout:
+  sword-slot: 0
+  axe-slot: 1
+  mace-one-slot: 7
+  mace-two-slot: 8
+  boots: IRON_BOOTS
+  unbreakable: true
+
+border:
+  radii: [3000, 2000, 1000, 650, 280, 80, 24]
+  total-moving-seconds: 1500
+  final-target-change-seconds: 20
+  final-center-speed: 3.0
+  damage-per-second: 2.0
+  warning-distance: 32
+  particle-spacing: 4.0
+  particle-color: '#E52B2B'
+  outside-particle-color: '#650000'
+
+loot:
+  chests-per-alive-player: 8
+  items-min: 4
+  items-max: 8
+  disappear-delay-seconds: 3
+  armor-durability-min: 0.30
+  armor-durability-max: 0.90
+  chest-tier-weights: [55, 30, 15]
+  minimum-chest-spacing: 4
+
+upgrades:
+  damage-per-book: 0.03
+  damage-maximum-books: 5
+  healing-per-book: 0.05
+  healing-maximum-books: 5
+  kill-mending-percentages: [0.01, 0.03, 0.05]
+  maximum-extra-enchantment-levels: 3
+  thorns-maximum-level: 4
+
+combat:
+  kill-credit-seconds: 30
+
+scoreboard:
+  update-ticks: 10
+  server-address: mcqi.top

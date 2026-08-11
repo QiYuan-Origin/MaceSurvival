@@ -1,0 +1,64 @@
+config-version: 1
+title: '<font:minecraft:uniform><white><shadow:#404040:1>INVITE PLAYER</shadow></white></font>'
+size: 54
+open-sound: 'item.book.page_turn'
+
+content-slots: [10-16, 19-25, 28-34, 37-43]
+
+sounds:
+  invite: 'entity.experience_orb.pickup'
+  page: 'item.book.page_turn'
+  return: 'item.book.page_turn'
+  error: 'entity.villager.no'
+
+items:
+  edge:
+    material: BLACK_STAINED_GLASS_PANE
+    name: '<dark_gray>You are looking at the frame.</dark_gray>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
+  corner:
+    material: LIME_STAINED_GLASS_PANE
+    name: '<green>You are looking at the frame.</green>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [0, 8, 45, 53]
+  header:
+    material: WRITABLE_BOOK
+    slot: 4
+    slots: [4]
+    name: '<green><bold>INVITE PLAYER</bold></green>'
+    lore:
+      - '<gray>Page <white>{page}/{pages}</white></gray>'
+      - '<dark_gray>Select a player who is not in another team.</dark_gray>'
+  player:
+    material: PLAYER_HEAD
+    name: '<aqua>{player}</aqua>'
+    lore:
+      - '<gray>Current team size: <white>{team_size}</white></gray>'
+      - '<green>Click to send a 30-second invitation.</green>'
+  empty:
+    material: GRAY_DYE
+    slot: 22
+    name: '<gray>[ No Players Available ]</gray>'
+    lore:
+      - '<dark_gray>No eligible waiting player is online.</dark_gray>'
+  previous:
+    material: ARROW
+    slot: 47
+    name: '<yellow>[ Previous Page ]</yellow>'
+    lore:
+      - '<gray>View the previous players.</gray>'
+  next:
+    material: ARROW
+    slot: 51
+    name: '<yellow>[ Next Page ]</yellow>'
+    lore:
+      - '<gray>View more players.</gray>'
+  return:
+    material: SPECTRAL_ARROW
+    slot: 49
+    name: '<aqua>[ Return ]</aqua>'
+    lore:
+      - '<gray>Return to team management.</gray>'

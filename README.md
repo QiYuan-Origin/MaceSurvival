@@ -4,33 +4,24 @@
 
 **A dedicated-server mace battle royale built for Paper.**
 
-[![Status](https://img.shields.io/badge/status-pre--alpha-E89B36)](https://github.com/QiYuan-Origin/MaceSurvival)
+[![Status](https://img.shields.io/badge/status-active_development-2F9E6F)](https://github.com/QiYuan-Origin/MaceSurvival)
 [![Paper](https://img.shields.io/badge/Paper-1.21.11-49A3D8)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21-E76F00)](https://adoptium.net/)
 [![License](https://img.shields.io/github/license/QiYuan-Origin/MaceSurvival)](LICENSE)
 
 </div>
 
-MaceSurvival is a large-scale PvP game mode centered on maces, aerial deployment,
-tiered world loot, team play, temporary equipment, and high-mobility combat. It is
-designed as the only game running on a dedicated server: joining players enter the
-waiting lobby automatically, while players who arrive during an active match become
-spectators.
-
-> [!IMPORTANT]
-> MaceSurvival is currently in the design and bootstrap stage. This page describes
-> the agreed gameplay target, not a finished public release. Rules and balance may
-> still change as the full design is discussed.
+MaceSurvival is a server-side battle royale centered on maces, aerial deployment,
+shared world loot, equipment upgrades, and a continuously moving final circle. It
+is built as the only game running on a dedicated Paper server. Players who connect
+before deployment enter the waiting lobby; players who connect after the match has
+started enter spectator mode.
 
 ## Inspiration
 
-The initial direction is inspired by the gameplay shown in
+The mode is inspired by the gameplay shown in
 [Pro Players VS Mace Battle Royale](https://www.youtube.com/watch?v=m8j_BFNOM-o),
 with a [Chinese subtitled version on Bilibili](https://www.bilibili.com/video/BV15k3q6bEgs).
-The source video demonstrates the core tier progression: one-star chests offer
-early utility such as golden apples and ender pearls, two-star chests can provide
-elytra and spears, and three-star chests contain high-value rewards such as armor
-upgrades and Totems of Undying.
 
 This repository is an independent recreation. It does not contain code, fonts,
 textures, maps, or other assets from `mace.vip`, `mcpvp.club`, or the referenced
@@ -38,24 +29,40 @@ video.
 
 ## Match Flow
 
-| Phase | Planned behavior |
+| Phase | Behavior |
 | --- | --- |
 | Join | Enter the waiting lobby immediately, or spectator mode if a match is already active. |
-| Waiting | Use lobby hotbar controls to create, join, and manage a team before the round. |
-| Transition | A short blackout hides the move from the lobby to the live map. |
-| Deployment | Drop from high above the map with server-controlled vertical momentum. Looking around steers only horizontal travel. |
-| Scavenge | Search the surface for randomly placed one-, two-, and three-star chests. |
-| Fight | Upgrade equipment, combine damaged loot, and eliminate enemy players or teams. |
-| Elimination | The defeated player's equipment bursts out into the world as collectible loot; the player becomes a spectator. |
-| Finale | The surviving winner or team receives a dedicated end title and layered sound sequence. |
+| Waiting | Use lobby hotbar controls to manage a team and starting hotbar layout. The normal countdown begins at 100 players and lasts 120 seconds; an administrator can force the same flow with any player count. |
+| Transition | A short blackout moves participants from the void lobby into a random-seed amplified match world. |
+| Deployment | Each separated team rides a Happy Ghast. The leader steers, may drop the team during the first 15 seconds, and everyone is forced off after 30 seconds. |
+| Descent | Looking around controls horizontal travel while the server keeps vertical momentum fixed. Deployment fall damage is disabled. |
+| Scavenge | Search the surface for shared one-, two-, and three-star chests containing equipment, healing, mobility, enchantments, and upgrades. |
+| Fight | Upgrade weapons, automatically equip armor, combine eligible damaged equipment, and eliminate enemy teams. Friendly attacks deal no damage. |
+| Finale | The circle reaches a 24-block radius and keeps moving until the remaining players resolve the fight. The winner receives an end title and sound sequence. |
 
-The exact player limit, team size, match countdown, border behavior, and victory
-rules will be finalized with the remaining game design.
+Teams support one to four players. There is no configured maximum match population.
+The normal circle schedule lasts 25 minutes; multiplayer matches can end earlier
+when only one team remains, while an administrator-started solo match still runs
+the full schedule before resolving.
+
+## World And Circle
+
+Each match uses a random-seed amplified world with a 5,000-block hard radius.
+Participants cannot break or place blocks. The circular safe zone contracts through
+the following radii:
+
+```text
+3000 -> 2000 -> 1000 -> 650 -> 280 -> 80 -> 24
+```
+
+Every target circle is placed inside the previous circle. Once the final radius is
+reached, its center continues choosing random targets and moving. Red particles
+show the current boundary, with a darker treatment for players outside it.
 
 ## Starting Loadout
 
-Every active player starts with four infinite-durability netherite weapons. All
-hotbar positions are configurable.
+Every participant starts with four unbreakable weapons. Their hotbar positions can
+be changed in the lobby and have configurable defaults.
 
 | Hotbar slot | Default item | Durability |
 | ---: | --- | --- |
@@ -64,16 +71,19 @@ hotbar positions are configurable.
 | 8 | Mace | Infinite |
 | 9 | Mace | Infinite |
 
-These permanent starting weapons are separate from the limited-use equipment found
-during the match.
-
-## Tiered Chests
+## Shared Tiered Chests
 
 One-, two-, and three-star chests spawn at valid random surface locations. Every
 chest has a world-space `TextDisplay` tier label using vertical billboard behavior,
-keeping the text readable as a player changes direction.
+shadowed uniform-font stars, and four to eight items in random slots.
 
-The planned loot pool includes:
+Chests are shared by the entire server. The active target is eight chests per living
+player. Chests outside the next circle are removed during contraction, and the safe
+area is replenished after a contraction completes. After the last viewer closes an
+opened chest, it disappears three seconds later with red particles and a layered
+sound; any contents left inside drop at the block position.
+
+The configurable loot table includes:
 
 - Upgrade and enchantment books
 - Elytra
@@ -85,21 +95,27 @@ The planned loot pool includes:
 - Potions
 - Armor and equipment upgrades
 
-Higher tiers produce stronger and rarer rewards. Loot weights, refill behavior, and
-per-tier tables will be configurable once their balance is locked.
+Every configured entry has a non-zero chance in every tier. Higher stars change the
+relative probabilities rather than making whole categories unavailable.
 
-## Limited-Use Equipment
+## Equipment And Fusion
 
-Selected loot has a small effective durability pool. After its final use, it breaks
-with an explosion effect. Two compatible damaged items can be combined directly in
-the player's inventory using the following rule:
+Spears, shields, and elytra receive a limited random use range and consume durability
+through their normal actions. They break through vanilla durability behavior after
+their final use. Compatible damaged items can be combined in the inventory; the
+consumed item contributes half of its remaining durability. An item can participate
+in one fusion per elimination, and that allowance refreshes after the player earns a
+kill.
 
-```text
-result durability = target durability + (consumed durability / 2)
-```
+Extra spears, shields, and elytra are stored in Reserve Bundles. Each bundle holds
+12 unstackable equipment items, and a player may carry multiple bundles. Bundle
+contents can be thrown back into the world but cannot be moved into ordinary
+inventory slots as loose duplicates.
 
-The result cannot exceed that item's configured maximum durability. The starting
-sword, axe, and maces do not use this system.
+Armor loot is equipped automatically and cannot be manually removed. Replaced armor
+returns to the chest; lower-tier armor remains there and drops if the chest expires.
+Armor enchantment loot is applied when the armor is acquired rather than appearing
+naturally on generated pieces.
 
 ## Upgrade Books
 
@@ -107,74 +123,101 @@ Upgrade books are divided into two interaction models.
 
 ### Instant Upgrades
 
-Some books disappear as soon as they enter the inventory and apply their effect to
-the player. Planned examples include increased damage, improved healing, and a bonus
-triggered by the player's next elimination.
+Damage, healing, and next-kill boost books disappear when collected and apply their
+effect for the rest of the match. Collection feedback is shown immediately.
 
 ### Weapon Upgrades
 
-Other books remain in the inventory until the player applies them to a compatible
-weapon from the inventory interface. Planned upgrades include:
+Weapon books remain until applied to a compatible weapon from the inventory. The
+table includes Sharpness, Breach, Density, Wind Burst, Unbreaking, and Kill Mending.
+Configured maximum levels extend beyond vanilla levels, while Thorns is capped at
+level IV.
 
-- Storm
-- Sharpness
-- Armor Piercing
-- Density
-- Unbreaking
-- Kill Mending
+Kill Mending replaces experience repair with elimination repair. Its three levels
+restore 1%, 3%, or 5% of maximum durability, divided across damaged items in the
+player's inventory.
 
-Kill Mending replaces experience-based repair with durability restored by player
-eliminations. Compatibility, stacking, levels, and repair values will be defined by
-configuration rather than hard-coded balance.
+When a player dies, carried equipment drops into the world. Their sword, axe, and
+maces can merge into the collector's matching starter weapons. Upgrade levels are
+only replaced when the defeated weapon carries a higher level, so collecting weaker
+gear never downgrades the surviving weapon.
+
+## Elimination And Reconnection
+
+Eliminated players become spectators, and players joining after deployment also
+spectate the active match. A disconnected participant has a 240-second reconnect
+window. When that window expires, their inventory is dropped at the disconnect
+location and later joins remain in spectator mode.
+
+Kill credit uses the direct killer or the most recent valid attacker within 30
+seconds. Lifetime games, wins, kills, deaths, and best placement are stored in YAML
+and exposed through `/macesurvival stats` and PlaceholderAPI.
 
 ## Text System
 
-Most bundled in-game text will be English. Every configurable text surface is
-planned to use one unified component pipeline with support for:
+Most bundled in-game text is English. Configurable text uses one Adventure component
+pipeline with support for:
 
 - Ampersand legacy codes (`&`)
 - Section-sign legacy codes (`§`)
 - MiniMessage
 - Raw JSON text components
+- PlaceholderAPI placeholders when the plugin is installed
 
-The visual direction takes inspiration from `mcpvp.club`: compact typography,
-strong scoreboard hierarchy, and deliberate text shadows. A scoreboard title may,
-for example, use a MiniMessage expression such as:
+The scoreboard uses a compact uniform-font title with a text shadow. It shows match
+time and circle state on one line, living players, personal kill rank, surviving
+team kill rank, and teammate direction/distance markers. Eliminated teammates remain
+visible with red strikethrough styling.
 
-```text
-<gradient:#FFFFFF:#FFFFFF><shadow:#404040:1>[R]</shadow></gradient>
-```
+## Commands And Permissions
 
-Legacy input will be converted into Adventure components before display so raw color
-markers are never shown to players. JSON input will be parsed as components instead
-of being emitted as literal text.
+The main command is `/macesurvival` with `/ms` and `/mace` aliases. Player commands
+cover help, team management, loadout settings, and statistics. Administrators can
+force-start or stop a match, reload configuration, and set the lobby. All branches
+provide tab completion, and administrator branches are hidden from players without
+their corresponding `macesurvival.admin.*` permission. LuckPerms can manage these
+standard Bukkit permissions.
 
 ## Resource Pack
 
-A custom resource pack is planned for the final fonts and visual identity, but it is
-intentionally outside the current development phase. No resource pack is included
-yet; the core match systems will be implemented and stabilized first.
+A custom resource pack has not been made and is not included in this repository.
+The current build uses vanilla fonts, `TextDisplay` entities, particles, sounds, and
+items as its fallback presentation. The server plugin does not require a client mod.
 
-## Current State
+## Configuration
 
-The repository currently provides the Java 21 / Paper 1.21.11 plugin foundation and
-build configuration. Match states, lobby tools, teams, deployment, loot, spectators,
-combat upgrades, configuration, and rich-text rendering are the next implementation
-work and are not playable yet.
+Defaults are bundled in `src/main/resources`:
+
+- `config.yml` controls server flow, teams, deployment, borders, loadout, combat,
+  loot placement, and shutdown behavior.
+- `loot.yml` defines materials, typed rewards, amount/use ranges, and tier weights.
+- `messages.yml` contains chat, title, action-bar, item, and scoreboard text.
+- `menus/` contains the configurable team and loadout inventory menus.
+
+`/macesurvival reload` restores missing bundled configuration files before loading
+their current values.
 
 ## Building
 
 Requirements:
 
-- Java 21
-- Maven 3.9 or newer
+- JDK 21
 
-```shell
-mvn clean package
+Linux and macOS:
+
+```bash
+./gradlew build
 ```
 
-The generated JAR is written to `target/`. At the current pre-alpha stage, a
-successful build validates only the plugin bootstrap.
+Windows:
+
+```powershell
+gradlew.bat build
+```
+
+The Shadow JAR is written to `build/libs/MaceSurvival-<version>.jar`. Copy it into a
+Paper 1.21.11 server's `plugins` directory. PlaceholderAPI and LuckPerms are optional
+integrations, not hard dependencies.
 
 ## License
 

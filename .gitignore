@@ -1,6 +1,10 @@
 # Maven build output
 target/
 
+# Gradle build output and local cache
+.gradle/
+build/
+
 # IntelliJ IDEA project files
 .idea/
 *.iml
@@ -8,10 +12,12 @@ target/
 # Java build artifacts
 *.class
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 
 # Local runtime and log files
 logs/
 *.log
+/runtime/
 
 # Operating system metadata
 .DS_Store

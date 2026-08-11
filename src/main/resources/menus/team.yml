@@ -1,0 +1,95 @@
+config-version: 2
+title: '<font:minecraft:uniform><white><shadow:#404040:1>TEAM</shadow></white></font>'
+size: 54
+open-sound: 'block.beacon.power_select'
+
+navigation:
+  close-as-return: false
+  return-command: 'menu'
+
+roles:
+  leader: 'Leader'
+  member: 'Member'
+
+member-slots: [20, 21, 23, 24]
+
+sounds:
+  invite: 'item.book.page_turn'
+  invitations: 'block.enchantment_table.use'
+  member: 'ui.button.click'
+  leave: 'entity.item.break'
+  close: 'block.iron_door.close'
+
+items:
+  edge:
+    material: BLACK_STAINED_GLASS_PANE
+    name: '<dark_gray>You are looking at the frame.</dark_gray>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
+  corner:
+    material: LIGHT_BLUE_STAINED_GLASS_PANE
+    name: '<aqua>You are looking at the frame.</aqua>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [0, 8, 45, 53]
+  header:
+    material: MACE
+    slot: 4
+    slots: [4]
+    name: '<white><bold>TEAM</bold></white>'
+    lore:
+      - '<gray>Players: <white>{team_size}/{max_size}</white></gray>'
+      - '<dark_gray>Teams can contain up to four players.</dark_gray>'
+  member-self:
+    material: PLAYER_HEAD
+    name: '<green>{player}</green>'
+    lore:
+      - '<gray>{role}</gray>'
+      - '<dark_gray>This is you.</dark_gray>'
+  member-leader:
+    material: PLAYER_HEAD
+    name: '<yellow>{player}</yellow>'
+    lore:
+      - '<gray>{role}</gray>'
+      - '<dark_gray>The leader controls team deployment.</dark_gray>'
+  member:
+    material: PLAYER_HEAD
+    name: '<aqua>{player}</aqua>'
+    lore:
+      - '<gray>{role}</gray>'
+      - '<green>Left click <gray>to transfer leadership</gray></green>'
+      - '<red>Right click <gray>to remove this player</gray></red>'
+  invite:
+    material: WRITABLE_BOOK
+    slot: 30
+    name: '<green>[ Invite Player ]</green>'
+    lore:
+      - '<gray>Invite an online player to your team.</gray>'
+      - '<dark_gray>Invitations expire after 30 seconds.</dark_gray>'
+  invitations:
+    material: PAPER
+    slot: 32
+    name: '<aqua>[ Team Invitations ]</aqua>'
+    lore:
+      - '<gray>You have <white>{count}</white> pending invitation(s).</gray>'
+      - '<green>Click to review them.</green>'
+  leave:
+    material: RED_DYE
+    slot: 40
+    name: '<red>[ Leave Team ]</red>'
+    lore:
+      - '<gray>Leave your current team.</gray>'
+      - '<dark_gray>A departing leader transfers leadership.</dark_gray>'
+  locked:
+    material: BARRIER
+    slot: 31
+    name: '<red>[ Team Locked ]</red>'
+    lore:
+      - '<gray>Teams cannot change after deployment.</gray>'
+  navigation:
+    material: BARRIER
+    slot: 49
+    name: '<red>[ Close ]</red>'
+    lore:
+      - '<gray>Close this menu.</gray>'

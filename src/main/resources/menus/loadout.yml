@@ -1,0 +1,80 @@
+config-version: 1
+title: '<font:minecraft:uniform><white><shadow:#404040:1>LOADOUT LAYOUT</shadow></white></font>'
+size: 45
+open-sound: 'item.armor.equip_netherite'
+
+navigation:
+  close-as-return: false
+  return-command: 'menu'
+
+sounds:
+  change: 'ui.button.click'
+  reset: 'block.respawn_anchor.set_spawn'
+  close: 'block.iron_door.close'
+  error: 'entity.villager.no'
+
+items:
+  edge:
+    material: BLACK_STAINED_GLASS_PANE
+    name: '<dark_gray>You are looking at the frame.</dark_gray>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [1-7, 9, 17, 18, 26, 27, 35, 37-43]
+  corner:
+    material: RED_STAINED_GLASS_PANE
+    name: '<red>You are looking at the frame.</red>'
+    lore:
+      - '<gray>It will not do anything.</gray>'
+    slots: [0, 8, 36, 44]
+  header:
+    material: NETHERITE_SWORD
+    slot: 4
+    slots: [4]
+    name: '<white><bold>LOADOUT LAYOUT</bold></white>'
+    lore:
+      - '<gray>Choose where each permanent weapon starts.</gray>'
+      - '<dark_gray>Left click moves forward; right click moves backward.</dark_gray>'
+  sword:
+    material: NETHERITE_SWORD
+    slot: 20
+    name: '<aqua>[ Netherite Sword ]</aqua>'
+    lore:
+      - '<gray>Selected hotbar slot: <white>{slot}</white></gray>'
+      - '<green>Left click <gray>next slot</gray></green>'
+      - '<yellow>Right click <gray>previous slot</gray></yellow>'
+  axe:
+    material: NETHERITE_AXE
+    slot: 21
+    name: '<aqua>[ Netherite Axe ]</aqua>'
+    lore:
+      - '<gray>Selected hotbar slot: <white>{slot}</white></gray>'
+      - '<green>Left click <gray>next slot</gray></green>'
+      - '<yellow>Right click <gray>previous slot</gray></yellow>'
+  mace-one:
+    material: MACE
+    slot: 23
+    name: '<red>[ First Mace ]</red>'
+    lore:
+      - '<gray>Selected hotbar slot: <white>{slot}</white></gray>'
+      - '<green>Left click <gray>next slot</gray></green>'
+      - '<yellow>Right click <gray>previous slot</gray></yellow>'
+  mace-two:
+    material: MACE
+    slot: 24
+    name: '<red>[ Second Mace ]</red>'
+    lore:
+      - '<gray>Selected hotbar slot: <white>{slot}</white></gray>'
+      - '<green>Left click <gray>next slot</gray></green>'
+      - '<yellow>Right click <gray>previous slot</gray></yellow>'
+  reset:
+    material: RECOVERY_COMPASS
+    slot: 31
+    name: '<yellow>[ Restore Defaults ]</yellow>'
+    lore:
+      - '<gray>Sword 1, axe 2, maces 8 and 9.</gray>'
+  navigation:
+    material: BARRIER
+    slot: 40
+    name: '<red>[ Close ]</red>'
+    lore:
+      - '<gray>Close this menu.</gray>'
