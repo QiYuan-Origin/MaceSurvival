@@ -1,0 +1,6 @@
+name: MaceSurvival
+version: '1.0.0'
+main: org.MaceSurvival
+api-version: '1.21'
+authors: [ bzd ]
+description: 依旧AI写的神秘mod
