@@ -295,6 +295,11 @@ public final class DeploymentController {
         player.setVelocity(facing);
         player.setFallDistance(0.0f);
         dropping.add(player.getUniqueId());
+        player.showTitle(Title.title(
+            plugin.text().message(player, "deployment.drop-title", Map.of()),
+            plugin.text().message(player, "deployment.drop-subtitle", Map.of()),
+            Title.Times.times(Duration.ofMillis(120), Duration.ofSeconds(2), Duration.ofMillis(350))
+        ));
         player.sendActionBar(plugin.text().message(player, "deployment.drop-actionbar", Map.of()));
     }
 

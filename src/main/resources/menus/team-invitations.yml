@@ -1,5 +1,5 @@
-config-version: 2
-title: '<font:minecraft:uniform><white><shadow:#404040:1>ʀᴇǫᴜᴇꜱᴛꜱ</shadow></white></font>'
+config-version: 3
+title: '<font:minecraft:uniform><white><shadow:#404040:1>REQUESTS</shadow></white></font>'
 size: 54
 open-sound: 'block.enchantment_table.use'
 
@@ -14,15 +14,11 @@ sounds:
 items:
   edge:
     material: BLACK_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><dark_gray>frame</dark_gray></font>'
-    lore:
-      - '<gray> '
+    name: '<font:minecraft:uniform><dark_gray>·</dark_gray></font>'
     slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
   corner:
     material: CYAN_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><aqua><shadow:#103040:1>corner</shadow></aqua></font>'
-    lore:
-      - '<gray> '
+    name: '<font:minecraft:uniform><aqua><shadow:#103040:1>•</shadow></aqua></font>'
     slots: [0, 8, 45, 53]
   header:
     material: PAPER
@@ -30,8 +26,8 @@ items:
     slots: [4]
     name: '<font:minecraft:uniform><aqua><shadow:#103040:1>Requests</shadow></aqua></font>'
     lore:
-      - '<dark_gray>Page</dark_gray> <white>{page}</white><gray>/</gray><white>{pages}</white>'
-      - '<gray>Incoming party requests expire fast.</gray>'
+      - '<dark_gray>{page}</dark_gray><gray>/</gray><white>{pages}</white>'
+      - '<gray>Incoming requests.</gray>'
   invitation:
     material: PLAYER_HEAD
     name: '<font:minecraft:uniform><yellow>{player}</yellow></font>'
@@ -41,24 +37,24 @@ items:
   empty:
     material: GRAY_DYE
     slot: 22
-    name: '<font:minecraft:uniform><gray>[ Empty ]</gray></font>'
+    name: '<font:minecraft:uniform><gray>Empty</gray></font>'
     lore:
-      - '<dark_gray>No active party requests.</dark_gray>'
+      - '<dark_gray>No active requests.</dark_gray>'
   previous:
     material: ARROW
     slot: 47
-    name: '<font:minecraft:uniform><yellow>[ Previous ]</yellow></font>'
+    name: '<font:minecraft:uniform><yellow>Previous</yellow></font>'
     lore:
-      - '<gray>Previous request page.</gray>'
+      - '<gray>Prev page.</gray>'
   next:
     material: ARROW
     slot: 51
-    name: '<font:minecraft:uniform><yellow>[ Next ]</yellow></font>'
+    name: '<font:minecraft:uniform><yellow>Next</yellow></font>'
     lore:
-      - '<gray>Next request page.</gray>'
+      - '<gray>Next page.</gray>'
   return:
     material: SPECTRAL_ARROW
     slot: 49
-    name: '<font:minecraft:uniform><aqua>[ Return ]</aqua></font>'
+    name: '<font:minecraft:uniform><aqua>Return</aqua></font>'
     lore:
       - '<gray>Back to party.</gray>'

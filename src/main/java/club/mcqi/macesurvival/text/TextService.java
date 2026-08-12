@@ -25,8 +25,8 @@ import java.util.logging.Level;
 /** Renders JSON, MiniMessage and legacy color syntax through one Adventure pipeline. */
 public final class TextService {
     private static final String DEFAULT_PREFIX =
-        "<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>MACE</shadow></color>"
-            + " <dark_gray>>></dark_gray> </font>";
+        "<font:minecraft:uniform><white><shadow:#404040:1>MACE</shadow></white>"
+            + "<color:#ff5555><shadow:#401818:1>.VIP</shadow></color> <dark_gray>›</dark_gray> </font>";
     private static final Map<Character, String> LEGACY_TAGS = legacyTags();
 
     private final JavaPlugin plugin;

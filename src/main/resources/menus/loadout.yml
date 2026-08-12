@@ -1,5 +1,5 @@
-config-version: 2
-title: '<font:minecraft:uniform><white><shadow:#404040:1>ʟᴏᴀᴅᴏᴜᴛ</shadow></white></font>'
+config-version: 3
+title: '<font:minecraft:uniform><white><shadow:#404040:1>LOADOUT</shadow></white></font>'
 size: 45
 open-sound: 'item.armor.equip_netherite'
 
@@ -16,15 +16,11 @@ sounds:
 items:
   edge:
     material: BLACK_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><dark_gray>frame</dark_gray></font>'
-    lore:
-      - '<gray> '
+    name: '<font:minecraft:uniform><dark_gray>·</dark_gray></font>'
     slots: [1-7, 9, 17, 18, 26, 27, 35, 37-43]
   corner:
     material: RED_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>corner</shadow></color></font>'
-    lore:
-      - '<gray> '
+    name: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>•</shadow></color></font>'
     slots: [0, 8, 36, 44]
   header:
     material: NETHERITE_SWORD
@@ -32,41 +28,41 @@ items:
     slots: [4]
     name: '<font:minecraft:uniform><white><shadow:#404040:1>Loadout</shadow></white></font>'
     lore:
-      - '<gray>Choose the hotbar slot for each starter weapon.</gray>'
-      - '<green>Left</green> <gray>next</gray> <dark_gray>/</dark_gray> <yellow>Right</yellow> <gray>previous</gray>'
+      - '<gray>Hotbar order.</gray>'
+      - '<green>Left</green> <gray>next</gray> <dark_gray>/</dark_gray> <yellow>Right</yellow> <gray>prev</gray>'
   sword:
     material: NETHERITE_SWORD
     slot: 20
-    name: '<font:minecraft:uniform><aqua>[ Sword ]</aqua></font>'
+    name: '<font:minecraft:uniform><aqua>Sword</aqua></font>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   axe:
     material: NETHERITE_AXE
     slot: 21
-    name: '<font:minecraft:uniform><aqua>[ Axe ]</aqua></font>'
+    name: '<font:minecraft:uniform><aqua>Axe</aqua></font>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   mace-one:
     material: MACE
     slot: 23
-    name: '<font:minecraft:uniform><color:#ff6464>[ Mace I ]</color></font>'
+    name: '<font:minecraft:uniform><color:#ff5555>Mace I</color></font>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   mace-two:
     material: MACE
     slot: 24
-    name: '<font:minecraft:uniform><color:#ff6464>[ Mace II ]</color></font>'
+    name: '<font:minecraft:uniform><color:#ff5555>Mace II</color></font>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   reset:
     material: RECOVERY_COMPASS
     slot: 31
-    name: '<font:minecraft:uniform><yellow>[ Reset ]</yellow></font>'
+    name: '<font:minecraft:uniform><yellow>Reset</yellow></font>'
     lore:
-      - '<gray>Sword 1, axe 2, maces 8 and 9.</gray>'
+      - '<gray>1 / 2 / 8 / 9.</gray>'
   navigation:
     material: BARRIER
     slot: 40
-    name: '<font:minecraft:uniform><red>[ Close ]</red></font>'
+    name: '<font:minecraft:uniform><red>Close</red></font>'
     lore:
-      - '<gray>Close this menu.</gray>'
+      - '<gray>Back out.</gray>'

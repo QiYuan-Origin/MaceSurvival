@@ -1,5 +1,5 @@
-config-version: 3
-title: '<font:minecraft:uniform><white><shadow:#404040:1>ᴘᴀʀᴛʏ</shadow></white></font>'
+config-version: 4
+title: '<font:minecraft:uniform><white><shadow:#404040:1>PARTY</shadow></white></font>'
 size: 54
 open-sound: 'block.beacon.power_select'
 
@@ -23,15 +23,11 @@ sounds:
 items:
   edge:
     material: BLACK_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><dark_gray>frame</dark_gray></font>'
-    lore:
-      - '<gray> '
+    name: '<font:minecraft:uniform><dark_gray>·</dark_gray></font>'
     slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
   corner:
     material: RED_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>corner</shadow></color></font>'
-    lore:
-      - '<gray> '
+    name: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>•</shadow></color></font>'
     slots: [0, 8, 45, 53]
   header:
     material: MACE
@@ -39,55 +35,55 @@ items:
     slots: [4]
     name: '<font:minecraft:uniform><white><shadow:#404040:1>Party</shadow></white></font>'
     lore:
-      - '<dark_gray>Players</dark_gray> <white>{team_size}</white><gray>/</gray><white>{max_size}</white>'
-      - '<gray>Leader controls the team drop.</gray>'
+      - '<dark_gray>{team_size}</dark_gray><gray>/</gray><white>{max_size}</white>'
+      - '<gray>Leader controls drop.</gray>'
   member-self:
     material: PLAYER_HEAD
     name: '<font:minecraft:uniform><green>{player}</green></font>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
-      - '<gray>This is you.</gray>'
+      - '<gray>You.</gray>'
   member-leader:
     material: PLAYER_HEAD
     name: '<font:minecraft:uniform><yellow>{player}</yellow></font>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
-      - '<gray>Leader jump pulls the whole party.</gray>'
+      - '<gray>Drop leader.</gray>'
   member:
     material: PLAYER_HEAD
     name: '<font:minecraft:uniform><aqua>{player}</aqua></font>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
-      - '<green>Left</green> <gray>promote</gray>'
-      - '<red>Right</red> <gray>remove</gray>'
+      - '<green>Left</green> <gray>leader</gray>'
+      - '<red>Right</red> <gray>kick</gray>'
   invite:
     material: WRITABLE_BOOK
     slot: 30
-    name: '<font:minecraft:uniform><green>[ Invite ]</green></font>'
+    name: '<font:minecraft:uniform><green>Invite</green></font>'
     lore:
-      - '<gray>Send a 30s party request.</gray>'
+      - '<dark_gray>30s request.</dark_gray>'
   invitations:
     material: PAPER
     slot: 32
-    name: '<font:minecraft:uniform><aqua>[ Requests ]</aqua></font>'
+    name: '<font:minecraft:uniform><aqua>Requests</aqua></font>'
     lore:
       - '<dark_gray>Pending</dark_gray> <white>{count}</white>'
-      - '<gray>Open incoming party requests.</gray>'
+      - '<gray>Open requests.</gray>'
   leave:
     material: RED_DYE
     slot: 40
-    name: '<font:minecraft:uniform><red>[ Leave ]</red></font>'
+    name: '<font:minecraft:uniform><red>Leave</red></font>'
     lore:
-      - '<gray>Exit your current party.</gray>'
+      - '<gray>Leave party.</gray>'
   locked:
     material: BARRIER
     slot: 31
-    name: '<font:minecraft:uniform><red>[ Locked ]</red></font>'
+    name: '<font:minecraft:uniform><red>Locked</red></font>'
     lore:
-      - '<gray>Party editing closes after drop starts.</gray>'
+      - '<gray>Drop already started.</gray>'
   navigation:
     material: BARRIER
     slot: 49
-    name: '<font:minecraft:uniform><red>[ Close ]</red></font>'
+    name: '<font:minecraft:uniform><red>Close</red></font>'
     lore:
-      - '<gray>Close this menu.</gray>'
+      - '<gray>Back out.</gray>'

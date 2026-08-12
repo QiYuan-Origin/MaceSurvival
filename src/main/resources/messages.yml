@@ -1,6 +1,6 @@
-config-version: 4
+config-version: 5
 
-prefix: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>ᴍᴀᴄᴇ</shadow></color> <dark_gray>»</dark_gray> </font>'
+prefix: '<font:minecraft:uniform><white><shadow:#404040:1>MACE</shadow></white><color:#ff5555><shadow:#401818:1>.VIP</shadow></color> <dark_gray>›</dark_gray> </font>'
 
 general:
   no-permission: '<red>No permission.</red>'
@@ -16,7 +16,7 @@ command:
   stats-usage: '<yellow>Usage</yellow> <gray>/{label} stats [player]</gray>'
 
 help:
-  header: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>ᴍᴀᴄᴇ</shadow></color> <dark_gray>-</dark_gray> <white>COMMANDS</white></font>'
+  header: '<font:minecraft:uniform><white><shadow:#404040:1>MACE.VIP</shadow></white> <dark_gray>|</dark_gray> <white>COMMANDS</white></font>'
   team: '<gray>/{label} team</gray> <dark_gray>-</dark_gray> <white>Party menu and party commands</white>'
   loadout: '<gray>/{label} loadout</gray> <dark_gray>-</dark_gray> <white>Starter weapon slots</white>'
   stats: '<gray>/{label} stats [player]</gray> <dark_gray>-</dark_gray> <white>Lifetime stats</white>'
@@ -50,23 +50,23 @@ stats:
     - '<gray>Kill rank <white>#{rank}</white></gray>'
 
 lobby:
-  joined: '<gray>Lobby joined.</gray> <dark_gray>Party, layout and visibility are in your hotbar.</dark_gray>'
-  countdown-cancelled: '<yellow>Countdown cancelled.</yellow> <gray>Not enough players.</gray>'
-  settings-locked: '<red>Locked after drop starts.</red>'
-  loadout-reset: '<green>Loadout reset.</green>'
-  loadout-no-slot: '<red>No free hotbar slot.</red>'
+  joined: '<gray>Queued.</gray> <dark_gray>Party / Loadout in hotbar.</dark_gray>'
+  countdown-cancelled: '<yellow>Queue held.</yellow> <dark_gray>Not enough players.</dark_gray>'
+  settings-locked: '<red>Locked.</red> <dark_gray>Drop already started.</dark_gray>'
+  loadout-reset: '<green>Loadout reset.</green> <dark_gray>1 / 2 / 8 / 9</dark_gray>'
+  loadout-no-slot: '<red>No open slot.</red>'
   hotbar:
     team:
-      name: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>[ Party ]</shadow></color></font>'
-      lore: '<gray>Invite, kick and manage teammates.</gray>'
+      name: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>Party</shadow></color></font>'
+      lore: '<dark_gray>Invite / team drop.</dark_gray>'
     loadout:
-      name: '<font:minecraft:uniform><aqua><shadow:#103040:1>[ Loadout ]</shadow></aqua></font>'
-      lore: '<gray>Choose where starter weapons land.</gray>'
+      name: '<font:minecraft:uniform><aqua><shadow:#103040:1>Loadout</shadow></aqua></font>'
+      lore: '<dark_gray>Starter slot order.</dark_gray>'
     visibility:
-      shown-name: '<font:minecraft:uniform><green><shadow:#143010:1>[ Players: All ]</shadow></green></font>'
-      shown-lore: '<gray>Click to show party players only.</gray>'
-      hidden-name: '<font:minecraft:uniform><gray><shadow:#202020:1>[ Players: Party ]</shadow></gray></font>'
-      hidden-lore: '<gray>Click to show everyone.</gray>'
+      shown-name: '<font:minecraft:uniform><green><shadow:#143010:1>Players: All</shadow></green></font>'
+      shown-lore: '<dark_gray>Click: party only.</dark_gray>'
+      hidden-name: '<font:minecraft:uniform><gray><shadow:#202020:1>Players: Party</shadow></gray></font>'
+      hidden-lore: '<dark_gray>Click: show all.</dark_gray>'
 
 team:
   created: '<green>Party created.</green>'
@@ -99,22 +99,24 @@ team:
     invitation-not-found: '<red>Request no longer exists.</red>'
 
 game:
-  countdown: '<gray>Drop in <white>{seconds}s</white>.</gray>'
-  stopped: '<red>Match stopped by staff.</red>'
-  reconnect-restored: '<green>Reconnected.</green> <gray>Your match state was restored.</gray>'
-  reconnect-expired: '<red>Reconnect window expired.</red> <gray>You are spectating.</gray>'
-  deployment-jump: '<yellow>Leader jumped.</yellow> <gray>Party is dropping.</gray>'
+  countdown: '<gray>Drop</gray> <white>{seconds}s</white>'
+  stopped: '<red>Match stopped.</red>'
+  reconnect-restored: '<green>Reconnected.</green> <dark_gray>State restored.</dark_gray>'
+  reconnect-expired: '<red>Expired.</red> <dark_gray>Spectating.</dark_gray>'
+  deployment-jump: '<yellow>Captain jumped.</yellow> <dark_gray>Party dropping.</dark_gray>'
   deployment-forced: '<red>Forced drop.</red>'
-  border-moving: '<red>Zone is moving.</red>'
+  border-moving: '<color:#ff5555>Zone moving.</color>'
   eliminated: '<red>Eliminated.</red>'
   winner: '<white>{winner}</white> <green>won Mace Survival.</green>'
-  draw: '<gray>No players survived.</gray>'
+  draw: '<dark_gray>No survivors.</dark_gray>'
 
 deployment:
-  ride-title: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>{team}</shadow></color></font>'
-  ride-subtitle: '<gray>Leader can jump early. Full party drops at 30s.</gray>'
-  ride-actionbar: '<gray>Look where you want to glide. Y velocity stays locked.</gray>'
-  drop-actionbar: '<color:#ff6464>Drop started.</color> <gray>Steer with your view.</gray>'
+  ride-title: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>{team}</shadow></color></font>'
+  ride-subtitle: '<dark_gray>Captain jump pulls the party.</dark_gray>'
+  ride-actionbar: '<gray>Look to steer.</gray> <dark_gray>Y is locked.</dark_gray>'
+  drop-title: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>DROP!</shadow></color></font>'
+  drop-subtitle: '<font:minecraft:uniform><gray>Glide to the ground</gray></font>'
+  drop-actionbar: '<color:#ff5555>DROP</color> <dark_gray>›</dark_gray> <gray>Steer with view.</gray>'
 
 title:
   victory: '<font:minecraft:uniform><green><shadow:#153d20:1>VICTORY</shadow></green></font>'
@@ -160,26 +162,26 @@ chat:
   format: '<{color}>{player}</{color}> <dark_gray>:</dark_gray> <white>{message}</white>'
 
 tab:
-  player: '<font:minecraft:uniform><dark_gray>[</dark_gray><{color}>{team_label}</{color}><dark_gray>]</dark_gray> <{color}>{player}</{color}></font>'
+  player: '<font:minecraft:uniform><dark_gray>[</dark_gray><{color}>{team_label}</{color}><dark_gray>]</dark_gray> <white>{player}</white></font>'
   header:
-    - '<font:minecraft:uniform><white><shadow:#404040:1>ᴍᴀᴄᴇ</shadow></white> <color:#ff6464><shadow:#401818:1>ꜱᴜʀᴠɪᴠᴀʟ</shadow></color></font>'
-    - '<dark_gray>{server}</dark_gray> <gray>|</gray> <white>{online}</white><gray>/{max}</gray>'
+    - '<font:minecraft:uniform><white><shadow:#404040:1>MACE.VIP</shadow></white></font>'
+    - '<font:minecraft:uniform><dark_gray>{server}</dark_gray> <gray>•</gray> <color:#ff5555>{phase}</color></font>'
   footer:
-    - '<gray>{phase}</gray> <dark_gray>|</dark_gray> <gray>Alive <white>{alive}</white></gray> <dark_gray>|</dark_gray> <gray>Party <{color}>{team_size}/4</{color}></gray>'
+    - '<font:minecraft:uniform><gray>{online}</gray><dark_gray>/</dark_gray><white>{max}</white> <dark_gray>online</dark_gray> <dark_gray>|</dark_gray> <gray>Alive</gray> <white>{alive}</white> <dark_gray>|</dark_gray> <gray>Party</gray> <{color}>{team_size}/4</{color}></font>'
 
 scoreboard:
-  title: '<font:minecraft:uniform><white><shadow:#404040:1>ᴍᴀᴄᴇ</shadow></white> <color:#ff6464><shadow:#401818:1>ꜱᴜʀᴠɪᴠᴀʟ</shadow></color></font>'
-  lobby-status: '<font:minecraft:uniform><dark_gray>Queue</dark_gray> <white>{waiting}</white><gray>/</gray><white>{minimum}</white></font>'
-  lobby-needed: '<font:minecraft:uniform><dark_gray>Need</dark_gray> <red>{needed}</red> <gray>more players</gray></font>'
-  lobby-countdown: '<font:minecraft:uniform><dark_gray>Drop</dark_gray> <color:#ff6464>{seconds}s</color></font>'
-  lobby-team: '<font:minecraft:uniform><dark_gray>Party</dark_gray> <{color}>{team_size}</{color}><gray>/</gray><white>{max_size}</white></font>'
-  time-border: '<font:minecraft:uniform><dark_gray>Match</dark_gray> <white>{time}</white> <gray>/</gray> <dark_gray>Border</dark_gray> <white>{border}m</white></font>'
-  time-border-moving: '<font:minecraft:uniform><dark_gray>Match</dark_gray> <white>{time}</white> <gray>/</gray> <dark_gray>Border</dark_gray> <red>{border}m</red></font>'
-  alive: '<font:minecraft:uniform><dark_gray>Alive</dark_gray> <white>{alive}</white></font>'
-  kills: '<font:minecraft:uniform><dark_gray>Kills</dark_gray> <white>{kills}</white> <gray>#</gray><white>{rank}</white></font>'
-  team-kills: '<font:minecraft:uniform><dark_gray>Team</dark_gray> <white>{kills}</white> <gray>#</gray><white>{rank}</white></font>'
-  teammates: '<font:minecraft:uniform><dark_gray>Team Track</dark_gray></font>'
-  teammate: '<font:minecraft:uniform><gray>{direction}</gray> <{color}>{name}</{color}> <dark_gray>{distance}</dark_gray><gray>m</gray></font>'
-  teammate-unknown: '<font:minecraft:uniform><dark_gray>-</dark_gray> <{color}>{name}</{color}> <dark_gray>--</dark_gray><gray>m</gray></font>'
+  title: '<font:minecraft:uniform><white><shadow:#404040:1>MACE.VIP</shadow></white> <dark_gray>|</dark_gray> <color:#ff5555><shadow:#401818:1>#{rank}</shadow></color></font>'
+  lobby-status: '<font:minecraft:uniform><dark_gray>⌚</dark_gray> <gray>Queue</gray> <white>{waiting}</white><dark_gray>/</dark_gray><white>{minimum}</white></font>'
+  lobby-needed: '<font:minecraft:uniform><dark_gray>▸</dark_gray> <gray>Start</gray> <color:#ff5555>+{needed}</color></font>'
+  lobby-countdown: '<font:minecraft:uniform><dark_gray>▾</dark_gray> <gray>Drop</gray> <color:#ff5555>{seconds}s</color></font>'
+  lobby-team: '<font:minecraft:uniform><dark_gray>◈</dark_gray> <gray>Party</gray> <{color}>{team_size}</{color}><dark_gray>/</dark_gray><white>{max_size}</white></font>'
+  time-border: '<font:minecraft:uniform><dark_gray>⌚</dark_gray> <gray>{time}</gray> <dark_gray>⌁</dark_gray> <white>{border}m</white></font>'
+  time-border-moving: '<font:minecraft:uniform><dark_gray>⌚</dark_gray> <gray>{time}</gray> <dark_gray>⌁</dark_gray> <color:#ff5555>{border}m</color></font>'
+  alive: '<font:minecraft:uniform><dark_gray>♥</dark_gray> <gray>Alive</gray> <white>{alive}</white></font>'
+  kills: '<font:minecraft:uniform><dark_gray>⚔</dark_gray> <gray>Kills</gray> <white>{kills}</white> <dark_gray>#</dark_gray><color:#ff5555>{rank}</color></font>'
+  team-kills: '<font:minecraft:uniform><dark_gray>⚑</dark_gray> <gray>Team</gray> <white>{kills}</white> <dark_gray>#</dark_gray><color:#ff5555>{rank}</color></font>'
+  teammates: '<font:minecraft:uniform><dark_gray>TEAM</dark_gray></font>'
+  teammate: '<font:minecraft:uniform><dark_gray>{direction}</dark_gray> <{color}>{name}</{color}> <dark_gray>{distance}m</dark_gray></font>'
+  teammate-unknown: '<font:minecraft:uniform><dark_gray>-</dark_gray> <{color}>{name}</{color}> <dark_gray>--m</dark_gray></font>'
   teammate-dead: '<font:minecraft:uniform><red><strikethrough>{name}</strikethrough></red></font>'
-  server: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>mcqi.top</shadow></color></font>'
+  server: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>MCQI.TOP</shadow></color></font>'

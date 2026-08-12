@@ -36,14 +36,15 @@ public final class PlayerPresentationService implements AutoCloseable {
     private static final String UNASSIGNED_TEAM_NAME = SCOREBOARD_TEAM_PREFIX + "_unassigned";
     private static final String DEFAULT_TAB_PLAYER =
         "<font:minecraft:uniform><dark_gray>[</dark_gray><{color}>{team_label}</{color}>"
-            + "<dark_gray>]</dark_gray> <{color}>{player}</{color}></font>";
+            + "<dark_gray>]</dark_gray> <white>{player}</white></font>";
     private static final String DEFAULT_TAB_HEADER =
-        "<font:minecraft:uniform><white><shadow:#404040:1>ᴍᴀᴄᴇ</shadow></white> "
-            + "<color:#ff6464><shadow:#401818:1>ꜱᴜʀᴠɪᴠᴀʟ</shadow></color></font>\n"
-            + "<dark_gray>mcqi.top</dark_gray> <gray>|</gray> <white>{online}</white><gray> online</gray>";
+        "<font:minecraft:uniform><white><shadow:#404040:1>MACE.VIP</shadow></white></font>\n"
+            + "<font:minecraft:uniform><dark_gray>{server}</dark_gray> <gray>•</gray> <color:#ff5555>{phase}</color></font>";
     private static final String DEFAULT_TAB_FOOTER =
-        "<gray>{phase}</gray> <dark_gray>|</dark_gray> <gray>Alive <white>{alive}</white></gray> "
-            + "<dark_gray>|</dark_gray> <gray>Team <{color}>{team_size}/4</{color}></gray>";
+        "<font:minecraft:uniform><gray>{online}</gray><dark_gray>/</dark_gray><white>{max}</white> "
+            + "<dark_gray>online</dark_gray> <dark_gray>|</dark_gray> "
+            + "<gray>Alive</gray> <white>{alive}</white> <dark_gray>|</dark_gray> "
+            + "<gray>Party</gray> <{color}>{team_size}/4</{color}></font>";
     private static final List<NamedTextColor> VANILLA_COLORS = List.of(
         NamedTextColor.BLACK,
         NamedTextColor.DARK_BLUE,

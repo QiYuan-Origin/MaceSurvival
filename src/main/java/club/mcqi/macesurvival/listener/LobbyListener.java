@@ -292,12 +292,13 @@ public final class LobbyListener implements Listener {
         return slot < 0 || slot > 8 ? fallback : slot;
     }
 
+    @SuppressWarnings("deprecation")
     private ItemStack lobbyItem(Material material, String id, Component name, Component lore) {
         ItemStack item = new ItemStack(material);
         item.editMeta(meta -> {
             meta.displayName(name.decoration(TextDecoration.ITALIC, false));
             meta.lore(java.util.List.of(lore.decoration(TextDecoration.ITALIC, false)));
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
             meta.getPersistentDataContainer().set(lobbyControlKey, PersistentDataType.STRING, id);
         });
         return item;

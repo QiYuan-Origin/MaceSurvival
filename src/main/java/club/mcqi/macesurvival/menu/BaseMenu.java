@@ -99,6 +99,7 @@ public abstract class BaseMenu implements InventoryHolder {
         return configuredItem(section, placeholders, fallback);
     }
 
+    @SuppressWarnings("deprecation")
     protected final ItemStack configuredItem(
         ConfigurationSection section,
         Map<String, String> placeholders,
@@ -112,7 +113,7 @@ public abstract class BaseMenu implements InventoryHolder {
             .map(line -> menuManager.text().parse(viewer, line, placeholders))
             .toList();
         meta.lore(lore);
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
         item.setItemMeta(meta);
         return item;
     }
