@@ -8,9 +8,9 @@ server:
   shutdown-delay-seconds: 8
 
 text:
-  prefix: '<gradient:#FF5A5A:#FF8A5A><shadow:#3A1010:1>MACE >></shadow></gradient> <white>'
+  prefix: '<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>ᴍᴀᴄᴇ</shadow></color> <dark_gray>»</dark_gray> </font>'
   default-font: 'minecraft:default'
-  scoreboard-title: '<font:minecraft:uniform><gradient:#FFFFFF:#FFFFFF><shadow:#404040:1>MACE SURVIVAL</shadow></gradient></font>'
+  scoreboard-title: '<font:minecraft:uniform><white><shadow:#404040:1>ᴍᴀᴄᴇ</shadow></white> <color:#ff6464><shadow:#401818:1>ꜱᴜʀᴠɪᴠᴀʟ</shadow></color></font>'
 
 lobby:
   world: world
@@ -22,6 +22,10 @@ lobby:
     pitch: 0.0
   void-return-y: 0.0
   hide-players-over: 20
+  hotbar:
+    team-slot: 0
+    loadout-slot: 4
+    visibility-slot: 8
   menu:
     root-close-is-return: false
     root-return-command: 'menu'
@@ -88,6 +92,7 @@ loot:
   armor-durability-max: 0.90
   chest-tier-weights: [55, 30, 15]
   minimum-chest-spacing: 4
+  star-display-view-range: 48
 
 upgrades:
   damage-per-book: 0.03

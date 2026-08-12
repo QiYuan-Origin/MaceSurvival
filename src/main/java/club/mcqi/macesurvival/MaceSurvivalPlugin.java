@@ -84,7 +84,7 @@ public final class MaceSurvivalPlugin extends JavaPlugin {
             GameManager current = gameReference.get();
             return current != null && current.state() != GameState.WAITING && current.state() != GameState.COUNTDOWN;
         });
-        presentations = new PlayerPresentationService(this, teams);
+        presentations = new PlayerPresentationService(this, teams, text, () -> gameReference.get());
         loadoutLayouts = new LoadoutLayoutManager(this);
         menus = new MenuManager(this, teams, loadoutLayouts, configFiles, text, player -> {
             GameManager current = gameReference.get();
@@ -169,6 +169,19 @@ public final class MaceSurvivalPlugin extends JavaPlugin {
             @Override
             public void setLobby(Location location) {
                 worlds.setLobby(location);
+            }
+
+            @Override
+            public List<club.mcqi.macesurvival.loot.LootChestSnapshot> lootChests() {
+                return lootChests.chests();
+            }
+
+            @Override
+            public club.mcqi.macesurvival.loot.LootChestSnapshot spawnChest(
+                Location location,
+                club.mcqi.macesurvival.loot.LootTier tier
+            ) {
+                return lootChests.spawnChest(location, tier);
             }
             }
         );

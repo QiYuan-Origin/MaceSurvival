@@ -22,4 +22,5 @@ public interface GameFacade {
     Optional<Location> lobbyLocation();
     long elapsedSeconds();
     double currentBorderRadius();
+    default int countdownRemainingSeconds() { return 0; }
 }

@@ -38,6 +38,7 @@ permissions:
       macesurvival.admin.stop: true
       macesurvival.admin.reload: true
       macesurvival.admin.setlobby: true
+      macesurvival.admin.chest: true
   macesurvival.admin.start:
     description: Force a match to start below the minimum player count
     default: op
@@ -49,4 +50,7 @@ permissions:
     default: op
   macesurvival.admin.setlobby:
     description: Set the lobby spawn
+    default: op
+  macesurvival.admin.chest:
+    description: Locate, teleport to, and spawn managed loot chests
     default: op

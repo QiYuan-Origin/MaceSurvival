@@ -8,6 +8,7 @@ import club.mcqi.macesurvival.team.LoadoutLayoutManager;
 import club.mcqi.macesurvival.team.TeamData;
 import club.mcqi.macesurvival.team.TeamManager;
 import club.mcqi.macesurvival.world.WorldManager;
+import net.kyori.adventure.title.Title;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -22,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Collection;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -137,30 +140,41 @@ public final class DeploymentController {
     private Map<TeamData, Location> resolveLocations(World world, Map<TeamData, SpawnPoint> points) {
         Map<TeamData, Location> result = new LinkedHashMap<>();
         for (Map.Entry<TeamData, SpawnPoint> entry : points.entrySet()) {
-            SpawnPoint point = entry.getValue();
-            int x = point.x();
-            int z = point.z();
-            int surface = world.getHighestBlockYAt(x, z);
+            SpawnPoint point = refineSpawnPoint(world, entry.getValue());
+            int surface = world.getHighestBlockYAt(point.x(), point.z());
             int configuredMinimum = plugin.getConfig().getInt("deployment.minimum-altitude", 300);
             int aboveSurface = plugin.getConfig().getInt("deployment.altitude-above-surface", 220);
             int y = Math.max(configuredMinimum, surface + aboveSurface);
-            result.put(entry.getKey(), new Location(world, x + 0.5, y, z + 0.5, point.yaw(), 0.0f));
+            result.put(entry.getKey(), new Location(world, point.x() + 0.5, y, point.z() + 0.5, point.yaw(), 0.0f));
         }
         return result;
     }
 
     private void deploy(Map<TeamData, Location> locations) {
         deploymentStartedTick = worldManager.matchWorld().getGameTime();
+        int teamNumber = 1;
         for (Map.Entry<TeamData, Location> entry : locations.entrySet()) {
             TeamData team = entry.getKey();
             Location location = entry.getValue();
+            String teamLabel = team.size() <= 1 ? "SOLO" : String.format(Locale.ROOT, "T%02d", teamNumber);
+            teamNumber++;
             HappyGhast ghast = (HappyGhast) location.getWorld().spawnEntity(location, EntityType.HAPPY_GHAST);
             ghast.setInvulnerable(true);
             ghast.setPersistent(false);
             ghast.setRemoveWhenFarAway(false);
-            ghast.setCustomNameVisible(false);
+            ghast.setCustomNameVisible(true);
+            ghast.setGlowing(true);
+            ghast.customName(plugin.text().parse(null,
+                "<font:minecraft:uniform><{color}><shadow:#401818:1>{label}</shadow></{color}>"
+                    + " <dark_gray>DROP</dark_gray> <gray>{size}/4</gray></font>",
+                Map.of(
+                    "color", net.kyori.adventure.text.format.TextColor.color(team.color().asRGB()).asHexString(),
+                    "label", teamLabel,
+                    "size", team.size()
+                )
+            ));
             if (ghast.getEquipment() != null) {
-                ghast.getEquipment().setItem(EquipmentSlot.BODY, new ItemStack(Material.WHITE_HARNESS));
+                ghast.getEquipment().setItem(EquipmentSlot.BODY, new ItemStack(harnessMaterial(team)));
             }
             ghastTeam.put(ghast.getUniqueId(), team.id());
             deploymentTeams.put(team.id(), team);
@@ -172,16 +186,17 @@ public final class DeploymentController {
             for (UUID playerId : ordered) {
                 Player player = plugin.getServer().getPlayer(playerId);
                 if (player == null) continue;
-                preparePlayer(player, location);
+                preparePlayer(player, location, teamLabel);
                 ghast.addPassenger(player);
             }
+            location.getWorld().playSound(location, Sound.ENTITY_GHAST_AMBIENT, 0.65f, 1.0f);
         }
         steeringTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::steerDroppingPlayers, 1L, 1L);
         int forceSeconds = plugin.getConfig().getInt("deployment.forced-jump-seconds", 30);
         finishTask = plugin.getServer().getScheduler().runTaskLater(plugin, this::forceAllJump, forceSeconds * 20L);
     }
 
-    private void preparePlayer(Player player, Location location) {
+    private void preparePlayer(Player player, Location location, String teamLabel) {
         player.closeInventory();
         player.setGameMode(GameMode.SURVIVAL);
         player.setInvulnerable(true);
@@ -196,6 +211,12 @@ public final class DeploymentController {
         player.getInventory().setArmorContents(new ItemStack[4]);
         giveStartingLoadout(player);
         player.teleport(location);
+        player.showTitle(Title.title(
+            plugin.text().message(player, "deployment.ride-title", Map.of("team", teamLabel)),
+            plugin.text().message(player, "deployment.ride-subtitle", Map.of()),
+            Title.Times.times(Duration.ofMillis(200), Duration.ofSeconds(3), Duration.ofMillis(500))
+        ));
+        player.sendActionBar(plugin.text().message(player, "deployment.ride-actionbar", Map.of()));
     }
 
     private void giveStartingLoadout(Player player) {
@@ -274,6 +295,7 @@ public final class DeploymentController {
         player.setVelocity(facing);
         player.setFallDistance(0.0f);
         dropping.add(player.getUniqueId());
+        player.sendActionBar(plugin.text().message(player, "deployment.drop-actionbar", Map.of()));
     }
 
     public void restoreDisconnected(Player player) {
@@ -345,6 +367,59 @@ public final class DeploymentController {
         ghastTeam.clear();
         deploymentTeams.clear();
         teamDeploymentLocations.clear();
+    }
+
+    private SpawnPoint refineSpawnPoint(World world, SpawnPoint original) {
+        if (isGoodSurface(world, original.x(), original.z())) {
+            return original;
+        }
+        for (int radius = 32; radius <= 192; radius += 32) {
+            for (int dx = -radius; dx <= radius; dx += 16) {
+                for (int dz = -radius; dz <= radius; dz += 16) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    int x = original.x() + dx;
+                    int z = original.z() + dz;
+                    if (isGoodSurface(world, x, z)) {
+                        double angle = Math.atan2(z, x);
+                        return new SpawnPoint(x, z, (float) Math.toDegrees(angle));
+                    }
+                }
+            }
+        }
+        return original;
+    }
+
+    private static boolean isGoodSurface(World world, int x, int z) {
+        int y = world.getHighestBlockYAt(x, z);
+        Material base = world.getBlockAt(x, y, z).getType();
+        Material above = world.getBlockAt(x, y + 1, z).getType();
+        return base.isSolid()
+            && base != Material.WATER
+            && base != Material.LAVA
+            && above.isAir();
+    }
+
+    private static Material harnessMaterial(TeamData team) {
+        float[] hsb = java.awt.Color.RGBtoHSB(
+            team.color().getRed(),
+            team.color().getGreen(),
+            team.color().getBlue(),
+            null
+        );
+        float hue = hsb[0];
+        if (hue < 0.04F || hue >= 0.95F) return Material.RED_HARNESS;
+        if (hue < 0.10F) return Material.ORANGE_HARNESS;
+        if (hue < 0.18F) return Material.YELLOW_HARNESS;
+        if (hue < 0.30F) return Material.LIME_HARNESS;
+        if (hue < 0.42F) return Material.GREEN_HARNESS;
+        if (hue < 0.52F) return Material.CYAN_HARNESS;
+        if (hue < 0.62F) return Material.LIGHT_BLUE_HARNESS;
+        if (hue < 0.72F) return Material.BLUE_HARNESS;
+        if (hue < 0.82F) return Material.PURPLE_HARNESS;
+        if (hue < 0.90F) return Material.MAGENTA_HARNESS;
+        return Material.PINK_HARNESS;
     }
 
     private record SpawnPoint(int x, int z, float yaw) { }

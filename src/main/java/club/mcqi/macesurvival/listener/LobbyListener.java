@@ -40,9 +40,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LobbyListener implements Listener {
-    private static final int TEAM_ITEM_SLOT = 3;
-    private static final int LOADOUT_ITEM_SLOT = 5;
-    private static final int VISIBILITY_ITEM_SLOT = 7;
+    private static final int DEFAULT_TEAM_ITEM_SLOT = 0;
+    private static final int DEFAULT_LOADOUT_ITEM_SLOT = 4;
+    private static final int DEFAULT_VISIBILITY_ITEM_SLOT = 8;
 
     private final JavaPlugin plugin;
     private final LobbyGateway gateway;
@@ -202,20 +202,23 @@ public final class LobbyListener implements Listener {
         player.getInventory().setArmorContents(new ItemStack[4]);
         player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
         player.setItemOnCursor(new ItemStack(Material.AIR));
-        player.getInventory().setItem(TEAM_ITEM_SLOT, lobbyItem(
+        int teamSlot = lobbySlot("team-slot", DEFAULT_TEAM_ITEM_SLOT);
+        int loadoutSlot = lobbySlot("loadout-slot", DEFAULT_LOADOUT_ITEM_SLOT);
+        int visibilitySlot = lobbySlot("visibility-slot", DEFAULT_VISIBILITY_ITEM_SLOT);
+        player.getInventory().setItem(teamSlot, lobbyItem(
             Material.PLAYER_HEAD,
             "team",
             text.message(player, "lobby.hotbar.team.name", Map.of()),
             text.message(player, "lobby.hotbar.team.lore", Map.of())
         ));
-        player.getInventory().setItem(LOADOUT_ITEM_SLOT, lobbyItem(
+        player.getInventory().setItem(loadoutSlot, lobbyItem(
             Material.RECOVERY_COMPASS,
             "loadout",
             text.message(player, "lobby.hotbar.loadout.name", Map.of()),
             text.message(player, "lobby.hotbar.loadout.lore", Map.of())
         ));
-        player.getInventory().setItem(VISIBILITY_ITEM_SLOT, visibilityItem(player));
-        player.getInventory().setHeldItemSlot(TEAM_ITEM_SLOT);
+        player.getInventory().setItem(visibilitySlot, visibilityItem(player));
+        player.getInventory().setHeldItemSlot(teamSlot);
         requestVisibilityRefresh();
     }
 
@@ -260,9 +263,10 @@ public final class LobbyListener implements Listener {
                     viewer.hidePlayer(plugin, target);
                 }
             }
-            ItemStack existing = viewer.getInventory().getItem(VISIBILITY_ITEM_SLOT);
+            int visibilitySlot = lobbySlot("visibility-slot", DEFAULT_VISIBILITY_ITEM_SLOT);
+            ItemStack existing = viewer.getInventory().getItem(visibilitySlot);
             if ("visibility".equals(controlId(existing))) {
-                viewer.getInventory().setItem(VISIBILITY_ITEM_SLOT, visibilityItem(viewer));
+                viewer.getInventory().setItem(visibilitySlot, visibilityItem(viewer));
             }
         }
     }
@@ -281,6 +285,11 @@ public final class LobbyListener implements Listener {
                 ? "lobby.hotbar.visibility.shown-lore"
                 : "lobby.hotbar.visibility.hidden-lore", Map.of())
         );
+    }
+
+    private int lobbySlot(String key, int fallback) {
+        int slot = plugin.getConfig().getInt("lobby.hotbar." + key, fallback);
+        return slot < 0 || slot > 8 ? fallback : slot;
     }
 
     private ItemStack lobbyItem(Material material, String id, Component name, Component lore) {

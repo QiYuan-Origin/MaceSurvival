@@ -311,7 +311,11 @@ public final class LootChestManager implements LootBridge {
             display.setDefaultBackground(false);
             display.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
             display.setLineWidth(200);
-            display.setViewRange(1.5f);
+            float viewRange = (float) Math.max(8.0D, Math.min(128.0D,
+                plugin.getConfig().getDouble("loot.star-display-view-range", 48.0D)));
+            display.setViewRange(viewRange);
+            display.setBrightness(new Display.Brightness(15, 15));
+            display.setGlowing(true);
             display.setPersistent(false);
             display.setInvulnerable(true);
             display.setGravity(false);

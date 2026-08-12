@@ -445,6 +445,9 @@ public final class GameManager implements GameFacade, BorderController.Listener,
         return matchStartedAt == null ? 0L : Duration.between(matchStartedAt, Instant.now()).toSeconds();
     }
     @Override public double currentBorderRadius() { return borderController.currentRadius(); }
+    @Override public int countdownRemainingSeconds() {
+        return state == GameState.COUNTDOWN ? Math.max(0, countdownRemaining) : 0;
+    }
 
     private record DisconnectSnapshot(
             Location location,

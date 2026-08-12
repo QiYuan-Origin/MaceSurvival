@@ -74,11 +74,16 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
         lobbySetup.accept(player);
         scoreboards.clear(player);
         text.sendPrefixed(player, "lobby.joined", Map.of());
+        updateScoreboards();
     }
 
     @Override
     public void stateChanged(GameState state) {
-        if (state == GameState.WAITING) scoreboards.clearAll();
+        if (state == GameState.BLACKOUT || state == GameState.ENDING) {
+            scoreboards.clearAll();
+            return;
+        }
+        updateScoreboards();
     }
 
     @Override
@@ -195,7 +200,12 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
     }
 
     private void updateScoreboards() {
-        if (game == null || (game.state() != GameState.ACTIVE && game.state() != GameState.DEPLOYMENT)) return;
+        if (game == null) return;
+        if (game.state() == GameState.WAITING || game.state() == GameState.COUNTDOWN) {
+            updateLobbyScoreboards();
+            return;
+        }
+        if (game.state() != GameState.ACTIVE && game.state() != GameState.DEPLOYMENT) return;
         Collection<Participant> participants = game.participants();
         Map<UUID, Integer> playerRanks = competitionRanks(participants.stream()
                 .collect(java.util.stream.Collectors.toMap(
@@ -223,6 +233,39 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
                     teamScores.getOrDefault(teamId, 0),
                     teamRanks.getOrDefault(teamId, 1),
                     teammateViews(viewer, team)
+            ));
+        }
+    }
+
+    private void updateLobbyScoreboards() {
+        org.bukkit.World lobbyWorld = game.lobbyLocation()
+            .map(org.bukkit.Location::getWorld)
+            .orElse(null);
+        if (lobbyWorld == null) {
+            return;
+        }
+        int waitingPlayers = (int) plugin.getServer().getOnlinePlayers().stream()
+            .filter(player -> player.getWorld().equals(lobbyWorld))
+            .filter(player -> player.getGameMode() != org.bukkit.GameMode.SPECTATOR)
+            .count();
+        int minimum = Math.max(1, plugin.getConfig().getInt("match.min-players", 100));
+        int countdown = game.state() == GameState.COUNTDOWN ? game.countdownRemainingSeconds() : 0;
+        String phase = game.state() == GameState.COUNTDOWN ? "STARTING" : "LOBBY";
+        for (Player viewer : lobbyWorld.getPlayers()) {
+            if (viewer.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+                scoreboards.clear(viewer);
+                continue;
+            }
+            TeamData team = teams.teamOf(viewer.getUniqueId()).orElse(null);
+            TextColor color = team == null ? TextColor.color(0xFFFFFF) : TextColor.color(team.color().asRGB());
+            scoreboards.updateLobby(viewer, new ScoreboardManager.LobbySnapshot(
+                phase,
+                waitingPlayers,
+                minimum,
+                countdown,
+                team == null ? 1 : team.size(),
+                TeamManager.MAX_TEAM_SIZE,
+                color
             ));
         }
     }

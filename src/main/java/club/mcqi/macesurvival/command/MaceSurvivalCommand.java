@@ -1,14 +1,21 @@
 package club.mcqi.macesurvival.command;
 
 import club.mcqi.macesurvival.data.StatsStore;
+import club.mcqi.macesurvival.loot.LootChestSnapshot;
+import club.mcqi.macesurvival.loot.LootTier;
 import club.mcqi.macesurvival.menu.MenuManager;
 import club.mcqi.macesurvival.team.TeamData;
 import club.mcqi.macesurvival.team.TeamManager;
 import club.mcqi.macesurvival.text.TextService;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.HeightMap;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Sound;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -35,6 +42,7 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
     public static final String PERMISSION_STOP = "macesurvival.admin.stop";
     public static final String PERMISSION_RELOAD = "macesurvival.admin.reload";
     public static final String PERMISSION_SET_LOBBY = "macesurvival.admin.setlobby";
+    public static final String PERMISSION_CHEST = "macesurvival.admin.chest";
     public static final String PERMISSION_TEAM = "macesurvival.team";
     public static final String PERMISSION_USE = "macesurvival.use";
     public static final String PERMISSION_STATS = "macesurvival.stats";
@@ -93,6 +101,7 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
             );
             case "reload" -> handleReload(sender);
             case "setlobby" -> handleSetLobby(sender);
+            case "chest" -> handleChest(sender, label, args);
             default -> {
                 sendConfigured(sender, "general.unknown-command", Map.of("label", label));
                 yield true;
@@ -299,6 +308,7 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
         sendAdminHelp(sender, PERMISSION_STOP, "help.admin-stop", placeholders);
         sendAdminHelp(sender, PERMISSION_RELOAD, "help.admin-reload", placeholders);
         sendAdminHelp(sender, PERMISSION_SET_LOBBY, "help.admin-setlobby", placeholders);
+        sendAdminHelp(sender, PERMISSION_CHEST, "help.admin-chest", placeholders);
     }
 
     private void sendAdminHelp(
@@ -365,6 +375,171 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
             .filter(player -> player.getName().equalsIgnoreCase(name))
             .findFirst()
             .orElse(null);
+    }
+
+    private boolean handleChest(CommandSender sender, String label, String[] args) {
+        if (!hasAdminPermission(sender, PERMISSION_CHEST)) {
+            sendConfigured(sender, "general.unknown-command-hidden", Map.of());
+            return true;
+        }
+
+        String operation = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "nearest";
+        return switch (operation) {
+            case "nearest", "list" -> handleChestNearest(sender, label, args);
+            case "tp", "teleport" -> handleChestTeleport(sender, label, args);
+            case "spawn" -> handleChestSpawn(sender, label, args);
+            default -> {
+                sendConfigured(sender, "admin.chest-usage", Map.of("label", label));
+                yield true;
+            }
+        };
+    }
+
+    private boolean handleChestNearest(CommandSender sender, String label, String[] args) {
+        Location origin = sender instanceof Player player ? player.getLocation() : null;
+        if (origin == null) {
+            sendConfigured(sender, "admin.chest-usage", Map.of("label", label));
+            return true;
+        }
+        LootTier tier = parseTier(args.length >= 3 ? args[2] : "any").orElse(null);
+        LootChestSnapshot nearest = nearestChest(origin, tier).orElse(null);
+        if (nearest == null) {
+            sendConfigured(sender, "admin.chest-none", Map.of());
+            return true;
+        }
+        Location location = nearest.location();
+        sendConfigured(sender, "admin.chest-nearest", Map.of(
+            "tier", nearest.tier().stars(),
+            "world", location.getWorld() == null ? "world" : location.getWorld().getName(),
+            "x", location.getBlockX(),
+            "y", location.getBlockY(),
+            "z", location.getBlockZ(),
+            "distance", (int) Math.round(location.distance(origin))
+        ));
+        return true;
+    }
+
+    private boolean handleChestTeleport(CommandSender sender, String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sendConfigured(sender, "general.player-only", Map.of());
+            return true;
+        }
+        LootTier tier = parseTier(args.length >= 3 ? args[2] : "any").orElse(null);
+        LootChestSnapshot nearest = nearestChest(player.getLocation(), tier).orElse(null);
+        if (nearest == null) {
+            sendConfigured(sender, "admin.chest-none", Map.of());
+            return true;
+        }
+        Location destination = nearest.location().add(0.5D, 1.0D, 0.5D);
+        player.teleportAsync(destination);
+        player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.8F, 1.0F);
+        sendConfigured(sender, "admin.chest-teleported", Map.of(
+            "tier", nearest.tier().stars(),
+            "x", nearest.location().getBlockX(),
+            "y", nearest.location().getBlockY(),
+            "z", nearest.location().getBlockZ()
+        ));
+        return true;
+    }
+
+    private boolean handleChestSpawn(CommandSender sender, String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sendConfigured(sender, "general.player-only", Map.of());
+            return true;
+        }
+        LootTier tier = parseTier(args.length >= 3 ? args[2] : "1").orElse(null);
+        if (tier == null) {
+            sendConfigured(sender, "admin.chest-usage", Map.of("label", label));
+            return true;
+        }
+        for (Location candidate : chestSpawnCandidates(player)) {
+            try {
+                LootChestSnapshot spawned = actions.spawnChest(candidate, tier);
+                Location location = spawned.location();
+                World world = location.getWorld();
+                if (world != null) {
+                    Location center = location.clone().add(0.5D, 0.5D, 0.5D);
+                    world.playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0F, 1.0F);
+                    world.playSound(center, Sound.BLOCK_BEACON_POWER_SELECT, 0.8F, 1.0F);
+                }
+                sendConfigured(sender, "admin.chest-spawned", Map.of(
+                    "tier", spawned.tier().stars(),
+                    "x", location.getBlockX(),
+                    "y", location.getBlockY(),
+                    "z", location.getBlockZ()
+                ));
+                return true;
+            } catch (IllegalArgumentException ignored) {
+                // Try the next nearby surface candidate.
+            }
+        }
+        sendConfigured(sender, "admin.chest-spawn-failed", Map.of());
+        return true;
+    }
+
+    private Optional<LootChestSnapshot> nearestChest(Location origin, @Nullable LootTier tier) {
+        return actions.lootChests().stream()
+            .filter(chest -> tier == null || chest.tier() == tier)
+            .filter(chest -> chest.location().getWorld() != null && chest.location().getWorld().equals(origin.getWorld()))
+            .min(Comparator.comparingDouble(chest -> chest.location().distanceSquared(origin)));
+    }
+
+    private static Optional<LootTier> parseTier(String input) {
+        String normalized = Objects.requireNonNullElse(input, "any").toLowerCase(Locale.ROOT);
+        if (normalized.equals("any") || normalized.equals("*")) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(LootTier.fromStars(Integer.parseInt(normalized)));
+        } catch (IllegalArgumentException exception) {
+            return Optional.empty();
+        }
+    }
+
+    private static List<Location> chestSpawnCandidates(Player player) {
+        List<Location> candidates = new ArrayList<>();
+        Block target = player.getTargetBlockExact(32);
+        if (target != null && target.getType().isSolid()) {
+            Location aboveTarget = target.getLocation().add(0.0D, 1.0D, 0.0D);
+            if (isValidChestCandidate(aboveTarget)) {
+                candidates.add(aboveTarget);
+            }
+        }
+        World world = player.getWorld();
+        Location center = player.getLocation();
+        int centerX = center.getBlockX();
+        int centerZ = center.getBlockZ();
+        for (int radius = 0; radius <= 8; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    int x = centerX + dx;
+                    int z = centerZ + dz;
+                    int surfaceY = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+                    Location candidate = new Location(world, x, surfaceY + 1, z);
+                    if (isValidChestCandidate(candidate)) {
+                        candidates.add(candidate);
+                    }
+                }
+            }
+        }
+        return List.copyOf(candidates);
+    }
+
+    private static boolean isValidChestCandidate(Location location) {
+        World world = location.getWorld();
+        if (world == null) {
+            return false;
+        }
+        Block destination = location.getBlock();
+        Block base = world.getBlockAt(location.getBlockX(), location.getBlockY() - 1, location.getBlockZ());
+        Material baseType = base.getType();
+        return baseType.isSolid()
+            && baseType != Material.WATER
+            && baseType != Material.LAVA
+            && (destination.isPassable() || destination.getType().isAir());
     }
 
     private OfflinePlayer findStatsPlayer(String name) {
@@ -438,7 +613,18 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
             addPermitted(subcommands, sender, PERMISSION_STOP, "stop");
             addPermitted(subcommands, sender, PERMISSION_RELOAD, "reload");
             addPermitted(subcommands, sender, PERMISSION_SET_LOBBY, "setlobby");
+            addPermitted(subcommands, sender, PERMISSION_CHEST, "chest");
             return filter(subcommands, args[0]);
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("chest") && hasAdminPermission(sender, PERMISSION_CHEST)) {
+            return filter(List.of("nearest", "tp", "spawn", "list"), args[1]);
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("chest") && hasAdminPermission(sender, PERMISSION_CHEST)) {
+            return switch (args[1].toLowerCase(Locale.ROOT)) {
+                case "nearest", "tp", "teleport", "list" -> filter(List.of("any", "1", "2", "3"), args[2]);
+                case "spawn" -> filter(List.of("1", "2", "3"), args[2]);
+                default -> List.of();
+            };
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("stats")) {
             if (statistics == null || !sender.hasPermission(PERMISSION_STATS_OTHERS)) {
@@ -545,5 +731,9 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
         void reload();
 
         void setLobby(Location location);
+
+        List<LootChestSnapshot> lootChests();
+
+        LootChestSnapshot spawnChest(Location location, LootTier tier);
     }
 }

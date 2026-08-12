@@ -54,14 +54,39 @@ public final class WorldManager {
         Location spawn = lobbyLocation();
         world.setSpawnLocation(spawn);
         int baseY = spawn.getBlockY() - 1;
-        for (int x = -4; x <= 4; x++) {
-            for (int z = -4; z <= 4; z++) {
+        int radius = 12;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                double distance = Math.hypot(x, z);
+                if (distance > radius + 0.15D) {
+                    continue;
+                }
+                Material material = lobbyPlatformMaterial(x, z, distance, radius);
                 if (world.getBlockAt(spawn.getBlockX() + x, baseY, spawn.getBlockZ() + z).isEmpty()) {
                     world.getBlockAt(spawn.getBlockX() + x, baseY, spawn.getBlockZ() + z)
-                            .setType(Material.POLISHED_DEEPSLATE, false);
+                        .setType(material, false);
                 }
             }
         }
+        for (int[] offset : new int[][] {{9, 0}, {-9, 0}, {0, 9}, {0, -9}}) {
+            if (world.getBlockAt(spawn.getBlockX() + offset[0], baseY + 1, spawn.getBlockZ() + offset[1]).isEmpty()) {
+                world.getBlockAt(spawn.getBlockX() + offset[0], baseY + 1, spawn.getBlockZ() + offset[1])
+                    .setType(Material.END_ROD, false);
+            }
+        }
+    }
+
+    private static Material lobbyPlatformMaterial(int x, int z, double distance, int radius) {
+        if (distance > radius - 1.1D) {
+            return Material.POLISHED_BLACKSTONE_BRICKS;
+        }
+        if (Math.abs(distance - 5.0D) < 0.55D || x == 0 || z == 0) {
+            return Material.RED_NETHER_BRICKS;
+        }
+        if (Math.abs(x) <= 1 && Math.abs(z) <= 1) {
+            return Material.NETHERITE_BLOCK;
+        }
+        return Material.POLISHED_DEEPSLATE;
     }
 
     public World prepareMatch() {

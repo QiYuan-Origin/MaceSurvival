@@ -2,6 +2,10 @@ package club.mcqi.macesurvival.presentation;
 
 import club.mcqi.macesurvival.team.TeamData;
 import club.mcqi.macesurvival.team.TeamManager;
+import club.mcqi.macesurvival.text.TextService;
+import club.mcqi.macesurvival.game.GameFacade;
+import club.mcqi.macesurvival.game.GameState;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -24,11 +28,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /** Keeps team-colored player names synchronized across tab and per-viewer scoreboards. */
 public final class PlayerPresentationService implements AutoCloseable {
     private static final String SCOREBOARD_TEAM_PREFIX = "msn";
     private static final String UNASSIGNED_TEAM_NAME = SCOREBOARD_TEAM_PREFIX + "_unassigned";
+    private static final String DEFAULT_TAB_PLAYER =
+        "<font:minecraft:uniform><dark_gray>[</dark_gray><{color}>{team_label}</{color}>"
+            + "<dark_gray>]</dark_gray> <{color}>{player}</{color}></font>";
+    private static final String DEFAULT_TAB_HEADER =
+        "<font:minecraft:uniform><white><shadow:#404040:1>ᴍᴀᴄᴇ</shadow></white> "
+            + "<color:#ff6464><shadow:#401818:1>ꜱᴜʀᴠɪᴠᴀʟ</shadow></color></font>\n"
+            + "<dark_gray>mcqi.top</dark_gray> <gray>|</gray> <white>{online}</white><gray> online</gray>";
+    private static final String DEFAULT_TAB_FOOTER =
+        "<gray>{phase}</gray> <dark_gray>|</dark_gray> <gray>Alive <white>{alive}</white></gray> "
+            + "<dark_gray>|</dark_gray> <gray>Team <{color}>{team_size}/4</{color}></gray>";
     private static final List<NamedTextColor> VANILLA_COLORS = List.of(
         NamedTextColor.BLACK,
         NamedTextColor.DARK_BLUE,
@@ -50,13 +65,17 @@ public final class PlayerPresentationService implements AutoCloseable {
 
     private final JavaPlugin plugin;
     private final TeamManager teams;
+    private final TextService text;
+    private final Supplier<GameFacade> game;
     private final Map<UUID, Scoreboard> knownScoreboards = new HashMap<>();
     private BukkitTask scoreboardPollTask;
     private BukkitTask pendingRefresh;
 
-    public PlayerPresentationService(JavaPlugin plugin, TeamManager teams) {
+    public PlayerPresentationService(JavaPlugin plugin, TeamManager teams, TextService text, Supplier<GameFacade> game) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.teams = Objects.requireNonNull(teams, "teams");
+        this.text = Objects.requireNonNull(text, "text");
+        this.game = Objects.requireNonNull(game, "game");
     }
 
     public void start() {
@@ -89,7 +108,8 @@ public final class PlayerPresentationService implements AutoCloseable {
             Component coloredName = Component.text(player.getName(), style.exactColor())
                 .decoration(TextDecoration.ITALIC, false);
             player.displayName(coloredName);
-            player.playerListName(coloredName);
+            player.playerListName(tabListName(player, style));
+            player.sendPlayerListHeaderAndFooter(tabHeader(player), tabFooter(player, style));
             knownScoreboards.put(player.getUniqueId(), player.getScoreboard());
         }
 
@@ -116,9 +136,17 @@ public final class PlayerPresentationService implements AutoCloseable {
 
     private Map<UUID, PlayerStyle> playerStyles(List<Player> onlinePlayers) {
         Map<UUID, PlayerStyle> styles = new LinkedHashMap<>();
+        int teamIndex = 1;
         for (TeamData team : teams.teams()) {
             TextColor exact = TextColor.color(team.color().asRGB());
-            PlayerStyle style = new PlayerStyle(scoreboardTeamName(team.id()), exact, nearestVanillaColor(exact));
+            String label = team.size() <= 1 ? "SOLO" : String.format(java.util.Locale.ROOT, "T%02d", teamIndex++);
+            PlayerStyle style = new PlayerStyle(
+                scoreboardTeamName(team.id()),
+                exact,
+                nearestVanillaColor(exact),
+                label,
+                team.size()
+            );
             for (UUID member : team.members()) {
                 styles.put(member, style);
             }
@@ -127,6 +155,62 @@ public final class PlayerPresentationService implements AutoCloseable {
             styles.putIfAbsent(player.getUniqueId(), PlayerStyle.unassigned());
         }
         return Map.copyOf(styles);
+    }
+
+    private Component tabListName(Player player, PlayerStyle style) {
+        return text.messageOr(player, "tab.player", DEFAULT_TAB_PLAYER, Map.of(
+            "player", player.getName(),
+            "color", style.exactColor().asHexString(),
+            "team_label", style.teamLabel(),
+            "team_size", style.teamSize()
+        ));
+    }
+
+    private Component tabHeader(Player player) {
+        List<Component> configured = text.messageLines(player, "tab.header", tabPlaceholders(player, PlayerStyle.unassigned()));
+        if (!configured.isEmpty()) {
+            return Component.join(JoinConfiguration.newlines(), configured);
+        }
+        return text.parse(player, DEFAULT_TAB_HEADER, tabPlaceholders(player, PlayerStyle.unassigned()));
+    }
+
+    private Component tabFooter(Player player, PlayerStyle style) {
+        List<Component> configured = text.messageLines(player, "tab.footer", tabPlaceholders(player, style));
+        if (!configured.isEmpty()) {
+            return Component.join(JoinConfiguration.newlines(), configured);
+        }
+        return text.parse(player, DEFAULT_TAB_FOOTER, tabPlaceholders(player, style));
+    }
+
+    private Map<String, Object> tabPlaceholders(Player player, PlayerStyle style) {
+        GameFacade current = game.get();
+        GameState state = current == null ? GameState.BOOTSTRAPPING : current.state();
+        int alive = current == null
+            ? 0
+            : (int) current.participants().stream().filter(club.mcqi.macesurvival.game.Participant::alive).count();
+        return Map.of(
+            "online", plugin.getServer().getOnlinePlayers().size(),
+            "max", plugin.getServer().getMaxPlayers(),
+            "phase", phaseName(state),
+            "alive", state == GameState.WAITING || state == GameState.COUNTDOWN ? "-" : Integer.toString(alive),
+            "server", plugin.getConfig().getString("scoreboard.server-address", "mcqi.top"),
+            "player", player.getName(),
+            "color", style.exactColor().asHexString(),
+            "team_label", style.teamLabel(),
+            "team_size", style.teamSize()
+        );
+    }
+
+    private static String phaseName(GameState state) {
+        return switch (state) {
+            case BOOTSTRAPPING -> "BOOTING";
+            case WAITING -> "LOBBY";
+            case COUNTDOWN -> "STARTING";
+            case BLACKOUT -> "BLACKOUT";
+            case DEPLOYMENT -> "DROP";
+            case ACTIVE -> "LIVE";
+            case ENDING -> "ENDING";
+        };
     }
 
     private static void synchronizeScoreboard(
@@ -220,16 +304,19 @@ public final class PlayerPresentationService implements AutoCloseable {
     private record PlayerStyle(
         String scoreboardTeamName,
         TextColor exactColor,
-        NamedTextColor vanillaColor
+        NamedTextColor vanillaColor,
+        String teamLabel,
+        int teamSize
     ) {
         private PlayerStyle {
             Objects.requireNonNull(scoreboardTeamName, "scoreboardTeamName");
             Objects.requireNonNull(exactColor, "exactColor");
             Objects.requireNonNull(vanillaColor, "vanillaColor");
+            Objects.requireNonNull(teamLabel, "teamLabel");
         }
 
         private static PlayerStyle unassigned() {
-            return new PlayerStyle(UNASSIGNED_TEAM_NAME, NamedTextColor.WHITE, NamedTextColor.WHITE);
+            return new PlayerStyle(UNASSIGNED_TEAM_NAME, NamedTextColor.WHITE, NamedTextColor.WHITE, "SOLO", 1);
         }
     }
 }

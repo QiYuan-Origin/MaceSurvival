@@ -28,28 +28,41 @@ import java.util.UUID;
 public final class ScoreboardManager implements AutoCloseable {
     private static final String OBJECTIVE_NAME = "macesurvival";
     private static final String DEFAULT_TITLE =
-        "<font:minecraft:uniform><white><shadow:#404040:1>MACE SURVIVAL</shadow></white></font>";
+        "<font:minecraft:uniform><white><shadow:#404040:1>ᴍᴀᴄᴇ</shadow></white> "
+            + "<color:#ff6464><shadow:#401818:1>ꜱᴜʀᴠɪᴠᴀʟ</shadow></color></font>";
     private static final String DEFAULT_TIME_BORDER =
-        "<font:minecraft:uniform><gray>TIME <white>{time}</white>  BORDER <white>{border}m</white></gray></font>";
+        "<font:minecraft:uniform><dark_gray>Match</dark_gray> <white>{time}</white> "
+            + "<gray>/</gray> <dark_gray>Border</dark_gray> <white>{border}m</white></font>";
     private static final String DEFAULT_TIME_BORDER_MOVING =
-        "<font:minecraft:uniform><gray>TIME <white>{time}</white>  BORDER <red>{border}m</red></gray></font>";
+        "<font:minecraft:uniform><dark_gray>Match</dark_gray> <white>{time}</white> "
+            + "<gray>/</gray> <dark_gray>Border</dark_gray> <red>{border}m</red></font>";
     private static final String DEFAULT_ALIVE =
-        "<font:minecraft:uniform><gray>ALIVE <white>{alive}</white></gray></font>";
+        "<font:minecraft:uniform><dark_gray>Alive</dark_gray> <white>{alive}</white></font>";
     private static final String DEFAULT_KILLS =
-        "<font:minecraft:uniform><gray>KILLS <white>{kills}</white> <dark_gray>#{rank}</dark_gray></gray></font>";
+        "<font:minecraft:uniform><dark_gray>Kills</dark_gray> <white>{kills}</white> "
+            + "<gray>#</gray><white>{rank}</white></font>";
     private static final String DEFAULT_TEAM_KILLS =
-        "<font:minecraft:uniform><gray>TEAM <white>{kills}</white> <dark_gray>#{rank}</dark_gray></gray></font>";
+        "<font:minecraft:uniform><dark_gray>Team</dark_gray> <white>{kills}</white> "
+            + "<gray>#</gray><white>{rank}</white></font>";
     private static final String DEFAULT_TEAMMATES =
-        "<font:minecraft:uniform><gray>TEAMMATES</gray></font>";
+        "<font:minecraft:uniform><dark_gray>Team Track</dark_gray></font>";
     private static final String DEFAULT_TEAMMATE =
         "<font:minecraft:uniform><gray>{direction}</gray> <{color}>{name}</{color}>"
-            + " <dark_gray>{distance}m</dark_gray></font>";
+            + " <dark_gray>{distance}</dark_gray><gray>m</gray></font>";
     private static final String DEFAULT_TEAMMATE_UNKNOWN =
-        "<font:minecraft:uniform><dark_gray>-</dark_gray> <{color}>{name}</{color}> <dark_gray>--m</dark_gray></font>";
+        "<font:minecraft:uniform><dark_gray>-</dark_gray> <{color}>{name}</{color}> <dark_gray>--</dark_gray><gray>m</gray></font>";
     private static final String DEFAULT_TEAMMATE_DEAD =
         "<font:minecraft:uniform><red><strikethrough>{name}</strikethrough></red></font>";
     private static final String DEFAULT_SERVER =
         "<font:minecraft:uniform><color:#ff6464><shadow:#401818:1>mcqi.top</shadow></color></font>";
+    private static final String DEFAULT_LOBBY_STATUS =
+        "<font:minecraft:uniform><dark_gray>Queue</dark_gray> <white>{waiting}</white><gray>/</gray><white>{minimum}</white></font>";
+    private static final String DEFAULT_LOBBY_NEEDED =
+        "<font:minecraft:uniform><dark_gray>Need</dark_gray> <red>{needed}</red> <gray>more players</gray></font>";
+    private static final String DEFAULT_LOBBY_COUNTDOWN =
+        "<font:minecraft:uniform><dark_gray>Drop</dark_gray> <color:#ff6464>{seconds}s</color></font>";
+    private static final String DEFAULT_LOBBY_TEAM =
+        "<font:minecraft:uniform><dark_gray>Party</dark_gray> <{color}>{team_size}</{color}><gray>/</gray><white>{max_size}</white></font>";
     private static final String[] DIRECTION_ARROWS = {"\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"};
 
     private final TextService text;
@@ -68,6 +81,20 @@ public final class ScoreboardManager implements AutoCloseable {
         BoardState state = boards.computeIfAbsent(viewer.getUniqueId(), ignored -> createBoard(viewer));
         state.objective().displayName(text.messageOr(viewer, "scoreboard.title", DEFAULT_TITLE, Map.of()));
         render(state, lines(viewer, snapshot));
+        if (viewer.getScoreboard() != state.scoreboard()) {
+            viewer.setScoreboard(state.scoreboard());
+        }
+    }
+
+    /** Shows the waiting lobby sidebar instead of leaving players on an empty board. */
+    public void updateLobby(Player viewer, LobbySnapshot snapshot) {
+        requirePrimaryThread();
+        Objects.requireNonNull(viewer, "viewer");
+        Objects.requireNonNull(snapshot, "snapshot");
+
+        BoardState state = boards.computeIfAbsent(viewer.getUniqueId(), ignored -> createBoard(viewer));
+        state.objective().displayName(text.messageOr(viewer, "scoreboard.title", DEFAULT_TITLE, Map.of()));
+        render(state, lobbyLines(viewer, snapshot));
         if (viewer.getScoreboard() != state.scoreboard()) {
             viewer.setScoreboard(state.scoreboard());
         }
@@ -153,6 +180,36 @@ public final class ScoreboardManager implements AutoCloseable {
             lines.add(Component.empty());
             lines.add(text.messageOr(viewer, "scoreboard.teammates", DEFAULT_TEAMMATES, Map.of()));
             teammates.forEach(teammate -> lines.add(teammateLine(viewer, teammate)));
+        }
+        lines.add(Component.empty());
+        lines.add(text.messageOr(viewer, "scoreboard.server", DEFAULT_SERVER, Map.of()));
+        return List.copyOf(lines);
+    }
+
+    private List<Component> lobbyLines(Player viewer, LobbySnapshot snapshot) {
+        String color = snapshot.teamColor().asHexString();
+        int needed = Math.max(0, snapshot.minimumPlayers() - snapshot.waitingPlayers());
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.empty());
+        lines.add(text.messageOr(viewer, "scoreboard.lobby-status", DEFAULT_LOBBY_STATUS, Map.of(
+            "phase", snapshot.phase(),
+            "waiting", snapshot.waitingPlayers(),
+            "minimum", snapshot.minimumPlayers(),
+            "needed", needed
+        )));
+        lines.add(text.messageOr(viewer, "scoreboard.lobby-team", DEFAULT_LOBBY_TEAM, Map.of(
+            "team_size", snapshot.teamSize(),
+            "max_size", snapshot.maxTeamSize(),
+            "color", color
+        )));
+        if (snapshot.countdownSeconds() > 0) {
+            lines.add(text.messageOr(viewer, "scoreboard.lobby-countdown", DEFAULT_LOBBY_COUNTDOWN, Map.of(
+                "seconds", snapshot.countdownSeconds()
+            )));
+        } else {
+            lines.add(text.messageOr(viewer, "scoreboard.lobby-needed", DEFAULT_LOBBY_NEEDED, Map.of(
+                "needed", needed
+            )));
         }
         lines.add(Component.empty());
         lines.add(text.messageOr(viewer, "scoreboard.server", DEFAULT_SERVER, Map.of()));
@@ -294,6 +351,25 @@ public final class ScoreboardManager implements AutoCloseable {
                 throw new IllegalArgumentException("Scoreboard ranks start at one");
             }
             teammates = List.copyOf(Objects.requireNonNull(teammates, "teammates"));
+        }
+    }
+
+    public record LobbySnapshot(
+        String phase,
+        int waitingPlayers,
+        int minimumPlayers,
+        int countdownSeconds,
+        int teamSize,
+        int maxTeamSize,
+        TextColor teamColor
+    ) {
+        public LobbySnapshot {
+            phase = Objects.requireNonNull(phase, "phase");
+            if (waitingPlayers < 0 || minimumPlayers < 0 || countdownSeconds < 0
+                || teamSize < 0 || maxTeamSize < 1) {
+                throw new IllegalArgumentException("Lobby scoreboard values cannot be negative");
+            }
+            teamColor = Objects.requireNonNullElse(teamColor, NamedTextColor.WHITE);
         }
     }
 

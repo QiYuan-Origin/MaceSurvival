@@ -1,5 +1,5 @@
-config-version: 1
-title: '<font:minecraft:uniform><white><shadow:#404040:1>INVITE PLAYER</shadow></white></font>'
+config-version: 2
+title: '<font:minecraft:uniform><white><shadow:#404040:1>ɪɴᴠɪᴛᴇ</shadow></white></font>'
 size: 54
 open-sound: 'item.book.page_turn'
 
@@ -14,51 +14,51 @@ sounds:
 items:
   edge:
     material: BLACK_STAINED_GLASS_PANE
-    name: '<dark_gray>You are looking at the frame.</dark_gray>'
+    name: '<font:minecraft:uniform><dark_gray>frame</dark_gray></font>'
     lore:
-      - '<gray>It will not do anything.</gray>'
+      - '<gray> '
     slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
   corner:
     material: LIME_STAINED_GLASS_PANE
-    name: '<green>You are looking at the frame.</green>'
+    name: '<font:minecraft:uniform><green><shadow:#143010:1>corner</shadow></green></font>'
     lore:
-      - '<gray>It will not do anything.</gray>'
+      - '<gray> '
     slots: [0, 8, 45, 53]
   header:
     material: WRITABLE_BOOK
     slot: 4
     slots: [4]
-    name: '<green><bold>INVITE PLAYER</bold></green>'
+    name: '<font:minecraft:uniform><green><shadow:#143010:1>Invite</shadow></green></font>'
     lore:
-      - '<gray>Page <white>{page}/{pages}</white></gray>'
-      - '<dark_gray>Select a player who is not in another team.</dark_gray>'
+      - '<dark_gray>Page</dark_gray> <white>{page}</white><gray>/</gray><white>{pages}</white>'
+      - '<gray>Select a waiting player.</gray>'
   player:
     material: PLAYER_HEAD
-    name: '<aqua>{player}</aqua>'
+    name: '<font:minecraft:uniform><aqua>{player}</aqua></font>'
     lore:
-      - '<gray>Current team size: <white>{team_size}</white></gray>'
-      - '<green>Click to send a 30-second invitation.</green>'
+      - '<dark_gray>Party size</dark_gray> <white>{team_size}</white>'
+      - '<green>Click</green> <gray>send request.</gray>'
   empty:
     material: GRAY_DYE
     slot: 22
-    name: '<gray>[ No Players Available ]</gray>'
+    name: '<font:minecraft:uniform><gray>[ Empty ]</gray></font>'
     lore:
       - '<dark_gray>No eligible waiting player is online.</dark_gray>'
   previous:
     material: ARROW
     slot: 47
-    name: '<yellow>[ Previous Page ]</yellow>'
+    name: '<font:minecraft:uniform><yellow>[ Previous ]</yellow></font>'
     lore:
-      - '<gray>View the previous players.</gray>'
+      - '<gray>Previous player page.</gray>'
   next:
     material: ARROW
     slot: 51
-    name: '<yellow>[ Next Page ]</yellow>'
+    name: '<font:minecraft:uniform><yellow>[ Next ]</yellow></font>'
     lore:
-      - '<gray>View more players.</gray>'
+      - '<gray>Next player page.</gray>'
   return:
     material: SPECTRAL_ARROW
     slot: 49
-    name: '<aqua>[ Return ]</aqua>'
+    name: '<font:minecraft:uniform><aqua>[ Return ]</aqua></font>'
     lore:
-      - '<gray>Return to team management.</gray>'
+      - '<gray>Back to party.</gray>'
