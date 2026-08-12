@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.server.ServerListPingEvent;
 import java.util.Map;
 
 public final class GameListener implements Listener {
@@ -173,6 +174,20 @@ public final class GameListener implements Listener {
             ),
             Map.of("message", message)
         ));
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onServerListPing(ServerListPingEvent event) {
+        if (!plugin.getConfig().getBoolean("server.motd.enabled", true)) return;
+        String lineOne = plugin.getConfig().getString(
+            "server.motd.line-1",
+            "§7⚔ §4ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ §7⚔"
+        );
+        String lineTwo = plugin.getConfig().getString(
+            "server.motd.line-2",
+            "§81.21.11+ §f● §9§lᴍᴀᴄᴇ§f §7| §9§lꜱᴜʀᴠɪᴠᴀʟ§7 §f● §8mcqi.top"
+        );
+        event.motd(text.parse(lineOne + "\n" + lineTwo));
     }
 
     private boolean isManagedWorld(Player player) {

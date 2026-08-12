@@ -1,4 +1,4 @@
-config-version: 7
+config-version: 8
 
 prefix: '<color:#7dd7ff><shadow:#17384d:1>MS</shadow></color> <dark_gray>»</dark_gray> '
 
@@ -16,7 +16,7 @@ command:
   stats-usage: '<color:#ffdf6b>Usage</color> <gray>/{label} stats [player]</gray>'
 
 help:
-  header: '<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color> <dark_gray>|</dark_gray> <white>COMMANDS</white>'
+  header: '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray> <dark_gray>|</dark_gray> <white>COMMANDS</white>'
   team: '<gray>/{label} team</gray> <dark_gray>-</dark_gray> <white>Party menu and party commands</white>'
   loadout: '<gray>/{label} loadout</gray> <dark_gray>-</dark_gray> <white>Starter weapon slots</white>'
   stats: '<gray>/{label} stats [player]</gray> <dark_gray>-</dark_gray> <white>Lifetime stats</white>'
@@ -109,6 +109,7 @@ game:
   eliminated: '<color:#ff4f68>Eliminated.</color>'
   winner: '<white>{winner}</white> <color:#91ff6d>won Mace Survival.</color>'
   draw: '<dark_gray>No survivors.</dark_gray>'
+  starting-subtitle: '<gray>The match begins.</gray>'
 
 deployment:
   ride-title: '<color:#7dd7ff><shadow:#17384d:1>{team}</shadow></color>'
@@ -164,13 +165,13 @@ chat:
 tab:
   player: '<dark_gray>[</dark_gray><{color}>{team_label}</{color}><dark_gray>]</dark_gray> <white>{player}</white>'
   header:
-    - '<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color>'
+    - '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray>'
     - '<gray>{server}</gray> <dark_gray>•</dark_gray> <color:#ffdf6b>{phase}</color>'
   footer:
     - '<gray>{online}</gray><dark_gray>/</dark_gray><white>{max}</white> <dark_gray>online</dark_gray> <dark_gray>|</dark_gray> <color:#a7efff>Alive</color> <white>{alive}</white> <dark_gray>|</dark_gray> <color:#91ff6d>Party</color> <{color}>{team_size}/4</{color}>'
 
 scoreboard:
-  title: '<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color> <dark_gray>|</dark_gray> <gray>#</gray><white>{rank}</white>'
+  title: '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray> <dark_gray>|</dark_gray> <gray>#</gray><white>{rank}</white>'
   lobby-status: '<color:#8bdcff>◷</color> <gray>Queue:</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>'
   lobby-needed: '<color:#ffdf6b>!</color> <gray>Need:</gray> <color:#ff4f68>{needed}</color>'
   lobby-countdown: '<color:#ffdf6b>!</color> <gray>Drop:</gray> <color:#ff4f68>{seconds}s</color>'

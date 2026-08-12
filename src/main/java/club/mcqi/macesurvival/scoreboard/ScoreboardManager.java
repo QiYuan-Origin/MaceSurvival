@@ -28,8 +28,8 @@ import java.util.UUID;
 public final class ScoreboardManager implements AutoCloseable {
     private static final String OBJECTIVE_NAME = "macesurvival";
     private static final String DEFAULT_TITLE =
-        "<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color> "
-            + "<dark_gray>|</dark_gray> <gray>#</gray><white>{rank}</white>";
+        "<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> "
+            + "<gray>⚔</gray> <dark_gray>|</dark_gray> <gray>#</gray><white>{rank}</white>";
     private static final String DEFAULT_TIME_BORDER =
         "<color:#8bdcff>◷</color> <gray>Time:</gray> <white>{time}</white> "
             + "<dark_gray>|</dark_gray> <color:#ffc857>{border}m</color>";

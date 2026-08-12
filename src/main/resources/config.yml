@@ -1,16 +1,20 @@
 # Configuration schema version. Missing values are restored on /macesurvival reload.
-config-version: 2
+config-version: 3
 
 server:
   address: mcqi.top
   language: en
+  motd:
+    enabled: true
+    line-1: '§7⚔ §4ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ §7⚔'
+    line-2: '§81.21.11+ §f● §9§lᴍᴀᴄᴇ§f §7| §9§lꜱᴜʀᴠɪᴠᴀʟ§7 §f● §8mcqi.top'
   shutdown-after-match: true
   shutdown-delay-seconds: 8
 
 text:
   prefix: '<color:#7dd7ff><shadow:#17384d:1>MS</shadow></color> <dark_gray>»</dark_gray> '
   default-font: 'minecraft:default'
-  scoreboard-title: '<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color>'
+  scoreboard-title: '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray>'
 
 lobby:
   world: world

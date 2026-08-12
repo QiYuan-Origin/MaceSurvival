@@ -37,7 +37,7 @@ public final class PlayerPresentationService implements AutoCloseable {
     private static final String DEFAULT_TAB_PLAYER =
         "<dark_gray>[</dark_gray><{color}>{team_label}</{color}><dark_gray>]</dark_gray> <white>{player}</white>";
     private static final String DEFAULT_TAB_HEADER =
-        "<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color>\n"
+        "<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray>\n"
             + "<gray>{server}</gray> <dark_gray>•</dark_gray> <color:#ffdf6b>{phase}</color>";
     private static final String DEFAULT_TAB_FOOTER =
         "<gray>{online}</gray><dark_gray>/</dark_gray><white>{max}</white> "
