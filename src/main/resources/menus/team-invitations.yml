@@ -1,5 +1,5 @@
-config-version: 3
-title: '<font:minecraft:uniform><white><shadow:#404040:1>REQUESTS</shadow></white></font>'
+config-version: 4
+title: '<color:#7dd7ff><shadow:#17384d:1>REQUESTS</shadow></color>'
 size: 54
 open-sound: 'block.enchantment_table.use'
 
@@ -14,47 +14,47 @@ sounds:
 items:
   edge:
     material: BLACK_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><dark_gray>·</dark_gray></font>'
+    name: '<dark_gray>·</dark_gray>'
     slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
   corner:
     material: CYAN_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><aqua><shadow:#103040:1>•</shadow></aqua></font>'
+    name: '<color:#7dd7ff>•</color>'
     slots: [0, 8, 45, 53]
   header:
     material: PAPER
     slot: 4
     slots: [4]
-    name: '<font:minecraft:uniform><aqua><shadow:#103040:1>Requests</shadow></aqua></font>'
+    name: '<color:#7dd7ff>Requests</color>'
     lore:
       - '<dark_gray>{page}</dark_gray><gray>/</gray><white>{pages}</white>'
       - '<gray>Incoming requests.</gray>'
   invitation:
     material: PLAYER_HEAD
-    name: '<font:minecraft:uniform><yellow>{player}</yellow></font>'
+    name: '<yellow>{player}</yellow>'
     lore:
       - '<green>Left</green> <gray>accept</gray>'
       - '<red>Right</red> <gray>decline</gray>'
   empty:
     material: GRAY_DYE
     slot: 22
-    name: '<font:minecraft:uniform><gray>Empty</gray></font>'
+    name: '<gray>Empty</gray>'
     lore:
       - '<dark_gray>No active requests.</dark_gray>'
   previous:
     material: ARROW
     slot: 47
-    name: '<font:minecraft:uniform><yellow>Previous</yellow></font>'
+    name: '<color:#ffdf6b>Previous</color>'
     lore:
       - '<gray>Prev page.</gray>'
   next:
     material: ARROW
     slot: 51
-    name: '<font:minecraft:uniform><yellow>Next</yellow></font>'
+    name: '<color:#ffdf6b>Next</color>'
     lore:
       - '<gray>Next page.</gray>'
   return:
     material: SPECTRAL_ARROW
     slot: 49
-    name: '<font:minecraft:uniform><aqua>Return</aqua></font>'
+    name: '<color:#7dd7ff>Return</color>'
     lore:
       - '<gray>Back to party.</gray>'

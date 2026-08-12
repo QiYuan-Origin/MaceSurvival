@@ -28,41 +28,40 @@ import java.util.UUID;
 public final class ScoreboardManager implements AutoCloseable {
     private static final String OBJECTIVE_NAME = "macesurvival";
     private static final String DEFAULT_TITLE =
-        "<font:minecraft:uniform><white><shadow:#404040:1>MACE.VIP</shadow></white> "
-            + "<dark_gray>|</dark_gray> <color:#ff5555><shadow:#401818:1>#{rank}</shadow></color></font>";
+        "<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color> "
+            + "<dark_gray>|</dark_gray> <gray>#</gray><white>{rank}</white>";
     private static final String DEFAULT_TIME_BORDER =
-        "<font:minecraft:uniform><dark_gray>⌚</dark_gray> <gray>{time}</gray> "
-            + "<dark_gray>⌁</dark_gray> <white>{border}m</white></font>";
+        "<color:#8bdcff>◷</color> <gray>Time:</gray> <white>{time}</white> "
+            + "<dark_gray>|</dark_gray> <color:#ffc857>{border}m</color>";
     private static final String DEFAULT_TIME_BORDER_MOVING =
-        "<font:minecraft:uniform><dark_gray>⌚</dark_gray> <gray>{time}</gray> "
-            + "<dark_gray>⌁</dark_gray> <color:#ff5555>{border}m</color></font>";
+        "<color:#8bdcff>◷</color> <gray>Time:</gray> <white>{time}</white> "
+            + "<dark_gray>|</dark_gray> <color:#ff4f68>{border}m</color>";
     private static final String DEFAULT_ALIVE =
-        "<font:minecraft:uniform><dark_gray>♥</dark_gray> <gray>Alive</gray> <white>{alive}</white></font>";
+        "<color:#a7efff>♥</color> <gray>Alive:</gray> <white>{alive}</white>";
     private static final String DEFAULT_KILLS =
-        "<font:minecraft:uniform><dark_gray>⚔</dark_gray> <gray>Kills</gray> <white>{kills}</white> "
-            + "<dark_gray>#</dark_gray><color:#ff5555>{rank}</color></font>";
+        "<color:#ffdf6b>⚔</color> <gray>Kills:</gray> <white>{kills}</white> "
+            + "<dark_gray>#</dark_gray><color:#ff4f68>{rank}</color>";
     private static final String DEFAULT_TEAM_KILLS =
-        "<font:minecraft:uniform><dark_gray>⚑</dark_gray> <gray>Team</gray> <white>{kills}</white> "
-            + "<dark_gray>#</dark_gray><color:#ff5555>{rank}</color></font>";
+        "<color:#91ff6d>⚑</color> <gray>Team:</gray> <color:#5dff66>{kills}</color> "
+            + "<dark_gray>#</dark_gray><white>{rank}</white>";
     private static final String DEFAULT_TEAMMATES =
-        "<font:minecraft:uniform><dark_gray>TEAM</dark_gray></font>";
+        "<dark_gray>TEAM TRACK</dark_gray>";
     private static final String DEFAULT_TEAMMATE =
-        "<font:minecraft:uniform><dark_gray>{direction}</dark_gray> <{color}>{name}</{color}>"
-            + " <dark_gray>{distance}m</dark_gray></font>";
+        "<white>{direction}</white> <{color}>{name}</{color}> <gray>+{distance}m</gray> <color:#ff4f68>0%</color>";
     private static final String DEFAULT_TEAMMATE_UNKNOWN =
-        "<font:minecraft:uniform><dark_gray>-</dark_gray> <{color}>{name}</{color}> <dark_gray>--m</dark_gray></font>";
+        "<dark_gray>-</dark_gray> <{color}>{name}</{color}> <gray>--m</gray> <color:#ff4f68>0%</color>";
     private static final String DEFAULT_TEAMMATE_DEAD =
-        "<font:minecraft:uniform><red><strikethrough>{name}</strikethrough></red></font>";
+        "<red><strikethrough>{name}</strikethrough></red> <dark_gray>down</dark_gray>";
     private static final String DEFAULT_SERVER =
-        "<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>MCQI.TOP</shadow></color></font>";
+        "<color:#9aa8ff><shadow:#202448:1>MCQI.TOP</shadow></color>";
     private static final String DEFAULT_LOBBY_STATUS =
-        "<font:minecraft:uniform><dark_gray>⌚</dark_gray> <gray>Queue</gray> <white>{waiting}</white><dark_gray>/</dark_gray><white>{minimum}</white></font>";
+        "<color:#8bdcff>◷</color> <gray>Queue:</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>";
     private static final String DEFAULT_LOBBY_NEEDED =
-        "<font:minecraft:uniform><dark_gray>▸</dark_gray> <gray>Start</gray> <color:#ff5555>+{needed}</color></font>";
+        "<color:#ffdf6b>!</color> <gray>Need:</gray> <color:#ff4f68>{needed}</color>";
     private static final String DEFAULT_LOBBY_COUNTDOWN =
-        "<font:minecraft:uniform><dark_gray>▾</dark_gray> <gray>Drop</gray> <color:#ff5555>{seconds}s</color></font>";
+        "<color:#ffdf6b>!</color> <gray>Drop:</gray> <color:#ff4f68>{seconds}s</color>";
     private static final String DEFAULT_LOBBY_TEAM =
-        "<font:minecraft:uniform><dark_gray>◈</dark_gray> <gray>Party</gray> <{color}>{team_size}</{color}><dark_gray>/</dark_gray><white>{max_size}</white></font>";
+        "<color:#91ff6d>⚑</color> <gray>Party:</gray> <{color}>{team_size}</{color}><dark_gray>/</dark_gray><white>{max_size}</white>";
     private static final String[] DIRECTION_ARROWS = {"\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"};
 
     private final TextService text;

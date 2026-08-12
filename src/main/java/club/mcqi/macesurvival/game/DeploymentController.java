@@ -165,8 +165,8 @@ public final class DeploymentController {
             ghast.setCustomNameVisible(true);
             ghast.setGlowing(true);
             ghast.customName(plugin.text().parse(null,
-                "<font:minecraft:uniform><{color}><shadow:#401818:1>{label}</shadow></{color}>"
-                    + " <dark_gray>DROP</dark_gray> <gray>{size}/4</gray></font>",
+                "<{color}><shadow:#17384d:1>{label}</shadow></{color}>"
+                    + " <dark_gray>DROP</dark_gray> <gray>{size}/4</gray>",
                 Map.of(
                     "color", net.kyori.adventure.text.format.TextColor.color(team.color().asRGB()).asHexString(),
                     "label", teamLabel,

@@ -8,9 +8,9 @@ server:
   shutdown-delay-seconds: 8
 
 text:
-  prefix: '<font:minecraft:uniform><white><shadow:#404040:1>MACE</shadow></white><color:#ff5555><shadow:#401818:1>.VIP</shadow></color> <dark_gray>›</dark_gray> </font>'
+  prefix: '<color:#7dd7ff><shadow:#17384d:1>MS</shadow></color> <dark_gray>»</dark_gray> '
   default-font: 'minecraft:default'
-  scoreboard-title: '<font:minecraft:uniform><white><shadow:#404040:1>MACE.VIP</shadow></white></font>'
+  scoreboard-title: '<color:#7dd7ff><shadow:#17384d:1>MACE SURVIVAL</shadow></color>'
 
 lobby:
   world: world

@@ -1,5 +1,5 @@
-config-version: 3
-title: '<font:minecraft:uniform><white><shadow:#404040:1>LOADOUT</shadow></white></font>'
+config-version: 4
+title: '<color:#7dd7ff><shadow:#17384d:1>LOADOUT</shadow></color>'
 size: 45
 open-sound: 'item.armor.equip_netherite'
 
@@ -16,53 +16,53 @@ sounds:
 items:
   edge:
     material: BLACK_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><dark_gray>·</dark_gray></font>'
+    name: '<dark_gray>·</dark_gray>'
     slots: [1-7, 9, 17, 18, 26, 27, 35, 37-43]
   corner:
     material: RED_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>•</shadow></color></font>'
+    name: '<color:#ff4f68>•</color>'
     slots: [0, 8, 36, 44]
   header:
     material: NETHERITE_SWORD
     slot: 4
     slots: [4]
-    name: '<font:minecraft:uniform><white><shadow:#404040:1>Loadout</shadow></white></font>'
+    name: '<color:#7dd7ff>Loadout</color>'
     lore:
       - '<gray>Hotbar order.</gray>'
       - '<green>Left</green> <gray>next</gray> <dark_gray>/</dark_gray> <yellow>Right</yellow> <gray>prev</gray>'
   sword:
     material: NETHERITE_SWORD
     slot: 20
-    name: '<font:minecraft:uniform><aqua>Sword</aqua></font>'
+    name: '<color:#a7efff>Sword</color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   axe:
     material: NETHERITE_AXE
     slot: 21
-    name: '<font:minecraft:uniform><aqua>Axe</aqua></font>'
+    name: '<color:#a7efff>Axe</color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   mace-one:
     material: MACE
     slot: 23
-    name: '<font:minecraft:uniform><color:#ff5555>Mace I</color></font>'
+    name: '<color:#ffdf6b>Mace I</color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   mace-two:
     material: MACE
     slot: 24
-    name: '<font:minecraft:uniform><color:#ff5555>Mace II</color></font>'
+    name: '<color:#ff4f68>Mace II</color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   reset:
     material: RECOVERY_COMPASS
     slot: 31
-    name: '<font:minecraft:uniform><yellow>Reset</yellow></font>'
+    name: '<color:#91ff6d>Reset</color>'
     lore:
       - '<gray>1 / 2 / 8 / 9.</gray>'
   navigation:
     material: BARRIER
     slot: 40
-    name: '<font:minecraft:uniform><red>Close</red></font>'
+    name: '<color:#ff4f68>Close</color>'
     lore:
       - '<gray>Back out.</gray>'

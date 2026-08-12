@@ -1,5 +1,5 @@
-config-version: 4
-title: '<font:minecraft:uniform><white><shadow:#404040:1>PARTY</shadow></white></font>'
+config-version: 5
+title: '<color:#7dd7ff><shadow:#17384d:1>PARTY</shadow></color>'
 size: 54
 open-sound: 'block.beacon.power_select'
 
@@ -23,35 +23,35 @@ sounds:
 items:
   edge:
     material: BLACK_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><dark_gray>·</dark_gray></font>'
+    name: '<dark_gray>·</dark_gray>'
     slots: [1-7, 9, 17, 18, 26, 27, 35, 36, 44, 46-52]
   corner:
     material: RED_STAINED_GLASS_PANE
-    name: '<font:minecraft:uniform><color:#ff5555><shadow:#401818:1>•</shadow></color></font>'
+    name: '<color:#ff4f68>•</color>'
     slots: [0, 8, 45, 53]
   header:
     material: MACE
     slot: 4
     slots: [4]
-    name: '<font:minecraft:uniform><white><shadow:#404040:1>Party</shadow></white></font>'
+    name: '<color:#7dd7ff>Party</color>'
     lore:
-      - '<dark_gray>{team_size}</dark_gray><gray>/</gray><white>{max_size}</white>'
+      - '<gray>{team_size}</gray><dark_gray>/</dark_gray><color:#91ff6d>{max_size}</color>'
       - '<gray>Leader controls drop.</gray>'
   member-self:
     material: PLAYER_HEAD
-    name: '<font:minecraft:uniform><green>{player}</green></font>'
+    name: '<color:#91ff6d>{player}</color>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
       - '<gray>You.</gray>'
   member-leader:
     material: PLAYER_HEAD
-    name: '<font:minecraft:uniform><yellow>{player}</yellow></font>'
+    name: '<color:#ffdf6b>{player}</color>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
       - '<gray>Drop leader.</gray>'
   member:
     material: PLAYER_HEAD
-    name: '<font:minecraft:uniform><aqua>{player}</aqua></font>'
+    name: '<color:#7dd7ff>{player}</color>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
       - '<green>Left</green> <gray>leader</gray>'
@@ -59,31 +59,31 @@ items:
   invite:
     material: WRITABLE_BOOK
     slot: 30
-    name: '<font:minecraft:uniform><green>Invite</green></font>'
+    name: '<color:#91ff6d>Invite</color>'
     lore:
       - '<dark_gray>30s request.</dark_gray>'
   invitations:
     material: PAPER
     slot: 32
-    name: '<font:minecraft:uniform><aqua>Requests</aqua></font>'
+    name: '<color:#7dd7ff>Requests</color>'
     lore:
       - '<dark_gray>Pending</dark_gray> <white>{count}</white>'
       - '<gray>Open requests.</gray>'
   leave:
     material: RED_DYE
     slot: 40
-    name: '<font:minecraft:uniform><red>Leave</red></font>'
+    name: '<color:#ff4f68>Leave</color>'
     lore:
       - '<gray>Leave party.</gray>'
   locked:
     material: BARRIER
     slot: 31
-    name: '<font:minecraft:uniform><red>Locked</red></font>'
+    name: '<color:#ff4f68>Locked</color>'
     lore:
       - '<gray>Drop already started.</gray>'
   navigation:
     material: BARRIER
     slot: 49
-    name: '<font:minecraft:uniform><red>Close</red></font>'
+    name: '<color:#ff4f68>Close</color>'
     lore:
       - '<gray>Back out.</gray>'
