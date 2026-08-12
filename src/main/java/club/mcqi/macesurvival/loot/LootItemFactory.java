@@ -3,6 +3,8 @@ package club.mcqi.macesurvival.loot;
 import club.mcqi.macesurvival.MaceSurvivalPlugin;
 import club.mcqi.macesurvival.combat.BuffType;
 import club.mcqi.macesurvival.combat.CombatManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -91,6 +93,7 @@ final class LootItemFactory {
             item = createTypedItem(definition, tier);
         }
         applyDurability(definition, item);
+        applyPresentation(definition, tier, item);
         return item;
     }
 
@@ -151,6 +154,71 @@ final class LootItemFactory {
         double minimum = range.size() >= 2 ? range.get(0) : 1.0;
         double maximum = range.size() >= 2 ? range.get(1) : tier.stars() * 4.0 + 4.0;
         combat.applySpearDamageBonus(spear, random.nextDouble(minimum, Math.nextUp(maximum)));
+    }
+
+    private void applyPresentation(ReloadableLootTable.Definition definition, LootTier tier, ItemStack item) {
+        if (item.getType().isAir()) {
+            return;
+        }
+        if (plugin instanceof MaceSurvivalPlugin maceSurvival) {
+            String family = presentationFamily(definition, item);
+            String tierColor = tierColor(tier);
+            item.editMeta(meta -> {
+                meta.displayName(maceSurvival.text().message(null, "loot.item-name", Map.of(
+                    "stars", stars(tier),
+                    "color", tierColor,
+                    "name", readableItemName(item)
+                )).decoration(TextDecoration.ITALIC, false));
+                meta.lore(List.of(
+                    maceSurvival.text().message(null, "loot.item-lore.tier", Map.of(
+                        "stars", stars(tier),
+                        "color", tierColor
+                    )).decoration(TextDecoration.ITALIC, false),
+                    maceSurvival.text().message(null, "loot.item-lore." + family, Map.of())
+                        .decoration(TextDecoration.ITALIC, false)
+                ));
+            });
+        }
+    }
+
+    private String presentationFamily(ReloadableLootTable.Definition definition, ItemStack item) {
+        if (definition.itemType() != null) {
+            String type = definition.itemType();
+            if (type.endsWith("_POTION")) return "potion";
+            if (type.equals("WEAPON_ENCHANT") || type.equals("KILL_MENDING")) return "weapon-book";
+            if (type.equals("ARMOR_ENCHANT")) return "armor-book";
+            if (type.endsWith("_UPGRADE")) return "boost";
+        }
+        String materialName = item.getType().name();
+        if (materialName.endsWith("_SPEAR")) return "spear";
+        if (materialName.equals("ELYTRA") || materialName.equals("SHIELD")) return "gear";
+        if (materialName.endsWith("_HELMET") || materialName.endsWith("_CHESTPLATE")
+            || materialName.endsWith("_LEGGINGS") || materialName.endsWith("_BOOTS")) return "armor";
+        return "supply";
+    }
+
+    private static String stars(LootTier tier) {
+        return "★".repeat(tier.stars());
+    }
+
+    private static String tierColor(LootTier tier) {
+        return switch (tier) {
+            case ONE -> "#f6f8ff";
+            case TWO -> "#58d9ff";
+            case THREE -> "#d98cff";
+        };
+    }
+
+    private static String readableItemName(ItemStack item) {
+        String material = item.getType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
+        String[] words = material.split(" ");
+        StringBuilder builder = new StringBuilder();
+        for (String word : words) {
+            if (word.isBlank()) continue;
+            if (!builder.isEmpty()) builder.append(' ');
+            builder.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return builder.toString();
     }
 
     private void applyDurability(ReloadableLootTable.Definition definition, ItemStack item) {

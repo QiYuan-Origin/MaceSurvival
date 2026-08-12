@@ -1,5 +1,5 @@
-config-version: 5
-title: '<color:#7dd7ff><shadow:#17384d:1>LOADOUT</shadow></color>'
+config-version: 6
+title: '<color:#E70939><shadow:#3A0612:1>ʟᴏᴀᴅᴏᴜᴛ</shadow></color>'
 size: 45
 open-sound: 'item.armor.equip_netherite'
 
@@ -26,43 +26,43 @@ items:
     material: NETHERITE_SWORD
     slot: 4
     slots: [4]
-    name: '<color:#7dd7ff>Loadout</color>'
+    name: '<color:#E70939><shadow:#3A0612:1>ʟᴏᴀᴅᴏᴜᴛ</shadow></color>'
     lore:
-      - '<gray>Hotbar order.</gray>'
-      - '<green>Left</green> <gray>next</gray> <dark_gray>/</dark_gray> <yellow>Right</yellow> <gray>prev</gray>'
+      - '<gray>Starter weapon hotbar order.</gray>'
+      - '<color:#91ff6d>Left</color> <gray>next</gray> <dark_gray>/</dark_gray> <color:#ffdf6b>Right</color> <gray>previous</gray>'
   sword:
     material: NETHERITE_SWORD
     slot: 20
-    name: '<color:#a7efff>Sword</color>'
+    name: '<color:#a7efff><shadow:#153344:1>ꜱᴡᴏʀᴅ</shadow></color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   axe:
     material: NETHERITE_AXE
     slot: 21
-    name: '<color:#a7efff>Axe</color>'
+    name: '<color:#a7efff><shadow:#153344:1>ᴀxᴇ</shadow></color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   mace-one:
     material: MACE
     slot: 23
-    name: '<color:#ffdf6b>Mace I</color>'
+    name: '<color:#ffdf6b><shadow:#4b3400:1>ᴍᴀᴄᴇ ɪ</shadow></color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   mace-two:
     material: MACE
     slot: 24
-    name: '<color:#ff4f68>Mace II</color>'
+    name: '<color:#ff4f68><shadow:#401818:1>ᴍᴀᴄᴇ ɪɪ</shadow></color>'
     lore:
       - '<dark_gray>Slot</dark_gray> <white>{slot}</white>'
   reset:
     material: RECOVERY_COMPASS
     slot: 31
-    name: '<color:#91ff6d>Reset</color>'
+    name: '<color:#91ff6d><shadow:#143914:1>ʀᴇꜱᴇᴛ</shadow></color>'
     lore:
       - '<gray>1 / 2 / 8 / 9.</gray>'
   navigation:
     material: BARRIER
     slot: 40
-    name: '<color:#ff4f68>Close</color>'
+    name: '<color:#ff4f68><shadow:#401818:1>ᴄʟᴏꜱᴇ</shadow></color>'
     lore:
       - '<gray>Back out.</gray>'

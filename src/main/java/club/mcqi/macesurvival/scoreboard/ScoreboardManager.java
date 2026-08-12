@@ -28,26 +28,24 @@ import java.util.UUID;
 public final class ScoreboardManager implements AutoCloseable {
     private static final String OBJECTIVE_NAME = "macesurvival";
     private static final String DEFAULT_TITLE =
-        "<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> "
-            + "<gray>⚔</gray> <dark_gray>|</dark_gray> <gray>#</gray><white>{rank}</white>";
+        "<color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> "
+            + "<dark_gray>#</dark_gray><white>{rank}</white>";
     private static final String DEFAULT_TIME_BORDER =
-        "<color:#8bdcff>◷</color> <gray>Time:</gray> <white>{time}</white> "
-            + "<dark_gray>|</dark_gray> <color:#ffc857>{border}m</color>";
+        "<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ffc857>{border}m</color>";
     private static final String DEFAULT_TIME_BORDER_MOVING =
-        "<color:#8bdcff>◷</color> <gray>Time:</gray> <white>{time}</white> "
-            + "<dark_gray>|</dark_gray> <color:#ff4f68>{border}m</color>";
+        "<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ff4f68>{border}m</color>";
     private static final String DEFAULT_ALIVE =
-        "<color:#a7efff>♥</color> <gray>Alive:</gray> <white>{alive}</white>";
+        "<color:#a7efff>♥</color> <gray>Alive</gray> <white>{alive}</white>";
     private static final String DEFAULT_KILLS =
-        "<color:#ffdf6b>⚔</color> <gray>Kills:</gray> <white>{kills}</white> "
+        "<color:#ffdf6b>⚔</color> <gray>Kills</gray> <white>{kills}</white> "
             + "<dark_gray>#</dark_gray><color:#ff4f68>{rank}</color>";
     private static final String DEFAULT_TEAM_KILLS =
-        "<color:#91ff6d>⚑</color> <gray>Team:</gray> <color:#5dff66>{kills}</color> "
+        "<color:#91ff6d>⚑</color> <gray>Team</gray> <color:#5dff66>{kills}</color> "
             + "<dark_gray>#</dark_gray><white>{rank}</white>";
     private static final String DEFAULT_TEAMMATES =
-        "<dark_gray>TEAM TRACK</dark_gray>";
+        "<dark_gray>ᴛᴇᴀᴍ ᴛʀᴀᴄᴋ</dark_gray>";
     private static final String DEFAULT_TEAMMATE =
-        "<white>{direction}</white> <{color}>{name}</{color}> <gray>+{distance}m</gray> <color:#ff4f68>0%</color>";
+        "<white>{direction}</white> <{color}>{name}</{color}> <gray>{distance}m</gray> <color:#ff4f68>0%</color>";
     private static final String DEFAULT_TEAMMATE_UNKNOWN =
         "<dark_gray>-</dark_gray> <{color}>{name}</{color}> <gray>--m</gray> <color:#ff4f68>0%</color>";
     private static final String DEFAULT_TEAMMATE_DEAD =
@@ -55,7 +53,7 @@ public final class ScoreboardManager implements AutoCloseable {
     private static final String DEFAULT_SERVER =
         "<color:#9aa8ff><shadow:#202448:1>MCQI.TOP</shadow></color>";
     private static final String DEFAULT_LOBBY_STATUS =
-        "<color:#8bdcff>◷</color> <gray>Queue:</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>";
+        "<color:#8bdcff>◷</color> <gray>Queue</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>";
     private static final String DEFAULT_LOBBY_NEEDED =
         "<color:#ffdf6b>!</color> <gray>Need:</gray> <color:#ff4f68>{needed}</color>";
     private static final String DEFAULT_LOBBY_COUNTDOWN =

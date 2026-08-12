@@ -68,7 +68,6 @@ public final class GameManager implements GameFacade, BorderController.Listener,
 
     public void enable() {
         worldManager.prepareLobby();
-        worldManager.prepareMatch();
         changeState(GameState.WAITING);
         heartbeat = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickSecond, 20L, 20L);
         for (Player player : plugin.getServer().getOnlinePlayers()) handleJoin(player);
@@ -136,6 +135,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
             changeState(GameState.WAITING);
             return;
         }
+        worldManager.prepareMatch();
         participants.clear();
         disconnectSnapshots.clear();
         for (Player player : players) {
@@ -160,6 +160,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
                     Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ZERO)
             ));
         }
+        events.matchStarting(worldManager.matchWorld(), participants());
         int blackoutTicks = plugin.getConfig().getInt("deployment.blackout-ticks", 40);
         plugin.getServer().getScheduler().runTaskLater(plugin, this::beginDeployment, blackoutTicks);
     }
@@ -186,7 +187,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
                 player.setInvulnerable(false);
             }
         }
-        events.matchActive(worldManager.matchWorld(), participants());
+        events.matchActive(worldManager.matchWorld(), participants(), deploymentController.deploymentLocations());
         checkForWinner();
     }
 
@@ -201,8 +202,8 @@ public final class GameManager implements GameFacade, BorderController.Listener,
     }
 
     @Override
-    public void onBoundaryMoved(org.bukkit.WorldBorder border) {
-        events.boundaryMoved(border);
+    public void onBoundaryMoved(World world, Location center, double radius) {
+        events.boundaryMoved(world, center, radius);
     }
 
     @Override
@@ -366,6 +367,19 @@ public final class GameManager implements GameFacade, BorderController.Listener,
 
     private void checkForWinner() {
         if (state != GameState.ACTIVE) return;
+        long aliveCount = participants.values().stream().filter(Participant::alive).count();
+        if (aliveCount == 0) {
+            endMatch(Set.of());
+            return;
+        }
+        if (aliveCount == 1 && initialTeamCount > 1) {
+            Set<UUID> winners = participants.values().stream()
+                .filter(Participant::alive)
+                .map(Participant::playerId)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+            endMatch(winners);
+            return;
+        }
         Map<UUID, Set<UUID>> aliveTeams = new LinkedHashMap<>();
         for (Participant participant : participants.values()) {
             if (!participant.alive()) continue;

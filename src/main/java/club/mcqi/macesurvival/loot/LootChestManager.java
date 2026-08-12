@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -14,6 +15,7 @@ import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.HumanEntity;
@@ -73,6 +75,13 @@ public final class LootChestManager implements LootBridge {
         return listener;
     }
 
+    public void restoreWorld(World world) {
+        Objects.requireNonNull(world, "world");
+        for (Chunk chunk : world.getLoadedChunks()) {
+            restoreChunk(chunk);
+        }
+    }
+
     public void reload() {
         itemFactory.reload();
     }
@@ -87,7 +96,7 @@ public final class LootChestManager implements LootBridge {
         if (byBlock.containsKey(key)) {
             throw new IllegalArgumentException("A managed loot chest already exists at " + blockLocation);
         }
-        if (!block.isPassable() && !block.getType().isAir()) {
+        if (!isChestSpace(blockLocation)) {
             throw new IllegalArgumentException("Loot chest location is occupied by " + block.getType());
         }
 
@@ -105,7 +114,17 @@ public final class LootChestManager implements LootBridge {
         byId.put(id, managed);
         byBlock.put(key, id);
         fillChest(chest.getBlockInventory(), tier, id);
+        playSpawnEffect(blockLocation, tier);
         return managed.snapshot();
+    }
+
+    private boolean isChestSpace(Location location) {
+        Block block = location.getBlock();
+        if (!block.isPassable() && !block.getType().isAir()) {
+            return false;
+        }
+        Block base = location.clone().add(0.0, -1.0, 0.0).getBlock();
+        return isValidChestBase(base.getType());
     }
 
     public List<LootChestSnapshot> spawnRandomSurfaceChests(
@@ -129,9 +148,12 @@ public final class LootChestManager implements LootBridge {
             double distance = Math.sqrt(random.nextDouble()) * radius;
             int x = (int) Math.floor(centerX + Math.cos(angle) * distance);
             int z = (int) Math.floor(centerZ + Math.sin(angle) * distance);
-            int surfaceY = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
-            Block base = world.getBlockAt(x, surfaceY, z);
-            Block destination = world.getBlockAt(x, surfaceY + 1, z);
+            Location candidate = findSurfacePlacement(world, x, z).orElse(null);
+            if (candidate == null) {
+                continue;
+            }
+            Block destination = candidate.getBlock();
+            Block base = world.getBlockAt(candidate.getBlockX(), candidate.getBlockY() - 1, candidate.getBlockZ());
             boolean tooClose = byId.values().stream()
                 .filter(chest -> chest.location.getWorld().equals(world))
                 .anyMatch(chest -> {
@@ -139,12 +161,13 @@ public final class LootChestManager implements LootBridge {
                     double dz = chest.location.getZ() - destination.getZ();
                     return dx * dx + dz * dz < spacingSquared;
                 });
-            if (!base.getType().isSolid() || (!destination.isPassable() && !destination.getType().isAir())
+            if (!isValidChestBase(base.getType())
+                || (!destination.isPassable() && !destination.getType().isAir())
                 || byBlock.containsKey(BlockKey.of(destination)) || tooClose) {
                 continue;
             }
             try {
-                spawned.add(spawnChest(destination.getLocation(), rollTier(matchProgress)));
+                spawned.add(spawnChest(candidate, rollTier(matchProgress)));
             } catch (IllegalArgumentException ignored) {
                 // Another placement may have claimed this block during the same generation pass.
             }
@@ -318,13 +341,100 @@ public final class LootChestManager implements LootBridge {
         });
     }
 
+    private void playSpawnEffect(Location blockLocation, LootTier tier) {
+        World world = blockLocation.getWorld();
+        if (world == null) {
+            return;
+        }
+        Location center = blockLocation.clone().add(0.5, 0.75, 0.5);
+        world.playSound(center, Sound.BLOCK_VAULT_ACTIVATE, SoundCategory.BLOCKS, 0.95F, 1.0F);
+        world.playSound(center, Sound.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.BLOCKS, 0.65F, 1.0F);
+        Color color = switch (tier) {
+            case ONE -> Color.fromRGB(246, 248, 255);
+            case TWO -> Color.fromRGB(88, 217, 255);
+            case THREE -> Color.fromRGB(217, 140, 255);
+        };
+        Particle.DustOptions dust = new Particle.DustOptions(color, 1.1F + tier.stars() * 0.18F);
+        for (int step = 0; step < 4; step++) {
+            int frame = step;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                double radius = 0.25D + frame * 0.18D;
+                world.spawnParticle(Particle.DUST, center, 16 + frame * 4,
+                    radius, 0.18D + frame * 0.04D, radius, 0.0D, dust);
+                world.spawnParticle(Particle.END_ROD, center, 3 + tier.stars(),
+                    radius * 0.6D, 0.22D, radius * 0.6D, 0.01D);
+            }, step * 2L);
+        }
+    }
+
+    void restoreChunk(Chunk chunk) {
+        for (BlockState state : chunk.getTileEntities()) {
+            if (!(state instanceof Chest chest)) {
+                continue;
+            }
+            String encodedId = chest.getPersistentDataContainer().get(chestIdKey, PersistentDataType.STRING);
+            Integer stars = chest.getPersistentDataContainer().get(chestTierKey, PersistentDataType.INTEGER);
+            if (encodedId == null || stars == null) {
+                continue;
+            }
+            UUID id;
+            LootTier tier;
+            try {
+                id = UUID.fromString(encodedId);
+                tier = LootTier.fromStars(stars);
+            } catch (IllegalArgumentException ignored) {
+                continue;
+            }
+            if (byId.containsKey(id)) {
+                continue;
+            }
+            TextDisplay display = spawnStarDisplay(chest.getLocation(), tier);
+            ManagedChest managed = new ManagedChest(id, chest.getLocation(), tier, display);
+            byId.put(id, managed);
+            byBlock.put(BlockKey.of(chest.getBlock()), id);
+        }
+    }
+
     @Override
     public void spawnInitial(World world, int alivePlayers) {
+        restoreWorld(world);
         refresh(world, alivePlayers);
     }
 
     @Override
+    public void spawnNear(
+            World world,
+            double centerX,
+            double centerZ,
+            double radius,
+            int count,
+            double matchProgress
+    ) {
+        if (count <= 0 || radius <= 0.0D) {
+            return;
+        }
+        spawnRandomSurfaceChestsAsync(
+            world,
+            centerX,
+            centerZ,
+            radius,
+            count,
+            matchProgress,
+            Math.max(1, Math.min(16, plugin.getConfig().getInt("loot.parallel-chunk-loads", 8)))
+        );
+    }
+
+    @Override
     public void refresh(World world, int alivePlayers) {
+        restoreWorld(world);
+        org.bukkit.WorldBorder border = world.getWorldBorder();
+        double radius = plugin.getConfig().getIntegerList("border.radii").stream()
+            .findFirst().orElse(2500);
+        refresh(world, alivePlayers, border.getCenter().getX(), border.getCenter().getZ(), radius);
+    }
+
+    public void refresh(World world, int alivePlayers, double centerX, double centerZ, double radius) {
+        restoreWorld(world);
         int target = Math.max(0, alivePlayers) * Math.max(0,
             plugin.getConfig().getInt("loot.chests-per-alive-player", 8));
         int existing = (int) byId.values().stream()
@@ -334,17 +444,15 @@ public final class LootChestManager implements LootBridge {
         if (missing == 0) {
             return;
         }
-        org.bukkit.WorldBorder border = world.getWorldBorder();
-        double radius = border.getSize() / 2.0;
         double initialRadius = plugin.getConfig().getIntegerList("border.radii").stream()
-            .findFirst().orElse(3000);
+            .findFirst().orElse(2500);
         double progress = 1.0 - Math.min(1.0, radius / Math.max(1.0, initialRadius));
         int parallelism = Math.max(1, Math.min(16,
             plugin.getConfig().getInt("loot.parallel-chunk-loads", 8)));
         spawnRandomSurfaceChestsAsync(
             world,
-            border.getCenter().getX(),
-            border.getCenter().getZ(),
+            centerX,
+            centerZ,
             Math.max(8.0, radius - 4.0),
             missing,
             progress,
@@ -364,6 +472,11 @@ public final class LootChestManager implements LootBridge {
             border.getCenter().getZ(),
             border.getSize() / 2.0
         );
+    }
+
+    @Override
+    public void removeOutside(World world, double centerX, double centerZ, double radius) {
+        destroyOutsideBoundary(world, centerX, centerZ, radius);
     }
 
     @Override
@@ -416,6 +529,9 @@ public final class LootChestManager implements LootBridge {
         plugin.getServer().getScheduler().runTaskLater(plugin,
             () -> world.playSound(center, Sound.ENTITY_ILLUSIONER_MIRROR_MOVE,
                 SoundCategory.BLOCKS, 1.1f, 1.0f), 3L);
+        plugin.getServer().getScheduler().runTaskLater(plugin,
+            () -> world.playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE,
+                SoundCategory.BLOCKS, 0.55f, 1.0f), 7L);
         Particle.DustOptions redDust = new Particle.DustOptions(Color.fromRGB(210, 20, 28), 1.25f);
         for (int step = 0; step < 5; step++) {
             int frame = step;
@@ -478,15 +594,18 @@ public final class LootChestManager implements LootBridge {
             int z,
             double matchProgress
     ) {
-        int surfaceY = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
-        Block base = world.getBlockAt(x, surfaceY, z);
-        Block destination = world.getBlockAt(x, surfaceY + 1, z);
-        if (!base.getType().isSolid() || (!destination.isPassable() && !destination.getType().isAir())
+        Location candidate = findSurfacePlacement(world, x, z).orElse(null);
+        if (candidate == null) {
+            return Optional.empty();
+        }
+        Block base = world.getBlockAt(candidate.getBlockX(), candidate.getBlockY() - 1, candidate.getBlockZ());
+        Block destination = candidate.getBlock();
+        if (!isValidChestBase(base.getType()) || (!destination.isPassable() && !destination.getType().isAir())
             || byBlock.containsKey(BlockKey.of(destination)) || isTooCloseToExisting(world, x, z)) {
             return Optional.empty();
         }
         try {
-            return Optional.of(spawnChest(destination.getLocation(), rollTier(matchProgress)));
+            return Optional.of(spawnChest(candidate, rollTier(matchProgress)));
         } catch (IllegalArgumentException ignored) {
             return Optional.empty();
         }
@@ -523,6 +642,26 @@ public final class LootChestManager implements LootBridge {
             return LootTier.TWO;
         }
         return LootTier.THREE;
+    }
+
+    private Optional<Location> findSurfacePlacement(World world, int x, int z) {
+        int highest = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        for (int y = highest + 1; y >= Math.max(world.getMinHeight(), highest - 2); y--) {
+            Block destination = world.getBlockAt(x, y, z);
+            Block base = world.getBlockAt(x, y - 1, z);
+            if (isValidChestBase(base.getType()) && destination.isPassable() && destination.getType().isAir()) {
+                return Optional.of(destination.getLocation());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static boolean isValidChestBase(Material type) {
+        return type.isSolid()
+            && type != Material.WATER
+            && type != Material.LAVA
+            && type != Material.SNOW
+            && type != Material.SNOW_BLOCK;
     }
 
     private SpawnCoordinate randomCoordinate(double centerX, double centerZ, double radius) {

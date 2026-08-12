@@ -1,5 +1,5 @@
-config-version: 5
-title: '<color:#7dd7ff><shadow:#17384d:1>INVITE</shadow></color>'
+config-version: 6
+title: '<color:#91ff6d><shadow:#143914:1>ɪɴᴠɪᴛᴇ</shadow></color>'
 size: 54
 open-sound: 'item.book.page_turn'
 
@@ -24,37 +24,37 @@ items:
     material: WRITABLE_BOOK
     slot: 4
     slots: [4]
-    name: '<color:#91ff6d>Invite</color>'
+    name: '<color:#91ff6d><shadow:#143914:1>ɪɴᴠɪᴛᴇ</shadow></color>'
     lore:
       - '<dark_gray>{page}</dark_gray><gray>/</gray><white>{pages}</white>'
       - '<gray>Select a player.</gray>'
   player:
     material: PLAYER_HEAD
-    name: '<aqua>{player}</aqua>'
+    name: '<color:#9adfff><shadow:#153344:1>{player}</shadow></color>'
     lore:
       - '<dark_gray>Party size</dark_gray> <white>{team_size}</white>'
       - '<green>Click</green> <gray>send request.</gray>'
   empty:
     material: GRAY_DYE
     slot: 22
-    name: '<gray>Empty</gray>'
+    name: '<dark_gray>ᴇᴍᴘᴛʏ</dark_gray>'
     lore:
       - '<dark_gray>No player online.</dark_gray>'
   previous:
     material: ARROW
     slot: 47
-    name: '<color:#ffdf6b>Previous</color>'
+    name: '<color:#ffdf6b><shadow:#4b3400:1>ᴘʀᴇᴠɪᴏᴜꜱ</shadow></color>'
     lore:
       - '<gray>Prev page.</gray>'
   next:
     material: ARROW
     slot: 51
-    name: '<color:#ffdf6b>Next</color>'
+    name: '<color:#ffdf6b><shadow:#4b3400:1>ɴᴇxᴛ</shadow></color>'
     lore:
       - '<gray>Next page.</gray>'
   return:
     material: SPECTRAL_ARROW
     slot: 49
-    name: '<color:#7dd7ff>Return</color>'
+    name: '<color:#9adfff><shadow:#153344:1>ʀᴇᴛᴜʀɴ</shadow></color>'
     lore:
       - '<gray>Back to party.</gray>'

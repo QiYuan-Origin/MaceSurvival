@@ -17,6 +17,8 @@ build/
 # Local runtime and log files
 logs/
 *.log
+console-restart-*.out
+console-restart-*.err
 /runtime/
 
 # Operating system metadata

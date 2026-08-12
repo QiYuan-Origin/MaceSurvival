@@ -1,5 +1,5 @@
 # Configuration schema version. Missing values are restored on /macesurvival reload.
-config-version: 3
+config-version: 5
 
 server:
   address: mcqi.top
@@ -12,7 +12,7 @@ server:
   shutdown-delay-seconds: 8
 
 text:
-  prefix: '<color:#7dd7ff><shadow:#17384d:1>MS</shadow></color> <dark_gray>»</dark_gray> '
+  prefix: '<color:#E70939><shadow:#3A0612:1>ᴍꜱ</shadow></color> <dark_gray>›</dark_gray> '
   default-font: 'minecraft:default'
   scoreboard-title: '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray>'
 
@@ -59,8 +59,8 @@ teams:
 
 deployment:
   blackout-ticks: 40
-  altitude-above-surface: 220
-  minimum-altitude: 300
+  altitude-above-surface: 95
+  minimum-altitude: 150
   team-separation-blocks: 400
   voluntary-jump-seconds: 15
   forced-jump-seconds: 30
@@ -77,7 +77,7 @@ starting-loadout:
   unbreakable: true
 
 border:
-  radii: [3000, 2000, 1000, 650, 280, 80, 24]
+  radii: [2500, 2000, 1000, 650, 280, 80, 24]
   total-moving-seconds: 1500
   final-target-change-seconds: 20
   final-center-speed: 3.0
@@ -89,13 +89,16 @@ border:
 
 loot:
   chests-per-alive-player: 8
-  items-min: 4
-  items-max: 8
+  deployment-nearby-chests: 10
+  deployment-nearby-radius: 96.0
+  items-min: 5
+  items-max: 9
   disappear-delay-seconds: 3
   armor-durability-min: 0.30
   armor-durability-max: 0.90
-  chest-tier-weights: [55, 30, 15]
-  minimum-chest-spacing: 4
+  chest-tier-weights: [50, 32, 18]
+  minimum-chest-spacing: 2
+  parallel-chunk-loads: 8
   star-display-view-range: 48
 
 upgrades:

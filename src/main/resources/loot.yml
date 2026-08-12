@@ -1,4 +1,4 @@
-config-version: 2
+config-version: 3
 
 # Every entry has a non-zero chance in every chest tier. Higher tiers only change probability.
 categories:
@@ -47,7 +47,7 @@ entries:
   enchanted-golden-apple:
     material: ENCHANTED_GOLDEN_APPLE
     amount: [1, 1]
-    tier-weights: [1, 3, 8]
+    tier-weights: [1, 4, 12]
   ender-pearl:
     material: ENDER_PEARL
     amount: [1, 4]
@@ -60,7 +60,7 @@ entries:
   totem:
     material: TOTEM_OF_UNDYING
     amount: [1, 1]
-    tier-weights: [2, 6, 12]
+    tier-weights: [2, 8, 18]
   shield:
     material: SHIELD
     amount: [1, 1]
@@ -70,7 +70,7 @@ entries:
     material: ELYTRA
     amount: [1, 1]
     limited-durability: [18, 40]
-    tier-weights: [1, 4, 8]
+    tier-weights: [1, 6, 14]
 
   wooden-spear:
     material: WOODEN_SPEAR
@@ -101,12 +101,12 @@ entries:
     material: DIAMOND_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [3, 13, 24]
+    tier-weights: [3, 15, 30]
   netherite-spear:
     material: NETHERITE_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [1, 5, 20]
+    tier-weights: [1, 7, 28]
 
   leather-armor:
     material-group: LEATHER_ARMOR
@@ -137,12 +137,12 @@ entries:
     material-group: DIAMOND_ARMOR
     amount: [1, 1]
     random-durability: true
-    tier-weights: [4, 15, 25]
+    tier-weights: [4, 17, 34]
   netherite-armor:
     material-group: NETHERITE_ARMOR
     amount: [1, 1]
     random-durability: true
-    tier-weights: [1, 4, 20]
+    tier-weights: [1, 6, 28]
 
   healing-potion:
     item-type: HEALING_POTION
@@ -176,11 +176,11 @@ entries:
   damage-upgrade:
     item-type: DAMAGE_UPGRADE
     amount: [1, 1]
-    tier-weights: [5, 11, 20]
+    tier-weights: [5, 13, 28]
   healing-upgrade:
     item-type: HEALING_UPGRADE
     amount: [1, 1]
-    tier-weights: [5, 11, 20]
+    tier-weights: [5, 13, 28]
   next-kill-upgrade:
     item-type: NEXT_KILL_UPGRADE
     amount: [1, 1]
@@ -188,33 +188,33 @@ entries:
   random-armor-enchant:
     item-type: ARMOR_ENCHANT
     amount: [1, 1]
-    tier-weights: [6, 14, 24]
+    tier-weights: [6, 17, 32]
   sharpness-book:
     item-type: WEAPON_ENCHANT
     enchantment: SHARPNESS
     amount: [1, 1]
-    tier-weights: [8, 16, 25]
+    tier-weights: [8, 18, 34]
   breach-book:
     item-type: WEAPON_ENCHANT
     enchantment: BREACH
     amount: [1, 1]
-    tier-weights: [6, 14, 23]
+    tier-weights: [6, 16, 31]
   density-book:
     item-type: WEAPON_ENCHANT
     enchantment: DENSITY
     amount: [1, 1]
-    tier-weights: [6, 14, 23]
+    tier-weights: [6, 16, 31]
   wind-burst-book:
     item-type: WEAPON_ENCHANT
     enchantment: WIND_BURST
     amount: [1, 1]
-    tier-weights: [5, 12, 21]
+    tier-weights: [5, 15, 30]
   unbreaking-book:
     item-type: WEAPON_ENCHANT
     enchantment: UNBREAKING
     amount: [1, 1]
-    tier-weights: [8, 16, 24]
+    tier-weights: [8, 18, 32]
   kill-mending-book:
     item-type: KILL_MENDING
     amount: [1, 1]
-    tier-weights: [5, 12, 21]
+    tier-weights: [5, 15, 30]

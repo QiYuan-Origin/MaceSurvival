@@ -176,7 +176,7 @@ public final class CombatManager {
             throw new IllegalArgumentException("Remaining durability range must be inside 0.0 to 1.0");
         }
         ItemMeta rawMeta = item.getItemMeta();
-        if (!(rawMeta instanceof Damageable damageable)) {
+        if (!(rawMeta instanceof Damageable damageable) || !damageable.hasMaxDamage()) {
             return;
         }
         int maximumDamage = damageable.getMaxDamage();
@@ -195,7 +195,7 @@ public final class CombatManager {
             throw new IllegalArgumentException("Remaining uses must be a positive range");
         }
         ItemMeta rawMeta = item.getItemMeta();
-        if (!(rawMeta instanceof Damageable damageable)) {
+        if (!(rawMeta instanceof Damageable damageable) || !damageable.hasMaxDamage()) {
             return;
         }
         int maximumDamage = damageable.getMaxDamage();
@@ -383,6 +383,9 @@ public final class CombatManager {
             return false;
         }
 
+        if (!targetDamageable.hasMaxDamage() || !donorDamageable.hasMaxDamage()) {
+            return false;
+        }
         int targetMaximum = targetDamageable.getMaxDamage();
         int donorMaximum = donorDamageable.getMaxDamage();
         if (targetMaximum <= 0 || donorMaximum <= 0 || targetDamageable.getDamage() <= 0) {
@@ -794,7 +797,8 @@ public final class CombatManager {
         mergeAttributeModifiers(sourceMeta, targetMeta);
 
         if (sourceMeta instanceof Damageable sourceDamage && targetMeta instanceof Damageable targetDamage
-            && !targetMeta.isUnbreakable() && sourceDamage.getMaxDamage() == targetDamage.getMaxDamage()) {
+            && !targetMeta.isUnbreakable() && sourceDamage.hasMaxDamage() && targetDamage.hasMaxDamage()
+            && sourceDamage.getMaxDamage() == targetDamage.getMaxDamage()) {
             targetDamage.setDamage(Math.min(targetDamage.getDamage(), sourceDamage.getDamage()));
         }
         target.setItemMeta(targetMeta);
@@ -927,7 +931,7 @@ public final class CombatManager {
 
     private double remainingDurabilityRatio(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
-        if (!(meta instanceof Damageable damageable) || damageable.getMaxDamage() <= 0) {
+        if (!(meta instanceof Damageable damageable) || !damageable.hasMaxDamage() || damageable.getMaxDamage() <= 0) {
             return 1.0;
         }
         return (damageable.getMaxDamage() - damageable.getDamage()) / (double) damageable.getMaxDamage();

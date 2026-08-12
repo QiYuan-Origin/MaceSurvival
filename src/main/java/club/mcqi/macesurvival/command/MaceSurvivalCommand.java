@@ -539,7 +539,7 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
         return baseType.isSolid()
             && baseType != Material.WATER
             && baseType != Material.LAVA
-            && (destination.isPassable() || destination.getType().isAir());
+            && destination.getType().isAir();
     }
 
     private OfflinePlayer findStatsPlayer(String name) {

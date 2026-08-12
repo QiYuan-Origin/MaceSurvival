@@ -1,5 +1,5 @@
-config-version: 6
-title: '<color:#7dd7ff><shadow:#17384d:1>PARTY</shadow></color>'
+config-version: 7
+title: '<color:#E70939><shadow:#3A0612:1>ᴘᴀʀᴛʏ</shadow></color>'
 size: 54
 open-sound: 'block.beacon.power_select'
 
@@ -33,25 +33,25 @@ items:
     material: MACE
     slot: 4
     slots: [4]
-    name: '<color:#7dd7ff>Party</color>'
+    name: '<color:#E70939><shadow:#3A0612:1>ᴘᴀʀᴛʏ</shadow></color>'
     lore:
-      - '<gray>{team_size}</gray><dark_gray>/</dark_gray><color:#91ff6d>{max_size}</color>'
-      - '<gray>Leader controls drop.</gray>'
+      - '<dark_gray>Slots</dark_gray> <white>{team_size}</white><dark_gray>/</dark_gray><color:#91ff6d>{max_size}</color>'
+      - '<gray>Captain controls the ghast drop.</gray>'
   member-self:
     material: PLAYER_HEAD
-    name: '<color:#91ff6d>{player}</color>'
+    name: '<color:#91ff6d><shadow:#143914:1>{player}</shadow></color>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
       - '<gray>You.</gray>'
   member-leader:
     material: PLAYER_HEAD
-    name: '<color:#ffdf6b>{player}</color>'
+    name: '<color:#ffdf6b><shadow:#4b3400:1>{player}</shadow></color>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
       - '<gray>Drop leader.</gray>'
   member:
     material: PLAYER_HEAD
-    name: '<color:#7dd7ff>{player}</color>'
+    name: '<color:#9adfff><shadow:#153344:1>{player}</shadow></color>'
     lore:
       - '<dark_gray>{role}</dark_gray>'
       - '<green>Left</green> <gray>leader</gray>'
@@ -59,31 +59,31 @@ items:
   invite:
     material: WRITABLE_BOOK
     slot: 30
-    name: '<color:#91ff6d>Invite</color>'
+    name: '<color:#91ff6d><shadow:#143914:1>ɪɴᴠɪᴛᴇ</shadow></color>'
     lore:
       - '<dark_gray>30s request.</dark_gray>'
   invitations:
     material: PAPER
     slot: 32
-    name: '<color:#7dd7ff>Requests</color>'
+    name: '<color:#9adfff><shadow:#153344:1>ʀᴇQᴜᴇꜱᴛꜱ</shadow></color>'
     lore:
       - '<dark_gray>Pending</dark_gray> <white>{count}</white>'
       - '<gray>Open requests.</gray>'
   leave:
     material: RED_DYE
     slot: 40
-    name: '<color:#ff4f68>Leave</color>'
+    name: '<color:#ff4f68><shadow:#401818:1>ʟᴇᴀᴠᴇ</shadow></color>'
     lore:
       - '<gray>Leave party.</gray>'
   locked:
     material: BARRIER
     slot: 31
-    name: '<color:#ff4f68>Locked</color>'
+    name: '<color:#ff4f68><shadow:#401818:1>ʟᴏᴄᴋᴇᴅ</shadow></color>'
     lore:
       - '<gray>Drop already started.</gray>'
   navigation:
     material: BARRIER
     slot: 49
-    name: '<color:#ff4f68>Close</color>'
+    name: '<color:#ff4f68><shadow:#401818:1>ᴄʟᴏꜱᴇ</shadow></color>'
     lore:
       - '<gray>Back out.</gray>'

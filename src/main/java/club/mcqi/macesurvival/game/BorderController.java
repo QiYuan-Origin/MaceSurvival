@@ -16,7 +16,7 @@ import java.util.Random;
 public final class BorderController {
     public interface Listener {
         void onStageFinished(int stageIndex);
-        void onBoundaryMoved(WorldBorder border);
+        void onBoundaryMoved(World world, Location center, double radius);
     }
 
     private final MaceSurvivalPlugin plugin;
@@ -29,6 +29,7 @@ public final class BorderController {
     private long elapsedTicks;
     private int stageIndex;
     private int segmentSeconds;
+    private double hardRadius;
     private Location segmentStart;
     private Location segmentTarget;
     private long segmentStartedAtTick;
@@ -51,6 +52,7 @@ public final class BorderController {
         }
         int total = plugin.getConfig().getInt("border.total-moving-seconds", 1500);
         segmentSeconds = Math.max(1, total / (radii.size() - 1));
+        hardRadius = plugin.getConfig().getInt("match.hard-radius", 5000);
     }
 
     public void start(World world) {
@@ -63,9 +65,9 @@ public final class BorderController {
         currentRadius = radii.getFirst();
         WorldBorder border = world.getWorldBorder();
         border.setCenter(0.0, 0.0);
-        border.setSize(currentRadius * 2.0);
+        border.setSize(Math.max(1.0, hardRadius * 2.0));
         border.setDamageBuffer(0.0);
-        border.setDamageAmount(plugin.getConfig().getDouble("border.damage-per-second", 2.0));
+        border.setDamageAmount(0.0);
         border.setWarningDistance(plugin.getConfig().getInt("border.warning-distance", 32));
         segmentStart = border.getCenter();
         beginStageTransition();
@@ -77,7 +79,6 @@ public final class BorderController {
         segmentStartedAtTick = elapsedTicks;
         segmentStart = world.getWorldBorder().getCenter();
         selectContainedStageTarget();
-        world.getWorldBorder().changeSize(radii.get(stageIndex + 1) * 2.0, segmentSeconds);
     }
 
     private void tick() {
@@ -119,7 +120,10 @@ public final class BorderController {
             renderParticles();
         }
         if (elapsedTicks % 20L == 0L) {
-            listener.onBoundaryMoved(world.getWorldBorder());
+            listener.onBoundaryMoved(world, world.getWorldBorder().getCenter(), currentRadius);
+        }
+        if (elapsedTicks % 60L == 0L) {
+            applyCircularDamage();
         }
     }
 
@@ -210,6 +214,23 @@ public final class BorderController {
                 double z = center.getZ() + Math.sin(angle) * currentRadius;
                 player.spawnParticle(Particle.DUST, x, player.getY() + 1.0, z, 1, 0.0, 0.8, 0.0, 0.0, dust);
             }
+        }
+    }
+
+    private void applyCircularDamage() {
+        double radius = currentRadius;
+        double damage = plugin.getConfig().getDouble("border.damage-per-second", 2.0);
+        for (Player player : world.getPlayers()) {
+            if (player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+                continue;
+            }
+            double dx = player.getX() - world.getWorldBorder().getCenter().getX();
+            double dz = player.getZ() - world.getWorldBorder().getCenter().getZ();
+            double distance = Math.hypot(dx, dz);
+            if (distance <= radius) {
+                continue;
+            }
+            player.damage(Math.max(1.0, damage));
         }
     }
 

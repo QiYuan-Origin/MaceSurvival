@@ -1,6 +1,6 @@
-config-version: 8
+config-version: 10
 
-prefix: '<color:#7dd7ff><shadow:#17384d:1>MS</shadow></color> <dark_gray>»</dark_gray> '
+prefix: '<color:#E70939><shadow:#3A0612:1>ᴍꜱ</shadow></color> <dark_gray>›</dark_gray> '
 
 general:
   no-permission: '<color:#ff4f68>No permission.</color>'
@@ -27,7 +27,7 @@ help:
   admin-chest: '<color:#ff4f68>/{label} chest [nearest|tp|spawn]</color> <dark_gray>-</dark_gray> <white>Debug loot chests</white>'
 
 admin:
-  start-requested: '<color:#91ff6d>Start flow armed.</color>'
+  start-requested: '<color:#91ff6d><shadow:#163916:1>ꜱᴛᴀʀᴛ ᴀʀᴍᴇᴅ</shadow></color> <dark_gray>•</dark_gray> <gray>Drop flow queued.</gray>'
   start-failed: '<color:#ffdf6b>Cannot start from this phase.</color>'
   stop-complete: '<color:#ff4f68>Match stopped.</color>'
   stop-none: '<color:#ffdf6b>No active match.</color>'
@@ -50,7 +50,7 @@ stats:
     - '<gray>Rank</gray> <white>#{rank}</white>'
 
 lobby:
-  joined: '<color:#7dd7ff>Queued.</color> <gray>Party / Loadout ready.</gray>'
+  joined: '<color:#9adfff><shadow:#153344:1>Qᴜᴇᴜᴇᴅ</shadow></color> <dark_gray>•</dark_gray> <gray>Party and loadout are ready.</gray>'
   countdown-cancelled: '<color:#ffdf6b>Queue held.</color> <gray>Need more players.</gray>'
   settings-locked: '<color:#ff4f68>Locked.</color> <gray>Drop already started.</gray>'
   loadout-reset: '<color:#91ff6d>Loadout reset.</color> <dark_gray>1 / 2 / 8 / 9</dark_gray>'
@@ -99,30 +99,34 @@ team:
     invitation-not-found: '<color:#ff4f68>Request no longer exists.</color>'
 
 game:
-  countdown: '<color:#ffdf6b>Drop</color> <white>{seconds}s</white>'
+  countdown: '<color:#ffdf6b><shadow:#4b3400:1>ᴅʀᴏᴘ</shadow></color> <white>{seconds}s</white>'
   stopped: '<color:#ff4f68>Match stopped.</color>'
   reconnect-restored: '<color:#91ff6d>Reconnected.</color> <gray>State restored.</gray>'
   reconnect-expired: '<color:#ff4f68>Expired.</color> <gray>Spectating.</gray>'
-  deployment-jump: '<color:#ffdf6b>Captain jumped.</color> <gray>Party dropping.</gray>'
-  deployment-forced: '<color:#ff4f68>Forced drop.</color>'
-  border-moving: '<color:#ff4f68>Zone moving.</color>'
-  eliminated: '<color:#ff4f68>Eliminated.</color>'
-  winner: '<white>{winner}</white> <color:#91ff6d>won Mace Survival.</color>'
+  deployment-jump: '<color:#ffdf6b><shadow:#4b3400:1>ᴄᴀᴘᴛᴀɪɴ ᴅʀᴏᴘ</shadow></color> <dark_gray>•</dark_gray> <gray>Party released.</gray>'
+  deployment-forced: '<color:#ff4f68><shadow:#401818:1>ꜰᴏʀᴄᴇ ᴅʀᴏᴘ</shadow></color>'
+  border-moving: '<color:#ff4f68><shadow:#401818:1>ᴢᴏɴᴇ ꜱʜɪꜰᴛ</shadow></color> <dark_gray>•</dark_gray> <gray>Loot outside the ring was cleared.</gray>'
+  eliminated: '<color:#ff4f68><shadow:#401818:1>ᴇʟɪᴍɪɴᴀᴛᴇᴅ</shadow></color>'
+  winner: '<white>{winner}</white> <gray>won</gray> <color:#91ff6d><shadow:#163916:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color>'
   draw: '<dark_gray>No survivors.</dark_gray>'
-  starting-subtitle: '<gray>The match begins.</gray>'
+  starting-title: '<color:#E70939><shadow:#3A0612:1>ᴍᴀᴛᴄʜ ʟᴏᴀᴅɪɴɢ</shadow></color>'
+  starting-subtitle: '<gray>Blackout in progress.</gray>'
 
 deployment:
-  ride-title: '<color:#7dd7ff><shadow:#17384d:1>{team}</shadow></color>'
-  ride-subtitle: '<gray>Captain jump pulls the party.</gray>'
-  ride-actionbar: '<gray>Look to steer.</gray> <dark_gray>Y is locked.</dark_gray>'
-  drop-title: '<color:#7dd7ff><shadow:#17384d:1>DROP!</shadow></color>'
-  drop-subtitle: '<gray>Glide to the ground.</gray>'
-  drop-actionbar: '<color:#7dd7ff>DROP</color> <dark_gray>›</dark_gray> <gray>Steer with view.</gray>'
+  ride-title: '<color:#9adfff><shadow:#153344:1>{team}</shadow></color>'
+  ride-subtitle: '<gray>Captain jump releases the squad.</gray>'
+  ride-actionbar: '<color:#9adfff><shadow:#153344:1>ʜᴀᴘᴘʏ ɢʜᴀꜱᴛ</shadow></color> <dark_gray>›</dark_gray> <gray>Look around. Wait for drop.</gray>'
+  ride-countdown: '<color:#E70939><shadow:#3A0612:1>ᴅʀᴏᴘ</shadow></color> <dark_gray>›</dark_gray> <gray>Jump</gray> <white>{jump}s</white> <dark_gray>|</dark_gray> <gray>Force</gray> <color:#ffdf6b>{force}s</color>'
+  force-count-title: '<color:#ffdf6b><shadow:#4b3400:1>{force}</shadow></color>'
+  force-count-subtitle: '<gray>Force drop incoming.</gray>'
+  drop-title: '<color:#E70939><shadow:#3A0612:1>ᴅʀᴏᴘ</shadow></color>'
+  drop-subtitle: '<gray>Steer horizontally. Fall speed is locked.</gray>'
+  drop-actionbar: '<color:#E70939><shadow:#3A0612:1>ᴅʀᴏᴘ</shadow></color> <dark_gray>›</dark_gray> <gray>Look direction controls glide.</gray>'
 
 title:
-  victory: '<color:#91ff6d><shadow:#1e4b20:1>VICTORY</shadow></color>'
+  victory: '<color:#91ff6d><shadow:#1e4b20:1>ᴠɪᴄᴛᴏʀʏ</shadow></color>'
   victory-subtitle: '<gray>Your party survived.</gray>'
-  defeat: '<color:#ff4f68><shadow:#401818:1>ELIMINATED</shadow></color>'
+  defeat: '<color:#ff4f68><shadow:#401818:1>ᴇʟɪᴍɪɴᴀᴛᴇᴅ</shadow></color>'
   defeat-subtitle: '<gray>Spectating remaining players.</gray>'
 
 death:
@@ -159,30 +163,43 @@ combat:
   bundle-eject: '<dark_gray>Right click to throw the last item.</dark_gray>'
   bundle-stored: '<color:#7dd7ff>Extra equipment moved to Reserve Bundle.</color>'
 
+loot:
+  item-name: '<{color}><shadow:#191919:1>{stars}</shadow></{color}> <white>{name}</white>'
+  item-lore:
+    tier: '<dark_gray>Tier</dark_gray> <{color}>{stars}</{color}>'
+    supply: '<gray>Fast supplies for the next fight.</gray>'
+    potion: '<gray>Use it before taking the next engage.</gray>'
+    gear: '<gray>Limited durability. Keep pressure high.</gray>'
+    armor: '<gray>Auto-equips if it beats your current piece.</gray>'
+    spear: '<gray>Lunge weapon with rolled attack damage.</gray>'
+    weapon-book: '<gray>Right click a weapon in your inventory.</gray>'
+    armor-book: '<gray>Auto-applies to one equipped armor piece.</gray>'
+    boost: '<gray>Instant permanent match upgrade.</gray>'
+
 chat:
-  format: '<{color}>{player}</{color}> <dark_gray>:</dark_gray> <white>{message}</white>'
+  format: '<dark_gray>‹</dark_gray><{color}>{player}</{color}><dark_gray>›</dark_gray> <gray>:</gray> <white>{message}</white>'
 
 tab:
   player: '<dark_gray>[</dark_gray><{color}>{team_label}</{color}><dark_gray>]</dark_gray> <white>{player}</white>'
   header:
     - '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray>'
-    - '<gray>{server}</gray> <dark_gray>•</dark_gray> <color:#ffdf6b>{phase}</color>'
+    - '<dark_gray>mcqi.top</dark_gray> <gray>•</gray> <color:#ffdf6b><shadow:#4b3400:1>{phase}</shadow></color>'
   footer:
     - '<gray>{online}</gray><dark_gray>/</dark_gray><white>{max}</white> <dark_gray>online</dark_gray> <dark_gray>|</dark_gray> <color:#a7efff>Alive</color> <white>{alive}</white> <dark_gray>|</dark_gray> <color:#91ff6d>Party</color> <{color}>{team_size}/4</{color}>'
 
 scoreboard:
-  title: '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <gray>⚔</gray> <dark_gray>|</dark_gray> <gray>#</gray><white>{rank}</white>'
-  lobby-status: '<color:#8bdcff>◷</color> <gray>Queue:</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>'
+  title: '<color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> <dark_gray>#</dark_gray><white>{rank}</white>'
+  lobby-status: '<color:#8bdcff>◷</color> <gray>Queue</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>'
   lobby-needed: '<color:#ffdf6b>!</color> <gray>Need:</gray> <color:#ff4f68>{needed}</color>'
   lobby-countdown: '<color:#ffdf6b>!</color> <gray>Drop:</gray> <color:#ff4f68>{seconds}s</color>'
   lobby-team: '<color:#91ff6d>⚑</color> <gray>Party:</gray> <{color}>{team_size}</{color}><dark_gray>/</dark_gray><white>{max_size}</white>'
-  time-border: '<color:#8bdcff>◷</color> <gray>Time:</gray> <white>{time}</white> <dark_gray>|</dark_gray> <color:#ffc857>{border}m</color>'
-  time-border-moving: '<color:#8bdcff>◷</color> <gray>Time:</gray> <white>{time}</white> <dark_gray>|</dark_gray> <color:#ff4f68>{border}m</color>'
-  alive: '<color:#a7efff>♥</color> <gray>Alive:</gray> <white>{alive}</white>'
-  kills: '<color:#ffdf6b>⚔</color> <gray>Kills:</gray> <white>{kills}</white> <dark_gray>#</dark_gray><color:#ff4f68>{rank}</color>'
-  team-kills: '<color:#91ff6d>⚑</color> <gray>Team:</gray> <color:#5dff66>{kills}</color> <dark_gray>#</dark_gray><white>{rank}</white>'
-  teammates: '<dark_gray>TEAM TRACK</dark_gray>'
-  teammate: '<white>{direction}</white> <{color}>{name}</{color}> <gray>+{distance}m</gray> <color:#ff4f68>0%</color>'
+  time-border: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ffc857>{border}m</color>'
+  time-border-moving: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ff4f68>{border}m</color>'
+  alive: '<color:#a7efff>♥</color> <gray>Alive</gray> <white>{alive}</white>'
+  kills: '<color:#ffdf6b>⚔</color> <gray>Kills</gray> <white>{kills}</white> <dark_gray>#</dark_gray><color:#ff4f68>{rank}</color>'
+  team-kills: '<color:#91ff6d>⚑</color> <gray>Team</gray> <color:#5dff66>{kills}</color> <dark_gray>#</dark_gray><white>{rank}</white>'
+  teammates: '<dark_gray>ᴛᴇᴀᴍ ᴛʀᴀᴄᴋ</dark_gray>'
+  teammate: '<white>{direction}</white> <{color}>{name}</{color}> <gray>{distance}m</gray> <color:#ff4f68>0%</color>'
   teammate-unknown: '<dark_gray>-</dark_gray> <{color}>{name}</{color}> <gray>--m</gray> <color:#ff4f68>0%</color>'
   teammate-dead: '<red><strikethrough>{name}</strikethrough></red> <dark_gray>down</dark_gray>'
   server: '<color:#9aa8ff><shadow:#202448:1>MCQI.TOP</shadow></color>'

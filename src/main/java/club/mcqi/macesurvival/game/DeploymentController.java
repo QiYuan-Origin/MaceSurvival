@@ -55,9 +55,11 @@ public final class DeploymentController {
     private final Set<UUID> dropping = new HashSet<>();
     private final Set<UUID> landed = new HashSet<>();
     private BukkitTask steeringTask;
+    private BukkitTask ridePromptTask;
     private BukkitTask finishTask;
     private long deploymentStartedTick;
     private boolean systemDismounting;
+    private int lastRidePromptSecond = Integer.MIN_VALUE;
 
     public DeploymentController(
             MaceSurvivalPlugin plugin,
@@ -142,8 +144,8 @@ public final class DeploymentController {
         for (Map.Entry<TeamData, SpawnPoint> entry : points.entrySet()) {
             SpawnPoint point = refineSpawnPoint(world, entry.getValue());
             int surface = world.getHighestBlockYAt(point.x(), point.z());
-            int configuredMinimum = plugin.getConfig().getInt("deployment.minimum-altitude", 300);
-            int aboveSurface = plugin.getConfig().getInt("deployment.altitude-above-surface", 220);
+            int configuredMinimum = plugin.getConfig().getInt("deployment.minimum-altitude", 180);
+            int aboveSurface = plugin.getConfig().getInt("deployment.altitude-above-surface", 140);
             int y = Math.max(configuredMinimum, surface + aboveSurface);
             result.put(entry.getKey(), new Location(world, point.x() + 0.5, y, point.z() + 0.5, point.yaw(), 0.0f));
         }
@@ -152,6 +154,7 @@ public final class DeploymentController {
 
     private void deploy(Map<TeamData, Location> locations) {
         deploymentStartedTick = worldManager.matchWorld().getGameTime();
+        lastRidePromptSecond = Integer.MIN_VALUE;
         int teamNumber = 1;
         for (Map.Entry<TeamData, Location> entry : locations.entrySet()) {
             TeamData team = entry.getKey();
@@ -192,6 +195,7 @@ public final class DeploymentController {
             location.getWorld().playSound(location, Sound.ENTITY_GHAST_AMBIENT, 0.65f, 1.0f);
         }
         steeringTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::steerDroppingPlayers, 1L, 1L);
+        ridePromptTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::sendRidePrompts, 0L, 20L);
         int forceSeconds = plugin.getConfig().getInt("deployment.forced-jump-seconds", 30);
         finishTask = plugin.getServer().getScheduler().runTaskLater(plugin, this::forceAllJump, forceSeconds * 20L);
     }
@@ -207,6 +211,7 @@ public final class DeploymentController {
         player.setSaturation(20.0f);
         player.setFireTicks(0);
         player.setFallDistance(0.0f);
+        player.setVelocity(new Vector());
         player.getInventory().clear();
         player.getInventory().setArmorContents(new ItemStack[4]);
         giveStartingLoadout(player);
@@ -244,6 +249,10 @@ public final class DeploymentController {
     }
 
     private void forceAllJump() {
+        if (ridePromptTask != null) {
+            ridePromptTask.cancel();
+            ridePromptTask = null;
+        }
         systemDismounting = true;
         for (World world : plugin.getServer().getWorlds()) {
             for (HappyGhast ghast : world.getEntitiesByClass(HappyGhast.class)) {
@@ -284,6 +293,38 @@ public final class DeploymentController {
         systemDismounting = false;
         beginDrop(player);
         player.playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1.0f, 1.0f);
+    }
+
+    private void sendRidePrompts() {
+        long elapsedTicks = Math.max(0L, worldManager.matchWorld().getGameTime() - deploymentStartedTick);
+        int elapsedSeconds = (int) (elapsedTicks / 20L);
+        int jumpSeconds = Math.max(0,
+            plugin.getConfig().getInt("deployment.voluntary-jump-seconds", 15) - elapsedSeconds);
+        int forceSeconds = Math.max(0,
+            plugin.getConfig().getInt("deployment.forced-jump-seconds", 30) - elapsedSeconds);
+        for (World world : plugin.getServer().getWorlds()) {
+            for (HappyGhast ghast : world.getEntitiesByClass(HappyGhast.class)) {
+                if (!ghastTeam.containsKey(ghast.getUniqueId())) continue;
+                for (Entity passenger : ghast.getPassengers()) {
+                    if (passenger instanceof Player player) {
+                        player.sendActionBar(plugin.text().message(player, "deployment.ride-countdown", Map.of(
+                            "jump", jumpSeconds,
+                            "force", forceSeconds
+                        )));
+                        if (elapsedSeconds != lastRidePromptSecond
+                            && (forceSeconds == 15 || forceSeconds == 10 || forceSeconds <= 5)) {
+                            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.45F, 1.0F);
+                            player.showTitle(Title.title(
+                                plugin.text().message(player, "deployment.force-count-title", Map.of("force", forceSeconds)),
+                                plugin.text().message(player, "deployment.force-count-subtitle", Map.of("jump", jumpSeconds)),
+                                Title.Times.times(Duration.ZERO, Duration.ofMillis(650), Duration.ofMillis(120))
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        lastRidePromptSecond = elapsedSeconds;
     }
 
     private void beginDrop(Player player) {
@@ -353,7 +394,7 @@ public final class DeploymentController {
             Vector horizontal = player.getEyeLocation().getDirection().setY(0.0);
             if (horizontal.lengthSquared() < 0.0001) continue;
             horizontal.normalize().multiply(speed);
-            double vertical = Math.min(player.getVelocity().getY(), -0.08);
+            double vertical = Math.max(-0.14, Math.min(player.getVelocity().getY(), -0.08));
             player.setVelocity(new Vector(horizontal.getX(), vertical, horizontal.getZ()));
             player.setFallDistance(0.0f);
         }
@@ -362,10 +403,16 @@ public final class DeploymentController {
     public boolean isDropping(UUID playerId) { return dropping.contains(playerId); }
     public boolean hasLanded(UUID playerId) { return landed.contains(playerId); }
 
+    public Collection<Location> deploymentLocations() {
+        return List.copyOf(teamDeploymentLocations.values());
+    }
+
     public void stop() {
         if (steeringTask != null) steeringTask.cancel();
+        if (ridePromptTask != null) ridePromptTask.cancel();
         if (finishTask != null) finishTask.cancel();
         steeringTask = null;
+        ridePromptTask = null;
         finishTask = null;
         dropping.clear();
         landed.clear();

@@ -102,8 +102,33 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
     }
 
     @Override
-    public void matchActive(org.bukkit.World world, Collection<Participant> participants) {
+    public void matchStarting(org.bukkit.World world, Collection<Participant> participants) {
+        for (Participant participant : participants) {
+            Player player = Bukkit.getPlayer(participant.playerId());
+            if (player == null) continue;
+            player.showTitle(Title.title(
+                text.message(player, "game.starting-title", Map.of()),
+                text.message(player, "game.starting-subtitle", Map.of()),
+                Title.Times.times(Duration.ofMillis(250), Duration.ofSeconds(3), Duration.ofMillis(500))
+            ));
+        }
+    }
+
+    @Override
+    public void matchActive(
+            org.bukkit.World world,
+            Collection<Participant> participants,
+            Collection<org.bukkit.Location> deploymentLocations
+    ) {
+        loot.restoreWorld(world);
         loot.spawnInitial(world, aliveCount(participants));
+        for (org.bukkit.Location location : deploymentLocations) {
+            loot.spawnNear(world, location.getX(), location.getZ(),
+                plugin.getConfig().getDouble("loot.deployment-nearby-radius", 72.0D),
+                plugin.getConfig().getInt("loot.deployment-nearby-chests", 6),
+                0.0D
+            );
+        }
     }
 
     @Override
@@ -112,16 +137,18 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
             int stageIndex,
             Collection<Participant> participants
     ) {
-        loot.removeOutside(world.getWorldBorder());
-        loot.refresh(world, aliveCount(participants));
+        loot.removeOutside(world, world.getWorldBorder().getCenter().getX(),
+            world.getWorldBorder().getCenter().getZ(), game.currentBorderRadius());
+        loot.refresh(world, aliveCount(participants), world.getWorldBorder().getCenter().getX(),
+            world.getWorldBorder().getCenter().getZ(), game.currentBorderRadius());
         for (Player player : world.getPlayers()) {
             text.sendPrefixed(player, "game.border-moving", Map.of("stage", stageIndex));
         }
     }
 
     @Override
-    public void boundaryMoved(org.bukkit.WorldBorder border) {
-        loot.removeOutside(border);
+    public void boundaryMoved(org.bukkit.World world, org.bukkit.Location center, double radius) {
+        loot.removeOutside(world, center.getX(), center.getZ(), radius);
     }
 
     @Override
