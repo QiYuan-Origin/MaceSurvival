@@ -1,4 +1,4 @@
-config-version: 5
+config-version: 6
 title: '<color:#7dd7ff><shadow:#17384d:1>PARTY</shadow></color>'
 size: 54
 open-sound: 'block.beacon.power_select'

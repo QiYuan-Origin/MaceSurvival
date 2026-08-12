@@ -1,4 +1,4 @@
-config-version: 4
+config-version: 5
 title: '<color:#7dd7ff><shadow:#17384d:1>INVITE</shadow></color>'
 size: 54
 open-sound: 'item.book.page_turn'

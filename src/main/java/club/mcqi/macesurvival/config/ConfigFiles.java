@@ -125,7 +125,11 @@ public final class ConfigFiles implements Reloadable {
             YamlConfiguration defaults = YamlConfiguration.loadConfiguration(defaultsReader);
             YamlConfiguration current = new YamlConfiguration();
             current.load(destination.toFile());
+            boolean versionChanged = hasConfigVersionChanged(current, defaults);
             boolean changed = mergeMissing(current, defaults);
+            if (versionChanged) {
+                changed |= refreshVersionedDefaults(path, current, defaults);
+            }
             changed |= updateConfigVersion(current, defaults);
             if (changed) {
                 current.save(destination.toFile());
@@ -148,6 +152,49 @@ public final class ConfigFiles implements Reloadable {
         for (String key : defaults.getKeys(true)) {
             if (!defaults.isConfigurationSection(key) && !current.contains(key)) {
                 current.set(key, defaults.get(key));
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    private static boolean hasConfigVersionChanged(YamlConfiguration current, YamlConfiguration defaults) {
+        for (String key : VERSION_KEYS) {
+            Object defaultVersion = defaults.get(key);
+            if (defaultVersion != null) {
+                return !Objects.equals(defaultVersion, current.get(key));
+            }
+        }
+        return false;
+    }
+
+    private static boolean refreshVersionedDefaults(
+        String path,
+        YamlConfiguration current,
+        YamlConfiguration defaults
+    ) {
+        if (path.equals("messages.yml") || path.startsWith("menus/")) {
+            return overwriteDefaultValues(current, defaults, "");
+        }
+        if (path.equals("config.yml")) {
+            return overwriteDefaultValues(current, defaults, "text.");
+        }
+        return false;
+    }
+
+    private static boolean overwriteDefaultValues(
+        YamlConfiguration current,
+        YamlConfiguration defaults,
+        String keyPrefix
+    ) {
+        boolean changed = false;
+        for (String key : defaults.getKeys(true)) {
+            if (defaults.isConfigurationSection(key) || !key.startsWith(keyPrefix)) {
+                continue;
+            }
+            Object defaultValue = defaults.get(key);
+            if (!Objects.equals(defaultValue, current.get(key))) {
+                current.set(key, defaultValue);
                 changed = true;
             }
         }

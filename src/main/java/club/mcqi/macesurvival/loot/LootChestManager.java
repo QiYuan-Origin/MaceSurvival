@@ -1,7 +1,6 @@
 package club.mcqi.macesurvival.loot;
 
 import club.mcqi.macesurvival.combat.CombatManager;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Color;
@@ -44,8 +43,6 @@ import java.util.function.Predicate;
 import java.util.random.RandomGenerator;
 
 public final class LootChestManager implements LootBridge {
-    private static final Key UNIFORM_FONT = Key.key("minecraft", "uniform");
-
     private final JavaPlugin plugin;
     private final CombatManager combat;
     private final Predicate<Player> participantPredicate;
@@ -301,7 +298,6 @@ public final class LootChestManager implements LootBridge {
         Location displayLocation = blockLocation.clone().add(0.5, 1.35, 0.5);
         return blockLocation.getWorld().spawn(displayLocation, TextDisplay.class, display -> {
             display.text(Component.text("★".repeat(tier.stars()), tier.color())
-                .font(UNIFORM_FONT)
                 .decoration(TextDecoration.BOLD, true)
                 .decoration(TextDecoration.ITALIC, false));
             display.setBillboard(Display.Billboard.VERTICAL);

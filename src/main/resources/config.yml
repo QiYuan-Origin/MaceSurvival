@@ -1,5 +1,5 @@
 # Configuration schema version. Missing values are restored on /macesurvival reload.
-config-version: 1
+config-version: 2
 
 server:
   address: mcqi.top

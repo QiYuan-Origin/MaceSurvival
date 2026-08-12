@@ -1,4 +1,4 @@
-config-version: 4
+config-version: 5
 title: '<color:#7dd7ff><shadow:#17384d:1>LOADOUT</shadow></color>'
 size: 45
 open-sound: 'item.armor.equip_netherite'
