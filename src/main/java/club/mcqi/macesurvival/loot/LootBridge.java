@@ -1,7 +1,6 @@
 package club.mcqi.macesurvival.loot;
 
 import org.bukkit.World;
-import org.bukkit.WorldBorder;
 
 public interface LootBridge {
     LootBridge NO_OP = new LootBridge() { };
@@ -12,8 +11,6 @@ public interface LootBridge {
     default void refresh(World world, int alivePlayers, double centerX, double centerZ, double radius) {
         refresh(world, alivePlayers);
     }
-    default void removeOutside(WorldBorder border) { }
-    default void removeOutside(World world, double centerX, double centerZ, double radius) { }
     default void clear() { }
     default void restoreWorld(World world) { }
 }

@@ -9,13 +9,16 @@ import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -27,16 +30,19 @@ public final class TextService {
     private static final String DEFAULT_PREFIX =
         "<color:#7dd7ff><shadow:#17384d:1>MS</shadow></color> <dark_gray>»</dark_gray> ";
     private static final Map<Character, String> LEGACY_TAGS = legacyTags();
+    private static final Set<String> SUPPORTED_LANGUAGES = Set.of("en", "zh");
 
     private final JavaPlugin plugin;
     private final ConfigFiles configFiles;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final GsonComponentSerializer json = GsonComponentSerializer.gson();
     private final Set<String> reportedMissingKeys = ConcurrentHashMap.newKeySet();
+    private final NamespacedKey languageKey;
 
     public TextService(JavaPlugin plugin, ConfigFiles configFiles) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.configFiles = Objects.requireNonNull(configFiles, "configFiles");
+        languageKey = new NamespacedKey(plugin, "language");
     }
 
     public Component parse(String input) {
@@ -91,7 +97,7 @@ public final class TextService {
     }
 
     public Component messageOr(Player player, String path, String fallback, Map<String, ?> placeholders) {
-        String template = messageTemplate(path).orElseGet(() -> {
+        String template = messageTemplate(player, path).orElseGet(() -> {
             reportMissing(path);
             return fallback;
         });
@@ -105,7 +111,7 @@ public final class TextService {
         Map<String, ?> placeholders,
         Map<String, Component> componentPlaceholders
     ) {
-        String template = messageTemplate(path).orElseGet(() -> {
+        String template = messageTemplate(player, path).orElseGet(() -> {
             reportMissing(path);
             return fallback;
         });
@@ -119,15 +125,18 @@ public final class TextService {
             return List.of();
         }
 
-        if (messages.isList(path)) {
+        String resolvedPath = localizedPath(player, path)
+            .filter(localized -> messages.isList(localized) || messages.isString(localized))
+            .orElse(path);
+        if (messages.isList(resolvedPath)) {
             List<Component> output = new ArrayList<>();
-            for (String line : messages.getStringList(path)) {
+            for (String line : messages.getStringList(resolvedPath)) {
                 output.add(parse(player, line, placeholders));
             }
             return List.copyOf(output);
         }
 
-        String scalar = messages.getString(path);
+        String scalar = messages.getString(resolvedPath);
         if (scalar == null) {
             reportMissing(path);
             return List.of();
@@ -163,9 +172,46 @@ public final class TextService {
         return messageOr(player, "prefix", DEFAULT_PREFIX, placeholders);
     }
 
-    private java.util.Optional<String> messageTemplate(String path) {
+    public String language(Player player) {
+        if (player != null) {
+            String stored = player.getPersistentDataContainer().get(languageKey, PersistentDataType.STRING);
+            String normalized = normalizeLanguage(stored);
+            if (normalized != null) {
+                return normalized;
+            }
+            if (stored != null) {
+                player.getPersistentDataContainer().remove(languageKey);
+            }
+        }
+        String configured = plugin.getConfig().getString("server.language", "en");
+        String normalized = normalizeLanguage(configured);
+        return normalized == null ? "en" : normalized;
+    }
+
+    public String toggleLanguage(Player player) {
+        Objects.requireNonNull(player, "player");
+        String next = language(player).equals("zh") ? "en" : "zh";
+        player.getPersistentDataContainer().set(languageKey, PersistentDataType.STRING, next);
+        return next;
+    }
+
+    private java.util.Optional<String> messageTemplate(Player player, String path) {
         FileConfiguration messages = messages();
-        return messages == null ? java.util.Optional.empty() : java.util.Optional.ofNullable(messages.getString(path));
+        if (messages == null) {
+            return java.util.Optional.empty();
+        }
+        java.util.Optional<String> localized = localizedPath(player, path)
+            .map(messages::getString)
+            .filter(Objects::nonNull);
+        return localized.isPresent() ? localized : java.util.Optional.ofNullable(messages.getString(path));
+    }
+
+    private java.util.Optional<String> localizedPath(Player player, String path) {
+        String language = language(player);
+        if (language.equals("en")) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of("languages." + language + "." + path);
     }
 
     private FileConfiguration messages() {
@@ -295,6 +341,22 @@ public final class TextService {
     private static boolean looksLikeJson(String input) {
         return (input.startsWith("{") && input.endsWith("}"))
             || (input.startsWith("[") && input.endsWith("]"));
+    }
+
+    private static String normalizeLanguage(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT).replace('-', '_');
+        if (normalized.equals("zh_cn") || normalized.equals("zh_hans")
+            || normalized.equals("cn") || normalized.equals("chinese") || normalized.equals("中文")) {
+            return "zh";
+        }
+        if (normalized.equals("en_us") || normalized.equals("en_gb")
+            || normalized.equals("english") || normalized.equals("英文")) {
+            return "en";
+        }
+        return SUPPORTED_LANGUAGES.contains(normalized) ? normalized : null;
     }
 
     /** Converts every supported legacy code into equivalent MiniMessage before parsing. */

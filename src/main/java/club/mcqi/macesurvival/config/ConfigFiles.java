@@ -177,7 +177,10 @@ public final class ConfigFiles implements Reloadable {
             return overwriteDefaultValues(current, defaults, "");
         }
         if (path.equals("config.yml")) {
-            return overwriteDefaultValues(current, defaults, "text.")
+            return overwriteDefaultValues(current, defaults, "server.")
+                | overwriteDefaultValues(current, defaults, "text.")
+                | overwriteDefaultValues(current, defaults, "lobby.")
+                | overwriteDefaultValues(current, defaults, "match.preload.")
                 | overwriteDefaultValues(current, defaults, "deployment.")
                 | overwriteDefaultValues(current, defaults, "border.")
                 | overwriteDefaultValues(current, defaults, "loot.");

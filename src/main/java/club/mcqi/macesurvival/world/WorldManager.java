@@ -14,16 +14,22 @@ import java.util.Random;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.Comparator;
+import java.util.Queue;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.stream.Stream;
+import org.bukkit.scheduler.BukkitTask;
 
 public final class WorldManager {
     private final MaceSurvivalPlugin plugin;
     private final Random random = new Random();
     private World lobbyWorld;
     private World matchWorld;
+    private BukkitTask preloadTask;
+    private int preloadedChunks;
+    private int totalPreloadChunks;
 
     public WorldManager(MaceSurvivalPlugin plugin) {
         this.plugin = plugin;
@@ -107,11 +113,17 @@ public final class WorldManager {
                 .createWorld();
         Objects.requireNonNull(matchWorld, "Match world could not be created");
         configureMatch(matchWorld);
+        startPreload(matchWorld);
         return matchWorld;
+    }
+
+    public void preloadMatchWorld() {
+        prepareMatch();
     }
 
     public World resetMatch() {
         World previous = matchWorld;
+        stopPreload();
         if (previous != null) {
             matchWorld = null;
             String previousName = previous.getName();
@@ -175,6 +187,14 @@ public final class WorldManager {
     public World lobbyWorld() { return Objects.requireNonNull(lobbyWorld); }
     public World matchWorld() { return Objects.requireNonNull(matchWorld); }
 
+    public int preloadedChunks() {
+        return preloadedChunks;
+    }
+
+    public int totalPreloadChunks() {
+        return totalPreloadChunks;
+    }
+
     private WorldType worldType(String configured) {
         try {
             return WorldType.valueOf(Objects.requireNonNullElse(configured, "AMPLIFIED")
@@ -197,6 +217,67 @@ public final class WorldManager {
         }
     }
 
+    private void startPreload(World world) {
+        stopPreload();
+        if (!plugin.getConfig().getBoolean("match.preload.enabled", true)) {
+            return;
+        }
+        int radius = Math.max(0, plugin.getConfig().getInt("match.preload.radius", 512));
+        int chunksPerTick = Math.max(1, Math.min(32,
+            plugin.getConfig().getInt("match.preload.chunks-per-tick", 2)));
+        Queue<ChunkCoordinate> queue = preloadQueue(radius);
+        preloadedChunks = 0;
+        totalPreloadChunks = queue.size();
+        if (queue.isEmpty()) {
+            return;
+        }
+        preloadTask = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (queue.isEmpty() || !world.equals(matchWorld)) {
+                stopPreload();
+                return;
+            }
+            for (int index = 0; index < chunksPerTick && !queue.isEmpty(); index++) {
+                ChunkCoordinate coordinate = queue.remove();
+                world.getChunkAtAsync(coordinate.x(), coordinate.z(), true)
+                    .thenRun(() -> preloadedChunks++);
+            }
+        }, 1L, 1L);
+    }
+
+    private void stopPreload() {
+        if (preloadTask != null) {
+            preloadTask.cancel();
+            preloadTask = null;
+        }
+    }
+
+    private static Queue<ChunkCoordinate> preloadQueue(int blockRadius) {
+        int chunkRadius = (int) Math.ceil(blockRadius / 16.0D);
+        ArrayDeque<ChunkCoordinate> queue = new ArrayDeque<>();
+        for (int radius = 0; radius <= chunkRadius; radius++) {
+            for (int x = -radius; x <= radius; x++) {
+                addPreloadCoordinate(queue, x, -radius, chunkRadius);
+                addPreloadCoordinate(queue, x, radius, chunkRadius);
+            }
+            for (int z = -radius + 1; z <= radius - 1; z++) {
+                addPreloadCoordinate(queue, -radius, z, chunkRadius);
+                addPreloadCoordinate(queue, radius, z, chunkRadius);
+            }
+        }
+        return queue;
+    }
+
+    private static void addPreloadCoordinate(
+        Queue<ChunkCoordinate> queue,
+        int x,
+        int z,
+        int chunkRadius
+    ) {
+        if (x * x + z * z <= chunkRadius * chunkRadius) {
+            queue.add(new ChunkCoordinate(x, z));
+        }
+    }
+
     private void deleteWorldDirectory(String worldName) {
         Path root = plugin.getServer().getWorldContainer().toPath().toAbsolutePath().normalize();
         deleteDirectory(root.resolve(worldName).normalize(), root);
@@ -214,4 +295,6 @@ public final class WorldManager {
             plugin.getLogger().log(Level.WARNING, "Could not delete stale match world " + directory, exception);
         }
     }
+
+    private record ChunkCoordinate(int x, int z) { }
 }

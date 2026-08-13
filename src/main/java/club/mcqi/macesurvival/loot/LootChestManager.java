@@ -235,20 +235,6 @@ public final class LootChestManager implements LootBridge {
         return true;
     }
 
-    public int destroyOutsideBoundary(World world, double centerX, double centerZ, double radius) {
-        double radiusSquared = radius * radius;
-        List<ManagedChest> outside = byId.values().stream()
-            .filter(chest -> chest.location.getWorld().equals(world))
-            .filter(chest -> {
-                double dx = chest.location.getX() + 0.5 - centerX;
-                double dz = chest.location.getZ() + 0.5 - centerZ;
-                return dx * dx + dz * dz > radiusSquared;
-            })
-            .toList();
-        outside.forEach(chest -> remove(chest, false, true));
-        return outside.size();
-    }
-
     public void clearAll(boolean dropContents) {
         activeSpawns.values().forEach(AsyncSpawnRun::cancel);
         activeSpawns.clear();
@@ -458,25 +444,6 @@ public final class LootChestManager implements LootBridge {
             progress,
             parallelism
         );
-    }
-
-    @Override
-    public void removeOutside(org.bukkit.WorldBorder border) {
-        World world = border.getWorld();
-        if (world == null) {
-            return;
-        }
-        destroyOutsideBoundary(
-            world,
-            border.getCenter().getX(),
-            border.getCenter().getZ(),
-            border.getSize() / 2.0
-        );
-    }
-
-    @Override
-    public void removeOutside(World world, double centerX, double centerZ, double radius) {
-        destroyOutsideBoundary(world, centerX, centerZ, radius);
     }
 
     @Override

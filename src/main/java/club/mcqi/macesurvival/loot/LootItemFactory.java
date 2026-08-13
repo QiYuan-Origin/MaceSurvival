@@ -92,7 +92,7 @@ final class LootItemFactory {
         } else {
             item = createTypedItem(definition, tier);
         }
-        applyDurability(definition, item);
+        applyDurability(definition, tier, item);
         applyPresentation(definition, tier, item);
         return item;
     }
@@ -150,7 +150,10 @@ final class LootItemFactory {
             case TWO -> "two-star";
             case THREE -> "three-star";
         };
-        List<Double> range = lootConfiguration().getDoubleList("spear.bonus-damage." + tierName);
+        List<Double> range = firstConfiguredRange(
+            "spear.bonus-damage." + tierName,
+            "spear.bonus-damage.any"
+        );
         double minimum = range.size() >= 2 ? range.get(0) : 1.0;
         double maximum = range.size() >= 2 ? range.get(1) : tier.stars() * 4.0 + 4.0;
         combat.applySpearDamageBonus(spear, random.nextDouble(minimum, Math.nextUp(maximum)));
@@ -221,19 +224,54 @@ final class LootItemFactory {
         return builder.toString();
     }
 
-    private void applyDurability(ReloadableLootTable.Definition definition, ItemStack item) {
+    private void applyDurability(ReloadableLootTable.Definition definition, LootTier tier, ItemStack item) {
         if (definition.maximumUses() > 0) {
-            combat.randomizeRemainingUses(item, definition.minimumUses(), definition.maximumUses());
+            int minimumUses = definition.minimumUses();
+            int maximumUses = definition.maximumUses();
+            List<Integer> tierRange = tierDurabilityRange(definition, tier, item);
+            if (tierRange.size() >= 2) {
+                minimumUses = tierRange.get(0);
+                maximumUses = tierRange.get(1);
+            }
+            combat.randomizeRemainingUses(item, minimumUses, maximumUses);
             return;
         }
         if (!definition.randomDurability()) {
             return;
         }
-        double minimum = Math.max(0.0, Math.min(1.0,
-            plugin.getConfig().getDouble("loot.armor-durability-min", 0.30)));
-        double maximum = Math.max(minimum, Math.min(1.0,
-            plugin.getConfig().getDouble("loot.armor-durability-max", 0.90)));
+        String tierName = switch (tier) {
+            case ONE -> "one-star";
+            case TWO -> "two-star";
+            case THREE -> "three-star";
+        };
+        List<Double> configured = firstConfiguredRange(
+            "armor.durability." + tierName,
+            "armor.durability.any"
+        );
+        double minimum = configured.size() >= 2
+            ? configured.get(0)
+            : plugin.getConfig().getDouble("loot.armor-durability-min", 0.30);
+        double maximum = configured.size() >= 2
+            ? configured.get(1)
+            : plugin.getConfig().getDouble("loot.armor-durability-max", 0.90);
+        minimum = Math.max(0.0, Math.min(1.0, minimum));
+        maximum = Math.max(minimum, Math.min(1.0, maximum));
         combat.randomizeDurability(item, minimum, maximum);
+    }
+
+    private List<Integer> tierDurabilityRange(ReloadableLootTable.Definition definition, LootTier tier, ItemStack item) {
+        String family = presentationFamily(definition, item);
+        String tierName = switch (tier) {
+            case ONE -> "one-star";
+            case TWO -> "two-star";
+            case THREE -> "three-star";
+        };
+        return firstConfiguredIntegerRange(
+            family + ".durability." + tierName,
+            family + ".durability.any",
+            "durability." + tierName,
+            "durability.any"
+        );
     }
 
     private ItemStack potion(PotionType type, boolean splash) {
@@ -293,6 +331,28 @@ final class LootItemFactory {
             return maceSurvival.configFiles().configuration("loot.yml");
         }
         return YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "loot.yml"));
+    }
+
+    private List<Double> firstConfiguredRange(String... paths) {
+        FileConfiguration configuration = lootConfiguration();
+        for (String path : paths) {
+            List<Double> values = configuration.getDoubleList(path);
+            if (values.size() >= 2) {
+                return values;
+            }
+        }
+        return List.of();
+    }
+
+    private List<Integer> firstConfiguredIntegerRange(String... paths) {
+        FileConfiguration configuration = lootConfiguration();
+        for (String path : paths) {
+            List<Integer> values = configuration.getIntegerList(path);
+            if (values.size() >= 2) {
+                return values;
+            }
+        }
+        return List.of();
     }
 
     private static Map<String, Object> configurationMap(ConfigurationSection section) {

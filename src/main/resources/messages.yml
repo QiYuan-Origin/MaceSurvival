@@ -1,4 +1,4 @@
-config-version: 10
+config-version: 11
 
 prefix: '<color:#E70939><shadow:#3A0612:1>ᴍꜱ</shadow></color> <dark_gray>›</dark_gray> '
 
@@ -57,16 +57,23 @@ lobby:
   loadout-no-slot: '<color:#ff4f68>No open slot.</color>'
   hotbar:
     team:
-      name: '<color:#91ff6d>Party</color>'
-      lore: '<gray>Invite / team drop.</gray>'
+      name: '<color:#91ff6d><shadow:#143914:1>ᴘᴀʀᴛʏ</shadow></color>'
+      lore: '<dark_gray>Invite / squad drop.</dark_gray>'
     loadout:
-      name: '<color:#7dd7ff>Loadout</color>'
-      lore: '<gray>Starter slot order.</gray>'
+      name: '<color:#7dd7ff><shadow:#153344:1>ʟᴏᴀᴅᴏᴜᴛ</shadow></color>'
+      lore: '<dark_gray>Starter slot order.</dark_gray>'
+    language:
+      en-name: '<color:#ffdf6b><shadow:#4b3400:1>ʟᴀɴɢᴜᴀɢᴇ</shadow></color> <dark_gray>EN</dark_gray>'
+      en-lore: '<gray>Click to switch Chinese.</gray>'
+      zh-name: '<color:#ffdf6b><shadow:#4b3400:1>语 言</shadow></color> <dark_gray>中文</dark_gray>'
+      zh-lore: '<gray>点击切换 English.</gray>'
     visibility:
-      shown-name: '<color:#91ff6d>Players: All</color>'
+      shown-name: '<color:#91ff6d><shadow:#143914:1>ᴘʟᴀʏᴇʀꜱ</shadow></color> <dark_gray>ALL</dark_gray>'
       shown-lore: '<gray>Click: party only.</gray>'
-      hidden-name: '<color:#c7c7c7>Players: Party</color>'
+      hidden-name: '<color:#c7c7c7><shadow:#202020:1>ᴘʟᴀʏᴇʀꜱ</shadow></color> <dark_gray>PARTY</dark_gray>'
       hidden-lore: '<gray>Click: show all.</gray>'
+  language:
+    changed: '<gray>Language</gray> <dark_gray>›</dark_gray> <color:#ffdf6b>{language}</color>'
 
 team:
   created: '<color:#91ff6d>Party created.</color>'
@@ -105,7 +112,7 @@ game:
   reconnect-expired: '<color:#ff4f68>Expired.</color> <gray>Spectating.</gray>'
   deployment-jump: '<color:#ffdf6b><shadow:#4b3400:1>ᴄᴀᴘᴛᴀɪɴ ᴅʀᴏᴘ</shadow></color> <dark_gray>•</dark_gray> <gray>Party released.</gray>'
   deployment-forced: '<color:#ff4f68><shadow:#401818:1>ꜰᴏʀᴄᴇ ᴅʀᴏᴘ</shadow></color>'
-  border-moving: '<color:#ff4f68><shadow:#401818:1>ᴢᴏɴᴇ ꜱʜɪꜰᴛ</shadow></color> <dark_gray>•</dark_gray> <gray>Loot outside the ring was cleared.</gray>'
+  border-moving: '<color:#ff4f68><shadow:#401818:1>ᴢᴏɴᴇ ꜱʜɪꜰᴛ</shadow></color> <dark_gray>•</dark_gray> <gray>New loot is appearing inside the ring.</gray>'
   eliminated: '<color:#ff4f68><shadow:#401818:1>ᴇʟɪᴍɪɴᴀᴛᴇᴅ</shadow></color>'
   winner: '<white>{winner}</white> <gray>won</gray> <color:#91ff6d><shadow:#163916:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color>'
   draw: '<dark_gray>No survivors.</dark_gray>'
@@ -122,6 +129,11 @@ deployment:
   drop-title: '<color:#E70939><shadow:#3A0612:1>ᴅʀᴏᴘ</shadow></color>'
   drop-subtitle: '<gray>Steer horizontally. Fall speed is locked.</gray>'
   drop-actionbar: '<color:#E70939><shadow:#3A0612:1>ᴅʀᴏᴘ</shadow></color> <dark_gray>›</dark_gray> <gray>Look direction controls glide.</gray>'
+
+border:
+  near-actionbar: '<color:#ff4f68><shadow:#401818:1>ʀɪɴɢ</shadow></color> <dark_gray>›</dark_gray> <gray>{distance}m to border</gray>'
+  outside-actionbar: '<color:#650000><shadow:#160000:1>ᴏᴜᴛꜱɪᴅᴇ ʀɪɴɢ</shadow></color> <dark_gray>›</dark_gray> <color:#ff4f68>{distance}m</color>'
+  damage-actionbar: '<color:#650000><shadow:#160000:1>ʀɪɴɢ ᴅᴀᴍᴀɢᴇ</shadow></color> <dark_gray>›</dark_gray> <color:#ff4f68>{distance}m outside</color>'
 
 title:
   victory: '<color:#91ff6d><shadow:#1e4b20:1>ᴠɪᴄᴛᴏʀʏ</shadow></color>'
@@ -193,8 +205,8 @@ scoreboard:
   lobby-needed: '<color:#ffdf6b>!</color> <gray>Need:</gray> <color:#ff4f68>{needed}</color>'
   lobby-countdown: '<color:#ffdf6b>!</color> <gray>Drop:</gray> <color:#ff4f68>{seconds}s</color>'
   lobby-team: '<color:#91ff6d>⚑</color> <gray>Party:</gray> <{color}>{team_size}</{color}><dark_gray>/</dark_gray><white>{max_size}</white>'
-  time-border: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ffc857>{border}m</color>'
-  time-border-moving: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ff4f68>{border}m</color>'
+  time-border: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <gray>Ring</gray> <color:#ffc857>{border}m</color>'
+  time-border-moving: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <gray>Ring</gray> <color:#ff4f68>{border}m</color>'
   alive: '<color:#a7efff>♥</color> <gray>Alive</gray> <white>{alive}</white>'
   kills: '<color:#ffdf6b>⚔</color> <gray>Kills</gray> <white>{kills}</white> <dark_gray>#</dark_gray><color:#ff4f68>{rank}</color>'
   team-kills: '<color:#91ff6d>⚑</color> <gray>Team</gray> <color:#5dff66>{kills}</color> <dark_gray>#</dark_gray><white>{rank}</white>'
@@ -203,3 +215,101 @@ scoreboard:
   teammate-unknown: '<dark_gray>-</dark_gray> <{color}>{name}</{color}> <gray>--m</gray> <color:#ff4f68>0%</color>'
   teammate-dead: '<red><strikethrough>{name}</strikethrough></red> <dark_gray>down</dark_gray>'
   server: '<color:#9aa8ff><shadow:#202448:1>MCQI.TOP</shadow></color>'
+
+languages:
+  zh:
+    general:
+      no-permission: '<color:#ff4f68>没有权限。</color>'
+      player-only: '<color:#ff4f68>只有玩家能用。</color>'
+      unknown-command: '<color:#ff4f68>未知命令。</color> <gray>试试</gray> <white>/{label} help</white>'
+      unknown-command-hidden: '<color:#ff4f68>未知命令。</color>'
+      player-or-invitation-not-found: '<color:#ff4f68>玩家或邀请不存在。</color>'
+      config-reloaded: '<color:#91ff6d>已重载。</color> <gray>缺失默认文件已补齐。</gray>'
+      config-reload-failed: '<color:#ff4f68>重载失败。</color> <gray>看控制台。</gray>'
+    lobby:
+      joined: '<color:#9adfff><shadow:#153344:1>已进入等待</shadow></color> <dark_gray>•</dark_gray> <gray>队伍和开局物品已准备。</gray>'
+      countdown-cancelled: '<color:#ffdf6b>等待暂停。</color> <gray>人数不足。</gray>'
+      settings-locked: '<color:#ff4f68>已锁定。</color> <gray>投放已经开始。</gray>'
+      loadout-reset: '<color:#91ff6d>开局物品位置已重置。</color> <dark_gray>1 / 2 / 8 / 9</dark_gray>'
+      loadout-no-slot: '<color:#ff4f68>没有空槽位。</color>'
+      hotbar:
+        team:
+          name: '<color:#91ff6d><shadow:#143914:1>组 队</shadow></color>'
+          lore: '<dark_gray>邀请 / 队伍投放。</dark_gray>'
+        loadout:
+          name: '<color:#7dd7ff><shadow:#153344:1>开局物品</shadow></color>'
+          lore: '<dark_gray>调整剑、斧、重锤槽位。</dark_gray>'
+        language:
+          en-name: '<color:#ffdf6b><shadow:#4b3400:1>ʟᴀɴɢᴜᴀɢᴇ</shadow></color> <dark_gray>EN</dark_gray>'
+          en-lore: '<gray>点击切换中文。</gray>'
+          zh-name: '<color:#ffdf6b><shadow:#4b3400:1>语 言</shadow></color> <dark_gray>中文</dark_gray>'
+          zh-lore: '<gray>点击切换 English。</gray>'
+        visibility:
+          shown-name: '<color:#91ff6d><shadow:#143914:1>玩家显示</shadow></color> <dark_gray>全部</dark_gray>'
+          shown-lore: '<gray>点击：只显示队友。</gray>'
+          hidden-name: '<color:#c7c7c7><shadow:#202020:1>玩家显示</shadow></color> <dark_gray>队友</dark_gray>'
+          hidden-lore: '<gray>点击：显示全部。</gray>'
+      language:
+        changed: '<gray>语言</gray> <dark_gray>›</dark_gray> <color:#ffdf6b>{language}</color>'
+    team:
+      created: '<color:#91ff6d>队伍已创建。</color>'
+      disbanded: '<color:#ffdf6b>队伍已解散。</color>'
+      done: '<color:#91ff6d>队伍已更新。</color>'
+      unknown-action: '<color:#ff4f68>未知队伍操作。</color>'
+      invite-sent: '<color:#7dd7ff>邀请已发送</color> <gray>给</gray> <white>{player}</white>'
+      invite-received: '<white>{player}</white> <gray>向你发送了队伍邀请。</gray>'
+      invite-expired: '<color:#ffdf6b>邀请已过期。</color>'
+      invite-declined: '<color:#ffdf6b>邀请已拒绝。</color>'
+      joined: '<color:#91ff6d>已加入队伍。</color>'
+      member-joined: '<white>{player}</white> <color:#91ff6d>加入了队伍。</color>'
+      left: '<color:#ffdf6b>已离开队伍。</color>'
+      kicked: '<color:#ff4f68>你被移出队伍。</color>'
+      member-kicked: '<white>{player}</white> <color:#ffdf6b>已被移出。</color>'
+      leader-transferred: '<white>{player}</white> <color:#91ff6d>现在控制投放。</color>'
+      you-are-leader: '<color:#91ff6d>你现在控制投放。</color>'
+      list: '<gray>队伍</gray> <white>{size}/{max}</white> <dark_gray>•</dark_gray> <aqua>{members}</aqua>'
+      full: '<color:#ff4f68>队伍已满。</color>'
+      friendly-hit: '<color:#a7efff>已阻止队友伤害。</color>'
+    game:
+      countdown: '<color:#ffdf6b><shadow:#4b3400:1>投放</shadow></color> <white>{seconds}s</white>'
+      stopped: '<color:#ff4f68>游戏已停止。</color>'
+      reconnect-restored: '<color:#91ff6d>已重连。</color> <gray>状态已恢复。</gray>'
+      reconnect-expired: '<color:#ff4f68>重连超时。</color> <gray>已进入旁观。</gray>'
+      deployment-jump: '<color:#ffdf6b><shadow:#4b3400:1>队长投放</shadow></color> <dark_gray>•</dark_gray> <gray>队伍已离开乐魂。</gray>'
+      deployment-forced: '<color:#ff4f68><shadow:#401818:1>强制投放</shadow></color>'
+      border-moving: '<color:#ff4f68><shadow:#401818:1>安全区移动</shadow></color> <dark_gray>•</dark_gray> <gray>圈内正在刷新新箱子。</gray>'
+      eliminated: '<color:#ff4f68><shadow:#401818:1>淘汰</shadow></color>'
+      winner: '<white>{winner}</white> <gray>赢下了</gray> <color:#91ff6d><shadow:#163916:1>重锤大逃杀</shadow></color>'
+      draw: '<dark_gray>无人存活。</dark_gray>'
+      starting-title: '<color:#E70939><shadow:#3A0612:1>游戏载入中</shadow></color>'
+      starting-subtitle: '<gray>黑屏转场。</gray>'
+    deployment:
+      ride-title: '<color:#9adfff><shadow:#153344:1>{team}</shadow></color>'
+      ride-subtitle: '<gray>队长跳下会带全队投放。</gray>'
+      ride-actionbar: '<color:#9adfff><shadow:#153344:1>乐 魂</shadow></color> <dark_gray>›</dark_gray> <gray>观察地形，等待投放。</gray>'
+      ride-countdown: '<color:#E70939><shadow:#3A0612:1>投放</shadow></color> <dark_gray>›</dark_gray> <gray>可跳</gray> <white>{jump}s</white> <dark_gray>|</dark_gray> <gray>强制</gray> <color:#ffdf6b>{force}s</color>'
+      force-count-title: '<color:#ffdf6b><shadow:#4b3400:1>{force}</shadow></color>'
+      force-count-subtitle: '<gray>即将强制投放。</gray>'
+      drop-title: '<color:#E70939><shadow:#3A0612:1>投 放</shadow></color>'
+      drop-subtitle: '<gray>视角控制水平飞行，Y 动量锁定。</gray>'
+      drop-actionbar: '<color:#E70939><shadow:#3A0612:1>投放中</shadow></color> <dark_gray>›</dark_gray> <gray>看向哪里就往哪里飞。</gray>'
+    border:
+      near-actionbar: '<color:#ff4f68><shadow:#401818:1>边界</shadow></color> <dark_gray>›</dark_gray> <gray>距离边界 {distance}m</gray>'
+      outside-actionbar: '<color:#650000><shadow:#160000:1>圈外</shadow></color> <dark_gray>›</dark_gray> <color:#ff4f68>{distance}m</color>'
+      damage-actionbar: '<color:#650000><shadow:#160000:1>圈外扣血</shadow></color> <dark_gray>›</dark_gray> <color:#ff4f68>离圈 {distance}m</color>'
+    scoreboard:
+      title: '<color:#E70939><shadow:#3A0612:1>重锤大逃杀</shadow></color> <dark_gray>#</dark_gray><white>{rank}</white>'
+      lobby-status: '<color:#8bdcff>◷</color> <gray>等待</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>'
+      lobby-needed: '<color:#ffdf6b>!</color> <gray>还差:</gray> <color:#ff4f68>{needed}</color>'
+      lobby-countdown: '<color:#ffdf6b>!</color> <gray>投放:</gray> <color:#ff4f68>{seconds}s</color>'
+      lobby-team: '<color:#91ff6d>⚑</color> <gray>队伍:</gray> <{color}>{team_size}</{color}><dark_gray>/</dark_gray><white>{max_size}</white>'
+      time-border: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <gray>边界</gray> <color:#ffc857>{border}m</color>'
+      time-border-moving: '<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <gray>边界</gray> <color:#ff4f68>{border}m</color>'
+      alive: '<color:#a7efff>♥</color> <gray>存活</gray> <white>{alive}</white>'
+      kills: '<color:#ffdf6b>⚔</color> <gray>击杀</gray> <white>{kills}</white> <dark_gray>#</dark_gray><color:#ff4f68>{rank}</color>'
+      team-kills: '<color:#91ff6d>⚑</color> <gray>队伍</gray> <color:#5dff66>{kills}</color> <dark_gray>#</dark_gray><white>{rank}</white>'
+      teammates: '<dark_gray>队友位置</dark_gray>'
+      teammate: '<white>{direction}</white> <{color}>{name}</{color}> <gray>{distance}m</gray> <color:#ff4f68>0%</color>'
+      teammate-unknown: '<dark_gray>-</dark_gray> <{color}>{name}</{color}> <gray>--m</gray> <color:#ff4f68>0%</color>'
+      teammate-dead: '<red><strikethrough>{name}</strikethrough></red> <dark_gray>已倒下</dark_gray>'
+      server: '<color:#9aa8ff><shadow:#202448:1>MCQI.TOP</shadow></color>'

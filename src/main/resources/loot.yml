@@ -1,19 +1,35 @@
-config-version: 3
+config-version: 4
 
-# Every entry has a non-zero chance in every chest tier. Higher tiers only change probability.
+# Core battle items have the same chance in every tier. Tiers mainly change durability and enchantment quality.
 categories:
   consumable:
-    tier-weights: [60, 40, 25]
+    tier-weights: [36, 36, 36]
   equipment:
-    tier-weights: [30, 40, 40]
+    tier-weights: [36, 36, 36]
   upgrade:
-    tier-weights: [10, 20, 35]
+    tier-weights: [22, 22, 22]
 
 spear:
+  durability:
+    one-star: [6, 12]
+    two-star: [12, 22]
+    three-star: [22, 42]
   bonus-damage:
     one-star: [1.0, 8.0]
     two-star: [1.0, 12.0]
     three-star: [1.0, 16.0]
+
+gear:
+  durability:
+    one-star: [10, 22]
+    two-star: [22, 44]
+    three-star: [44, 96]
+
+armor:
+  durability:
+    one-star: [0.24, 0.46]
+    two-star: [0.46, 0.72]
+    three-star: [0.72, 0.96]
 
 entries:
   cooked-beef:
@@ -43,70 +59,70 @@ entries:
   golden-apple:
     material: GOLDEN_APPLE
     amount: [1, 3]
-    tier-weights: [14, 20, 24]
+    tier-weights: [18, 18, 18]
   enchanted-golden-apple:
     material: ENCHANTED_GOLDEN_APPLE
     amount: [1, 1]
-    tier-weights: [1, 4, 12]
+    tier-weights: [5, 5, 5]
   ender-pearl:
     material: ENDER_PEARL
     amount: [1, 4]
-    tier-weights: [18, 22, 22]
+    tier-weights: [20, 20, 20]
   wind-charge:
     material: WIND_CHARGE
     amount: [2, 8]
-    tier-weights: [18, 20, 20]
+    tier-weights: [20, 20, 20]
 
   totem:
     material: TOTEM_OF_UNDYING
     amount: [1, 1]
-    tier-weights: [2, 8, 18]
+    tier-weights: [8, 8, 8]
   shield:
     material: SHIELD
     amount: [1, 1]
     limited-durability: [12, 28]
-    tier-weights: [8, 10, 12]
+    tier-weights: [12, 12, 12]
   elytra:
     material: ELYTRA
     amount: [1, 1]
     limited-durability: [18, 40]
-    tier-weights: [1, 6, 14]
+    tier-weights: [12, 12, 12]
 
   wooden-spear:
     material: WOODEN_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [20, 8, 3]
+    tier-weights: [10, 10, 10]
   stone-spear:
     material: STONE_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [18, 11, 4]
+    tier-weights: [10, 10, 10]
   copper-spear:
     material: COPPER_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [15, 15, 7]
+    tier-weights: [10, 10, 10]
   iron-spear:
     material: IRON_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [10, 18, 14]
+    tier-weights: [10, 10, 10]
   golden-spear:
     material: GOLDEN_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [6, 7, 5]
+    tier-weights: [10, 10, 10]
   diamond-spear:
     material: DIAMOND_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [3, 15, 30]
+    tier-weights: [10, 10, 10]
   netherite-spear:
     material: NETHERITE_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [1, 7, 28]
+    tier-weights: [10, 10, 10]
 
   leather-armor:
     material-group: LEATHER_ARMOR
@@ -176,45 +192,45 @@ entries:
   damage-upgrade:
     item-type: DAMAGE_UPGRADE
     amount: [1, 1]
-    tier-weights: [5, 13, 28]
+    tier-weights: [12, 12, 12]
   healing-upgrade:
     item-type: HEALING_UPGRADE
     amount: [1, 1]
-    tier-weights: [5, 13, 28]
+    tier-weights: [12, 12, 12]
   next-kill-upgrade:
     item-type: NEXT_KILL_UPGRADE
     amount: [1, 1]
-    tier-weights: [4, 9, 17]
+    tier-weights: [8, 8, 8]
   random-armor-enchant:
     item-type: ARMOR_ENCHANT
     amount: [1, 1]
-    tier-weights: [6, 17, 32]
+    tier-weights: [14, 14, 14]
   sharpness-book:
     item-type: WEAPON_ENCHANT
     enchantment: SHARPNESS
     amount: [1, 1]
-    tier-weights: [8, 18, 34]
+    tier-weights: [14, 14, 14]
   breach-book:
     item-type: WEAPON_ENCHANT
     enchantment: BREACH
     amount: [1, 1]
-    tier-weights: [6, 16, 31]
+    tier-weights: [12, 12, 12]
   density-book:
     item-type: WEAPON_ENCHANT
     enchantment: DENSITY
     amount: [1, 1]
-    tier-weights: [6, 16, 31]
+    tier-weights: [12, 12, 12]
   wind-burst-book:
     item-type: WEAPON_ENCHANT
     enchantment: WIND_BURST
     amount: [1, 1]
-    tier-weights: [5, 15, 30]
+    tier-weights: [10, 10, 10]
   unbreaking-book:
     item-type: WEAPON_ENCHANT
     enchantment: UNBREAKING
     amount: [1, 1]
-    tier-weights: [8, 18, 32]
+    tier-weights: [12, 12, 12]
   kill-mending-book:
     item-type: KILL_MENDING
     amount: [1, 1]
-    tier-weights: [5, 15, 30]
+    tier-weights: [10, 10, 10]

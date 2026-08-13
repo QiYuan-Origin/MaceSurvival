@@ -47,6 +47,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
     private boolean forcedCountdown;
     private int initialTeamCount;
     private Instant matchStartedAt;
+    private boolean matchEndingRestartIssued;
 
     public GameManager(
             MaceSurvivalPlugin plugin,
@@ -68,6 +69,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
 
     public void enable() {
         worldManager.prepareLobby();
+        worldManager.preloadMatchWorld();
         changeState(GameState.WAITING);
         heartbeat = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickSecond, 20L, 20L);
         for (Player player : plugin.getServer().getOnlinePlayers()) handleJoin(player);
@@ -278,12 +280,16 @@ public final class GameManager implements GameFacade, BorderController.Listener,
     }
 
     private void setupSpectator(Player player) {
-        player.closeInventory();
-        player.setGameMode(GameMode.SPECTATOR);
-        player.setInvulnerable(true);
         World world = worldManager.matchWorld();
         Location location = world.getWorldBorder().getCenter();
         location.setY(world.getHighestBlockYAt(location) + 20.0);
+        setupSpectator(player, location);
+    }
+
+    private void setupSpectator(Player player, Location location) {
+        player.closeInventory();
+        player.setGameMode(GameMode.SPECTATOR);
+        player.setInvulnerable(true);
         player.teleport(location);
     }
 
@@ -318,6 +324,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
     public void eliminate(Player victim, Player killer) {
         Participant participant = participants.get(victim.getUniqueId());
         if (participant == null || !participant.alive()) return;
+        Location eliminationLocation = victim.getLocation().clone();
         participant.setAlive(false);
         participant.setDisconnectedAt(null);
         disconnectSnapshots.remove(victim.getUniqueId());
@@ -330,7 +337,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
         }
         events.playerEliminated(victim, killer, participant);
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            if (victim.isOnline()) setupSpectator(victim);
+            if (victim.isOnline()) setupSpectator(victim, eliminationLocation);
             checkForWinner();
         });
     }
@@ -405,11 +412,28 @@ public final class GameManager implements GameFacade, BorderController.Listener,
         int delay = plugin.getConfig().getInt("server.shutdown-delay-seconds", 8);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (plugin.getConfig().getBoolean("server.shutdown-after-match", true)) {
-                plugin.getServer().shutdown();
+                restartServer();
             } else {
                 resetToLobby();
             }
         }, Math.max(1, delay) * 20L);
+    }
+
+    private void restartServer() {
+        if (matchEndingRestartIssued) {
+            return;
+        }
+        matchEndingRestartIssued = true;
+        String command = plugin.getConfig().getString("server.restart-command", "restart").strip();
+        if (!command.isEmpty()) {
+            String commandLine = command.startsWith("/") ? command.substring(1) : command;
+            boolean accepted = plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), commandLine);
+            if (accepted) {
+                return;
+            }
+            plugin.getLogger().warning("Configured restart command was not accepted; falling back to shutdown.");
+        }
+        plugin.getServer().shutdown();
     }
 
     private void resetToLobby() {
@@ -423,6 +447,7 @@ public final class GameManager implements GameFacade, BorderController.Listener,
         countdownRemaining = 0;
         initialTeamCount = 0;
         matchStartedAt = null;
+        matchEndingRestartIssued = false;
         changeState(GameState.WAITING);
         for (Player player : plugin.getServer().getOnlinePlayers()) setupLobbyPlayer(player);
         worldManager.resetMatch();
@@ -459,6 +484,10 @@ public final class GameManager implements GameFacade, BorderController.Listener,
         return matchStartedAt == null ? 0L : Duration.between(matchStartedAt, Instant.now()).toSeconds();
     }
     @Override public double currentBorderRadius() { return borderController.currentRadius(); }
+    public Location currentBorderCenter() {
+        Location center = borderController.currentCenter();
+        return center == null ? worldManager.matchWorld().getWorldBorder().getCenter() : center;
+    }
     @Override public int countdownRemainingSeconds() {
         return state == GameState.COUNTDOWN ? Math.max(0, countdownRemaining) : 0;
     }

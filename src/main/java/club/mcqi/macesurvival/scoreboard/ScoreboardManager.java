@@ -31,9 +31,9 @@ public final class ScoreboardManager implements AutoCloseable {
         "<color:#E70939><shadow:#3A0612:1>ᴍᴀᴄᴇ ꜱᴜʀᴠɪᴠᴀʟ</shadow></color> "
             + "<dark_gray>#</dark_gray><white>{rank}</white>";
     private static final String DEFAULT_TIME_BORDER =
-        "<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ffc857>{border}m</color>";
+        "<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <gray>Ring</gray> <color:#ffc857>{border}m</color>";
     private static final String DEFAULT_TIME_BORDER_MOVING =
-        "<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <color:#ff4f68>{border}m</color>";
+        "<color:#8bdcff>◷</color> <gray>{time}</gray> <dark_gray>•</dark_gray> <gray>Ring</gray> <color:#ff4f68>{border}m</color>";
     private static final String DEFAULT_ALIVE =
         "<color:#a7efff>♥</color> <gray>Alive</gray> <white>{alive}</white>";
     private static final String DEFAULT_KILLS =
@@ -152,7 +152,7 @@ public final class ScoreboardManager implements AutoCloseable {
     private List<Component> lines(Player viewer, BoardSnapshot snapshot) {
         Map<String, Object> timeBorder = Map.of(
             "time", formatTime(snapshot.elapsed()),
-            "border", formatBorder(snapshot.borderRadius())
+            "border", snapshot.borderDistance()
         );
         List<Component> lines = new ArrayList<>();
         lines.add(Component.empty());
@@ -287,10 +287,6 @@ public final class ScoreboardManager implements AutoCloseable {
         return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds % 60L);
     }
 
-    private static String formatBorder(double radius) {
-        return String.format(Locale.ROOT, "%,.0f", Math.max(0.0D, radius));
-    }
-
     private static void requirePrimaryThread() {
         if (!Bukkit.isPrimaryThread()) {
             throw new IllegalStateException("Scoreboards must be updated from the server thread");
@@ -334,7 +330,7 @@ public final class ScoreboardManager implements AutoCloseable {
     /** Immutable display data supplied by the live game manager. */
     public record BoardSnapshot(
         Duration elapsed,
-        double borderRadius,
+        String borderDistance,
         boolean borderMoving,
         int alivePlayers,
         int playerKills,
@@ -345,7 +341,8 @@ public final class ScoreboardManager implements AutoCloseable {
     ) {
         public BoardSnapshot {
             elapsed = Objects.requireNonNull(elapsed, "elapsed");
-            if (borderRadius < 0.0D || alivePlayers < 0 || playerKills < 0 || teamKills < 0) {
+            borderDistance = Objects.requireNonNull(borderDistance, "borderDistance");
+            if (alivePlayers < 0 || playerKills < 0 || teamKills < 0) {
                 throw new IllegalArgumentException("Scoreboard values cannot be negative");
             }
             if (playerKillRank < 1 || teamKillRank < 1) {

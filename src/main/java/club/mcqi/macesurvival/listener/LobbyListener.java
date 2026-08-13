@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class LobbyListener implements Listener {
     private static final int DEFAULT_TEAM_ITEM_SLOT = 0;
     private static final int DEFAULT_LOADOUT_ITEM_SLOT = 4;
+    private static final int DEFAULT_LANGUAGE_ITEM_SLOT = 7;
     private static final int DEFAULT_VISIBILITY_ITEM_SLOT = 8;
 
     private final JavaPlugin plugin;
@@ -82,7 +83,7 @@ public final class LobbyListener implements Listener {
         plugin.getServer().getScheduler().runTask(plugin, () -> admit(player));
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND || !gateway.isWaitingPlayer(event.getPlayer())) {
             return;
@@ -106,6 +107,16 @@ public final class LobbyListener implements Listener {
             event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.BLOCK_TRIAL_SPAWNER_DETECT_PLAYER,
                 0.75F, 1.0F);
             refreshVisibility();
+        } else if (control.equals("language")) {
+            Player player = event.getPlayer();
+            String language = text.toggleLanguage(player);
+            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.85F, 1.0F);
+            player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.55F, 1.0F);
+            text.sendPrefixed(player, "lobby.language.changed", Map.of(
+                "language", language.equals("zh") ? "中文" : "English"
+            ));
+            giveLobbyItems(player);
+            presentation.requestRefresh();
         }
     }
 
@@ -204,6 +215,7 @@ public final class LobbyListener implements Listener {
         player.setItemOnCursor(new ItemStack(Material.AIR));
         int teamSlot = lobbySlot("team-slot", DEFAULT_TEAM_ITEM_SLOT);
         int loadoutSlot = lobbySlot("loadout-slot", DEFAULT_LOADOUT_ITEM_SLOT);
+        int languageSlot = lobbySlot("language-slot", DEFAULT_LANGUAGE_ITEM_SLOT);
         int visibilitySlot = lobbySlot("visibility-slot", DEFAULT_VISIBILITY_ITEM_SLOT);
         player.getInventory().setItem(teamSlot, lobbyItem(
             Material.PLAYER_HEAD,
@@ -217,6 +229,7 @@ public final class LobbyListener implements Listener {
             text.message(player, "lobby.hotbar.loadout.name", Map.of()),
             text.message(player, "lobby.hotbar.loadout.lore", Map.of())
         ));
+        player.getInventory().setItem(languageSlot, languageItem(player));
         player.getInventory().setItem(visibilitySlot, visibilityItem(player));
         player.getInventory().setHeldItemSlot(teamSlot);
         requestVisibilityRefresh();
@@ -268,7 +281,25 @@ public final class LobbyListener implements Listener {
             if ("visibility".equals(controlId(existing))) {
                 viewer.getInventory().setItem(visibilitySlot, visibilityItem(viewer));
             }
+            int languageSlot = lobbySlot("language-slot", DEFAULT_LANGUAGE_ITEM_SLOT);
+            if ("language".equals(controlId(viewer.getInventory().getItem(languageSlot)))) {
+                viewer.getInventory().setItem(languageSlot, languageItem(viewer));
+            }
         }
+    }
+
+    private ItemStack languageItem(Player player) {
+        boolean chinese = text.language(player).equals("zh");
+        return lobbyItem(
+            chinese ? Material.CHERRY_SIGN : Material.OAK_SIGN,
+            "language",
+            text.message(player, chinese
+                ? "lobby.hotbar.language.zh-name"
+                : "lobby.hotbar.language.en-name", Map.of()),
+            text.message(player, chinese
+                ? "lobby.hotbar.language.zh-lore"
+                : "lobby.hotbar.language.en-lore", Map.of())
+        );
     }
 
     private ItemStack visibilityItem(Player player) {

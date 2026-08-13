@@ -137,8 +137,6 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
             int stageIndex,
             Collection<Participant> participants
     ) {
-        loot.removeOutside(world, world.getWorldBorder().getCenter().getX(),
-            world.getWorldBorder().getCenter().getZ(), game.currentBorderRadius());
         loot.refresh(world, aliveCount(participants), world.getWorldBorder().getCenter().getX(),
             world.getWorldBorder().getCenter().getZ(), game.currentBorderRadius());
         for (Player player : world.getPlayers()) {
@@ -148,7 +146,7 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
 
     @Override
     public void boundaryMoved(org.bukkit.World world, org.bukkit.Location center, double radius) {
-        loot.removeOutside(world, center.getX(), center.getZ(), radius);
+        // Chests outside the moving ring remain shared map objectives; only new refreshes prefer the live ring.
     }
 
     @Override
@@ -252,7 +250,7 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
             int ownKills = own == null ? 0 : own.kills();
             scoreboards.update(viewer, new ScoreboardManager.BoardSnapshot(
                     Duration.ofSeconds(game.elapsedSeconds()),
-                    Math.max(0.0, game.currentBorderRadius()),
+                    boundaryDistance(viewer, game.currentBorderRadius()),
                     game.state() == GameState.ACTIVE,
                     alive,
                     ownKills,
@@ -295,6 +293,19 @@ public final class MatchRuntime implements MatchEvents, AutoCloseable {
                 color
             ));
         }
+    }
+
+    private static String boundaryDistance(Player viewer, double radius) {
+        org.bukkit.Location center = viewer.getWorld().getWorldBorder().getCenter();
+        double distanceFromCenter = Math.hypot(
+            viewer.getLocation().getX() - center.getX(),
+            viewer.getLocation().getZ() - center.getZ()
+        );
+        double delta = radius - distanceFromCenter;
+        if (delta < 0.0D) {
+            return "OUT " + Math.max(1, (int) Math.ceil(Math.abs(delta)));
+        }
+        return Integer.toString(Math.max(0, (int) Math.floor(delta)));
     }
 
     private List<ScoreboardManager.TeammateView> teammateViews(Player viewer, TeamData team) {

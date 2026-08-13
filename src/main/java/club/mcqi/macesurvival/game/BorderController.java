@@ -4,6 +4,8 @@ import club.mcqi.macesurvival.MaceSurvivalPlugin;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.bukkit.entity.Player;
@@ -11,6 +13,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public final class BorderController {
@@ -32,6 +35,7 @@ public final class BorderController {
     private double hardRadius;
     private Location segmentStart;
     private Location segmentTarget;
+    private Location center;
     private long segmentStartedAtTick;
     private double currentRadius;
     private double segmentDistance;
@@ -70,6 +74,7 @@ public final class BorderController {
         border.setDamageAmount(0.0);
         border.setWarningDistance(plugin.getConfig().getInt("border.warning-distance", 32));
         segmentStart = border.getCenter();
+        center = segmentStart.clone();
         beginStageTransition();
         task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L);
     }
@@ -77,7 +82,7 @@ public final class BorderController {
     private void beginStageTransition() {
         if (stageIndex >= radii.size() - 1) return;
         segmentStartedAtTick = elapsedTicks;
-        segmentStart = world.getWorldBorder().getCenter();
+        segmentStart = center == null ? world.getWorldBorder().getCenter() : center.clone();
         selectContainedStageTarget();
     }
 
@@ -99,7 +104,7 @@ public final class BorderController {
                 if (stageIndex < radii.size() - 1) beginStageTransition();
                 else {
                     segmentStartedAtTick = elapsedTicks;
-                    segmentStart = world.getWorldBorder().getCenter();
+                    segmentStart = center == null ? world.getWorldBorder().getCenter() : center.clone();
                     selectFinalTarget();
                 }
             }
@@ -112,15 +117,15 @@ public final class BorderController {
             moveCenter(progress);
             if (progress >= 1.0) {
                 segmentStartedAtTick = elapsedTicks;
-                segmentStart = world.getWorldBorder().getCenter();
+                segmentStart = center == null ? world.getWorldBorder().getCenter() : center.clone();
                 selectFinalTarget();
             }
         }
-        if (elapsedTicks % 5L == 0L) {
+        if (elapsedTicks % Math.max(1L, plugin.getConfig().getLong("border.particle-wall-interval-ticks", 3L)) == 0L) {
             renderParticles();
         }
         if (elapsedTicks % 20L == 0L) {
-            listener.onBoundaryMoved(world, world.getWorldBorder().getCenter(), currentRadius);
+            listener.onBoundaryMoved(world, center == null ? world.getWorldBorder().getCenter() : center.clone(), currentRadius);
         }
         if (elapsedTicks % 60L == 0L) {
             applyCircularDamage();
@@ -130,6 +135,7 @@ public final class BorderController {
     private void moveCenter(double progress) {
         double x = segmentStart.getX() + ((segmentTarget.getX() - segmentStart.getX()) * progress);
         double z = segmentStart.getZ() + ((segmentTarget.getZ() - segmentStart.getZ()) * progress);
+        center = new Location(world, x, 0.0, z);
         world.getWorldBorder().setCenter(x, z);
     }
 
@@ -196,23 +202,75 @@ public final class BorderController {
     }
 
     private void renderParticles() {
-        WorldBorder border = world.getWorldBorder();
-        Location center = border.getCenter();
+        Location visualCenter = center == null ? world.getWorldBorder().getCenter() : center;
         Color inside = parseColor(plugin.getConfig().getString("border.particle-color", "#E52B2B"));
         Color outside = parseColor(plugin.getConfig().getString("border.outside-particle-color", "#650000"));
+        Color transition = parseColor(plugin.getConfig().getString("border.particle-transition-color", "#FF7B7B"));
+        double renderDistance = Math.max(16.0D,
+            plugin.getConfig().getDouble("border.particle-render-distance", 180.0D));
+        double band = Math.max(8.0D,
+            plugin.getConfig().getDouble("border.particle-wall-band", 112.0D));
+        int columns = Math.max(8, Math.min(96,
+            plugin.getConfig().getInt("border.particle-columns-per-player", 48)));
+        double stepDegrees = Math.max(0.25D,
+            plugin.getConfig().getDouble("border.particle-angle-step-degrees", 2.0D));
+        List<Double> heights = plugin.getConfig().getDoubleList("border.particle-height-levels");
+        if (heights.isEmpty()) {
+            heights = List.of(0.35D, 1.15D, 1.95D, 2.75D, 3.55D);
+        }
+        boolean transitionParticle = plugin.getConfig().getBoolean("border.particle-transition-enabled", true);
         for (Player player : world.getPlayers()) {
             if (player.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
-            double dx = player.getX() - center.getX();
-            double dz = player.getZ() - center.getZ();
+            double dx = player.getX() - visualCenter.getX();
+            double dz = player.getZ() - visualCenter.getZ();
             double distance = Math.hypot(dx, dz);
-            if (Math.abs(distance - currentRadius) > 72.0) continue;
+            double distanceToRing = Math.abs(distance - currentRadius);
+            if (distanceToRing > renderDistance) {
+                if (elapsedTicks % 20L == 0L && distance > currentRadius) {
+                    player.sendActionBar(plugin.text().message(player, "border.outside-actionbar", Map.of(
+                        "distance", (int) Math.ceil(distance - currentRadius)
+                    )));
+                }
+                continue;
+            }
             double baseAngle = Math.atan2(dz, dx);
-            Particle.DustOptions dust = new Particle.DustOptions(distance > currentRadius ? outside : inside, 1.25f);
-            for (int offset = -5; offset <= 5; offset++) {
-                double angle = baseAngle + (offset * 0.0125);
-                double x = center.getX() + Math.cos(angle) * currentRadius;
-                double z = center.getZ() + Math.sin(angle) * currentRadius;
-                player.spawnParticle(Particle.DUST, x, player.getY() + 1.0, z, 1, 0.0, 0.8, 0.0, 0.0, dust);
+            double arcHalfRadians = Math.min(Math.PI,
+                Math.max(band, renderDistance) / Math.max(16.0D, currentRadius));
+            double configuredStep = Math.toRadians(stepDegrees);
+            double step = Math.max(0.0025D, Math.min(configuredStep, (arcHalfRadians * 2.0D) / columns));
+            Particle.DustOptions dust = new Particle.DustOptions(distance > currentRadius ? outside : inside, 1.45f);
+            Particle.DustTransition transitionDust =
+                new Particle.DustTransition(distance > currentRadius ? outside : inside, transition, 1.15f);
+            int rendered = 0;
+            for (double offset = -arcHalfRadians; offset <= arcHalfRadians && rendered < columns; offset += step) {
+                double angle = baseAngle + offset;
+                double x = visualCenter.getX() + Math.cos(angle) * currentRadius;
+                double z = visualCenter.getZ() + Math.sin(angle) * currentRadius;
+                if (Math.hypot(player.getX() - x, player.getZ() - z) > renderDistance + 24.0D) {
+                    continue;
+                }
+                for (double height : heights) {
+                    player.spawnParticle(Particle.DUST, x, player.getY() + height, z,
+                        1, 0.02D, 0.03D, 0.02D, 0.0D, dust);
+                }
+                if (transitionParticle && rendered % 4 == 0) {
+                    player.spawnParticle(Particle.DUST_COLOR_TRANSITION, x, player.getY() + 1.6D, z,
+                        1, 0.04D, 0.18D, 0.04D, 0.0D, transitionDust);
+                }
+                rendered++;
+            }
+            if (elapsedTicks % 20L == 0L) {
+                if (distance > currentRadius) {
+                    player.sendActionBar(plugin.text().message(player, "border.outside-actionbar", Map.of(
+                        "distance", (int) Math.ceil(distance - currentRadius)
+                    )));
+                    player.playSound(player.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE,
+                        SoundCategory.PLAYERS, 0.28F, 1.0F);
+                } else if (distanceToRing < plugin.getConfig().getDouble("border.warning-distance", 32.0D)) {
+                    player.sendActionBar(plugin.text().message(player, "border.near-actionbar", Map.of(
+                        "distance", (int) Math.floor(currentRadius - distance)
+                    )));
+                }
             }
         }
     }
@@ -224,12 +282,16 @@ public final class BorderController {
             if (player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
                 continue;
             }
-            double dx = player.getX() - world.getWorldBorder().getCenter().getX();
-            double dz = player.getZ() - world.getWorldBorder().getCenter().getZ();
+            Location damageCenter = center == null ? world.getWorldBorder().getCenter() : center;
+            double dx = player.getX() - damageCenter.getX();
+            double dz = player.getZ() - damageCenter.getZ();
             double distance = Math.hypot(dx, dz);
             if (distance <= radius) {
                 continue;
             }
+            player.sendActionBar(plugin.text().message(player, "border.damage-actionbar", Map.of(
+                "distance", (int) Math.ceil(distance - radius)
+            )));
             player.damage(Math.max(1.0, damage));
         }
     }
@@ -245,6 +307,9 @@ public final class BorderController {
 
     public long elapsedSeconds() { return elapsedSeconds; }
     public double currentRadius() { return currentRadius; }
+    public Location currentCenter() {
+        return center == null ? null : center.clone();
+    }
     public int stageIndex() { return stageIndex; }
 
     public void stop() {

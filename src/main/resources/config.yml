@@ -1,5 +1,5 @@
 # Configuration schema version. Missing values are restored on /macesurvival reload.
-config-version: 5
+config-version: 6
 
 server:
   address: mcqi.top
@@ -10,6 +10,7 @@ server:
     line-2: '§81.21.11+ §f● §9§lᴍᴀᴄᴇ§f §7| §9§lꜱᴜʀᴠɪᴠᴀʟ§7 §f● §8mcqi.top'
   shutdown-after-match: true
   shutdown-delay-seconds: 8
+  restart-command: 'restart'
 
 text:
   prefix: '<color:#E70939><shadow:#3A0612:1>ᴍꜱ</shadow></color> <dark_gray>›</dark_gray> '
@@ -29,6 +30,7 @@ lobby:
   hotbar:
     team-slot: 0
     loadout-slot: 4
+    language-slot: 7
     visibility-slot: 8
   menu:
     root-close-is-return: false
@@ -40,6 +42,10 @@ match:
   random-seed: true
   seed: 0
   hard-radius: 5000
+  preload:
+    enabled: true
+    radius: 768
+    chunks-per-tick: 2
   min-players: 100
   max-players: 0
   waiting-countdown-seconds: 120
@@ -86,6 +92,14 @@ border:
   particle-spacing: 4.0
   particle-color: '#E52B2B'
   outside-particle-color: '#650000'
+  particle-transition-color: '#FF7B7B'
+  particle-wall-interval-ticks: 3
+  particle-render-distance: 180.0
+  particle-wall-band: 112.0
+  particle-columns-per-player: 48
+  particle-angle-step-degrees: 2.0
+  particle-height-levels: [0.35, 1.15, 1.95, 2.75, 3.55]
+  particle-transition-enabled: true
 
 loot:
   chests-per-alive-player: 8

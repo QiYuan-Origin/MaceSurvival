@@ -59,6 +59,7 @@ public final class DeploymentController {
     private BukkitTask finishTask;
     private long deploymentStartedTick;
     private boolean systemDismounting;
+    private boolean deploymentFinished;
     private int lastRidePromptSecond = Integer.MIN_VALUE;
 
     public DeploymentController(
@@ -155,6 +156,7 @@ public final class DeploymentController {
     private void deploy(Map<TeamData, Location> locations) {
         deploymentStartedTick = worldManager.matchWorld().getGameTime();
         lastRidePromptSecond = Integer.MIN_VALUE;
+        deploymentFinished = false;
         int teamNumber = 1;
         for (Map.Entry<TeamData, Location> entry : locations.entrySet()) {
             TeamData team = entry.getKey();
@@ -249,10 +251,6 @@ public final class DeploymentController {
     }
 
     private void forceAllJump() {
-        if (ridePromptTask != null) {
-            ridePromptTask.cancel();
-            ridePromptTask = null;
-        }
         systemDismounting = true;
         for (World world : plugin.getServer().getWorlds()) {
             for (HappyGhast ghast : world.getEntitiesByClass(HappyGhast.class)) {
@@ -261,7 +259,7 @@ public final class DeploymentController {
             }
         }
         systemDismounting = false;
-        listener.onDeploymentFinished();
+        finishDeploymentIfAllReleased();
     }
 
     private void jumpTeam(HappyGhast ghast, TeamData team) {
@@ -281,6 +279,7 @@ public final class DeploymentController {
         systemDismounting = false;
         ghast.getWorld().playSound(ghast.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1.2f, 1.0f);
         ghast.remove();
+        finishDeploymentIfAllReleased();
     }
 
     private void jumpPlayer(HappyGhast ghast, Player player) {
@@ -293,6 +292,39 @@ public final class DeploymentController {
         systemDismounting = false;
         beginDrop(player);
         player.playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1.0f, 1.0f);
+        if (ghast.isValid() && ghast.getPassengers().stream().noneMatch(Player.class::isInstance)) {
+            ghast.remove();
+        }
+        finishDeploymentIfAllReleased();
+    }
+
+    private void finishDeploymentIfAllReleased() {
+        if (deploymentFinished || hasRiderOnManagedGhast()) {
+            return;
+        }
+        deploymentFinished = true;
+        if (ridePromptTask != null) {
+            ridePromptTask.cancel();
+            ridePromptTask = null;
+        }
+        if (finishTask != null) {
+            finishTask.cancel();
+            finishTask = null;
+        }
+        listener.onDeploymentFinished();
+    }
+
+    private boolean hasRiderOnManagedGhast() {
+        World world = worldManager.matchWorld();
+        for (HappyGhast ghast : world.getEntitiesByClass(HappyGhast.class)) {
+            if (!ghastTeam.containsKey(ghast.getUniqueId())) {
+                continue;
+            }
+            if (ghast.getPassengers().stream().anyMatch(Player.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void sendRidePrompts() {
@@ -419,6 +451,7 @@ public final class DeploymentController {
         ghastTeam.clear();
         deploymentTeams.clear();
         teamDeploymentLocations.clear();
+        deploymentFinished = false;
     }
 
     private SpawnPoint refineSpawnPoint(World world, SpawnPoint original) {

@@ -28,6 +28,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
 
 public final class GameListener implements Listener {
     private final MaceSurvivalPlugin plugin;
@@ -35,6 +37,7 @@ public final class GameListener implements Listener {
     private final WorldManager worlds;
     private final TeamManager teams;
     private final TextService text;
+    private final Map<UUID, org.bukkit.Location> deathLocations = new HashMap<>();
 
     public GameListener(
         MaceSurvivalPlugin plugin,
@@ -107,16 +110,21 @@ public final class GameListener implements Listener {
         event.setKeepInventory(false);
         event.setKeepLevel(true);
         Player killer = game.resolveKiller(victim);
+        deathLocations.put(victim.getUniqueId(), victim.getLocation().clone());
         game.eliminate(victim, killer);
     }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         if (!game.isParticipant(event.getPlayer().getUniqueId())) return;
-        event.setRespawnLocation(worlds.matchWorld().getSpawnLocation());
+        org.bukkit.Location deathLocation = deathLocations.remove(event.getPlayer().getUniqueId());
+        event.setRespawnLocation(deathLocation == null ? event.getPlayer().getLocation() : deathLocation);
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            event.getPlayer().setGameMode(GameMode.SPECTATOR);
-            game.handleJoin(event.getPlayer());
+            Player player = event.getPlayer();
+            player.setGameMode(GameMode.SPECTATOR);
+            if (deathLocation != null && deathLocation.getWorld() != null) {
+                player.teleportAsync(deathLocation);
+            }
         });
     }
 
