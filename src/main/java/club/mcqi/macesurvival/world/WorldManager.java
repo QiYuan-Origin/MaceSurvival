@@ -57,42 +57,30 @@ public final class WorldManager {
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
         world.setGameRule(GameRule.KEEP_INVENTORY, true);
         world.setTime(6000);
+        world.setStorm(false);
+        world.setThundering(false);
+        world.setSpawnFlags(false, false);
         Location spawn = lobbyLocation();
         world.setSpawnLocation(spawn);
-        int baseY = spawn.getBlockY() - 1;
-        int radius = 12;
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                double distance = Math.hypot(x, z);
-                if (distance > radius + 0.15D) {
-                    continue;
-                }
-                Material material = lobbyPlatformMaterial(x, z, distance, radius);
-                if (world.getBlockAt(spawn.getBlockX() + x, baseY, spawn.getBlockZ() + z).isEmpty()) {
-                    world.getBlockAt(spawn.getBlockX() + x, baseY, spawn.getBlockZ() + z)
-                        .setType(material, false);
-                }
-            }
-        }
-        for (int[] offset : new int[][] {{9, 0}, {-9, 0}, {0, 9}, {0, -9}}) {
-            if (world.getBlockAt(spawn.getBlockX() + offset[0], baseY + 1, spawn.getBlockZ() + offset[1]).isEmpty()) {
-                world.getBlockAt(spawn.getBlockX() + offset[0], baseY + 1, spawn.getBlockZ() + offset[1])
-                    .setType(Material.END_ROD, false);
-            }
-        }
+        buildGlassLobbyBox(world, spawn);
     }
 
-    private static Material lobbyPlatformMaterial(int x, int z, double distance, int radius) {
-        if (distance > radius - 1.1D) {
-            return Material.POLISHED_BLACKSTONE_BRICKS;
+    private static void buildGlassLobbyBox(World world, Location spawn) {
+        int minX = spawn.getBlockX() - 15;
+        int maxX = spawn.getBlockX() + 16;
+        int minZ = spawn.getBlockZ() - 15;
+        int maxZ = spawn.getBlockZ() + 16;
+        int floorY = spawn.getBlockY() - 1;
+        int ceilingY = floorY + 9;
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = floorY; y <= ceilingY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    boolean shell = x == minX || x == maxX || z == minZ || z == maxZ
+                        || y == floorY || y == ceilingY;
+                    world.getBlockAt(x, y, z).setType(shell ? Material.GLASS : Material.AIR, false);
+                }
+            }
         }
-        if (Math.abs(distance - 5.0D) < 0.55D || x == 0 || z == 0) {
-            return Material.RED_NETHER_BRICKS;
-        }
-        if (Math.abs(x) <= 1 && Math.abs(z) <= 1) {
-            return Material.NETHERITE_BLOCK;
-        }
-        return Material.POLISHED_DEEPSLATE;
     }
 
     public World prepareMatch() {
@@ -141,14 +129,20 @@ public final class WorldManager {
     private void configureMatch(World world) {
         world.setGameRule(GameRule.KEEP_INVENTORY, false);
         world.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
-        world.setGameRule(GameRule.DO_MOB_SPAWNING,
-                plugin.getConfig().getBoolean("match.natural-mob-spawning", false));
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_PATROL_SPAWNING, false);
         world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        world.setGameRule(GameRule.DO_INSOMNIA, false);
         world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false);
         world.setDifficulty(org.bukkit.Difficulty.HARD);
         world.setGameRule(GameRule.PVP, true);
+        world.setTime(plugin.getConfig().getLong("match.fixed-time", 6000L));
+        world.setStorm(false);
+        world.setThundering(false);
+        world.setSpawnFlags(false, false);
         int hardRadius = plugin.getConfig().getInt("match.hard-radius", 5000);
         world.getWorldBorder().setCenter(0.0, 0.0);
         world.getWorldBorder().setSize(hardRadius * 2.0);

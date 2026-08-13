@@ -1,5 +1,5 @@
 # Configuration schema version. Missing values are restored on /macesurvival reload.
-config-version: 6
+config-version: 7
 
 server:
   address: mcqi.top
@@ -11,6 +11,7 @@ server:
   shutdown-after-match: true
   shutdown-delay-seconds: 8
   restart-command: 'restart'
+  restart-fallback-shutdown-delay-ticks: 100
 
 text:
   prefix: '<color:#E70939><shadow:#3A0612:1>ᴍꜱ</shadow></color> <dark_gray>›</dark_gray> '
@@ -41,6 +42,7 @@ match:
   generator: AMPLIFIED
   random-seed: true
   seed: 0
+  fixed-time: 6000
   hard-radius: 5000
   preload:
     enabled: true

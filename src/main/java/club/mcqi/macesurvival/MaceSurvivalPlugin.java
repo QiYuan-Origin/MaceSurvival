@@ -183,6 +183,24 @@ public final class MaceSurvivalPlugin extends JavaPlugin {
             ) {
                 return lootChests.spawnChest(location, tier);
             }
+
+            @Override
+            public String scoreboardLine(String key) {
+                return configFiles.messages().getString("scoreboard." + key, "");
+            }
+
+            @Override
+            public void setScoreboardLine(String key, String value) {
+                configFiles.messages().set("scoreboard." + key, value);
+                configFiles.messages().set("languages.zh.scoreboard." + key, value);
+                try {
+                    configFiles.save("messages.yml");
+                } catch (java.io.IOException exception) {
+                    throw new IllegalStateException("Could not save messages.yml", exception);
+                }
+                configFiles.reload();
+                presentations.requestRefresh();
+            }
             }
         );
         PluginCommand command = Objects.requireNonNull(getCommand("macesurvival"),

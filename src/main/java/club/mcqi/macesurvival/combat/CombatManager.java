@@ -521,6 +521,9 @@ public final class CombatManager {
     }
 
     public int maximumLevel(Enchantment enchantment) {
+        if (enchantment.equals(Enchantment.LUNGE)) {
+            return 3;
+        }
         if (enchantment.equals(Enchantment.MENDING)) {
             return 3;
         }

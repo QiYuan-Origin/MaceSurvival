@@ -1,4 +1,4 @@
-config-version: 4
+config-version: 5
 
 # Core battle items have the same chance in every tier. Tiers mainly change durability and enchantment quality.
 categories:
@@ -88,41 +88,11 @@ entries:
     limited-durability: [18, 40]
     tier-weights: [12, 12, 12]
 
-  wooden-spear:
-    material: WOODEN_SPEAR
-    amount: [1, 1]
-    limited-durability: [9, 16]
-    tier-weights: [10, 10, 10]
-  stone-spear:
-    material: STONE_SPEAR
-    amount: [1, 1]
-    limited-durability: [9, 16]
-    tier-weights: [10, 10, 10]
-  copper-spear:
-    material: COPPER_SPEAR
-    amount: [1, 1]
-    limited-durability: [9, 16]
-    tier-weights: [10, 10, 10]
-  iron-spear:
-    material: IRON_SPEAR
-    amount: [1, 1]
-    limited-durability: [9, 16]
-    tier-weights: [10, 10, 10]
-  golden-spear:
-    material: GOLDEN_SPEAR
-    amount: [1, 1]
-    limited-durability: [9, 16]
-    tier-weights: [10, 10, 10]
-  diamond-spear:
-    material: DIAMOND_SPEAR
-    amount: [1, 1]
-    limited-durability: [9, 16]
-    tier-weights: [10, 10, 10]
   netherite-spear:
     material: NETHERITE_SPEAR
     amount: [1, 1]
     limited-durability: [9, 16]
-    tier-weights: [10, 10, 10]
+    tier-weights: [70, 70, 70]
 
   leather-armor:
     material-group: LEATHER_ARMOR

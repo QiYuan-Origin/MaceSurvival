@@ -7,7 +7,9 @@ import club.mcqi.macesurvival.world.WorldManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.GameMode;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -15,6 +17,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDismountEvent;
@@ -27,6 +30,8 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.event.weather.ThunderChangeEvent;
+import org.bukkit.event.weather.WeatherChangeEvent;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
@@ -152,6 +157,32 @@ public final class GameListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if (!isManagedWorld(event.getLocation().getWorld())) {
+            return;
+        }
+        if (event.getEntityType() == EntityType.HAPPY_GHAST
+            && event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM) {
+            return;
+        }
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onWeatherChange(WeatherChangeEvent event) {
+        if (event.toWeatherState() && isManagedWorld(event.getWorld())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onThunderChange(ThunderChangeEvent event) {
+        if (event.toThunderState() && isManagedWorld(event.getWorld())) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
         if (!event.hasChangedPosition()) return;
@@ -199,8 +230,20 @@ public final class GameListener implements Listener {
     }
 
     private boolean isManagedWorld(Player player) {
-        return player.getWorld().equals(worlds.lobbyWorld())
-                || (game.state() != GameState.WAITING && player.getWorld().equals(worlds.matchWorld()));
+        return isManagedWorld(player.getWorld());
+    }
+
+    private boolean isManagedWorld(World world) {
+        try {
+            if (world.equals(worlds.lobbyWorld())) {
+                return true;
+            }
+            return game.state() != GameState.WAITING
+                && game.state() != GameState.BOOTSTRAPPING
+                && world.equals(worlds.matchWorld());
+        } catch (NullPointerException | IllegalStateException ignored) {
+            return false;
+        }
     }
 
     private static Player resolvePlayer(Entity damager) {

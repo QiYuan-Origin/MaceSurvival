@@ -298,8 +298,11 @@ public final class LootChestManager implements LootBridge {
             slots.add(slot);
         }
         Collections.shuffle(slots, new java.util.Random(random.nextLong()));
+        Set<String> usedFamilies = new HashSet<>();
         for (int index = 0; index < itemCount; index++) {
-            inventory.setItem(slots.get(index), itemFactory.create(tier, chestId));
+            LootItemFactory.GeneratedLoot generated = itemFactory.create(tier, chestId, usedFamilies);
+            usedFamilies.add(generated.familyKey());
+            inventory.setItem(slots.get(index), generated.item());
         }
     }
 

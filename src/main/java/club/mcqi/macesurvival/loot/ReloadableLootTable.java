@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.random.RandomGenerator;
 
 final class ReloadableLootTable {
@@ -54,14 +55,26 @@ final class ReloadableLootTable {
     }
 
     Definition select(LootTier tier, RandomGenerator random) {
+        return select(tier, random, Set.of());
+    }
+
+    Definition select(LootTier tier, RandomGenerator random, Set<String> excludedFamilies) {
         Objects.requireNonNull(tier, "tier");
         Objects.requireNonNull(random, "random");
-        long totalWeight = totalWeight(tier);
+        Objects.requireNonNull(excludedFamilies, "excludedFamilies");
+        long totalWeight = totalWeight(tier, excludedFamilies);
+        if (totalWeight <= 0 && !excludedFamilies.isEmpty()) {
+            totalWeight = totalWeight(tier);
+            excludedFamilies = Set.of();
+        }
         if (totalWeight <= 0) {
             throw new IllegalStateException("The configured loot table has no positive weight for " + tier);
         }
         long roll = random.nextLong(totalWeight);
         for (Definition definition : definitions) {
+            if (excludedFamilies.contains(definition.familyKey())) {
+                continue;
+            }
             roll -= definition.weight(tier);
             if (roll < 0) {
                 return definition;
@@ -72,6 +85,14 @@ final class ReloadableLootTable {
 
     long totalWeight(LootTier tier) {
         return definitions.stream().mapToLong(definition -> definition.weight(tier)).sum();
+    }
+
+    long totalWeight(LootTier tier, Set<String> excludedFamilies) {
+        Objects.requireNonNull(excludedFamilies, "excludedFamilies");
+        return definitions.stream()
+            .filter(definition -> !excludedFamilies.contains(definition.familyKey()))
+            .mapToLong(definition -> definition.weight(tier))
+            .sum();
     }
 
     List<Definition> definitions() {
@@ -240,6 +261,25 @@ final class ReloadableLootTable {
 
         int weight(LootTier tier) {
             return tierWeights.get(tier.stars() - 1);
+        }
+
+        String familyKey() {
+            if (material != null) {
+                if (material.endsWith("_SPEAR")) {
+                    return "material:spear";
+                }
+                return "material:" + material;
+            }
+            if (materialGroup != null) {
+                return "group:" + materialGroup;
+            }
+            if (itemType != null) {
+                if (itemType.equals("WEAPON_ENCHANT")) {
+                    return "type:" + itemType + ":" + Objects.requireNonNullElse(enchantment, "ANY");
+                }
+                return "type:" + itemType;
+            }
+            return "entry:" + id;
         }
     }
 

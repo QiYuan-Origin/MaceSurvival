@@ -1,4 +1,4 @@
-config-version: 11
+config-version: 12
 
 prefix: '<color:#E70939><shadow:#3A0612:1>ᴍꜱ</shadow></color> <dark_gray>›</dark_gray> '
 
@@ -25,6 +25,7 @@ help:
   admin-reload: '<color:#ff4f68>/{label} reload</color> <dark_gray>-</dark_gray> <white>Reload config files</white>'
   admin-setlobby: '<color:#ff4f68>/{label} setlobby</color> <dark_gray>-</dark_gray> <white>Set lobby spawn</white>'
   admin-chest: '<color:#ff4f68>/{label} chest [nearest|tp|spawn]</color> <dark_gray>-</dark_gray> <white>Debug loot chests</white>'
+  admin-scoreboard: '<color:#ff4f68>/{label} scoreboard [preview|keys|set]</color> <dark_gray>-</dark_gray> <white>Preview or edit sidebar text</white>'
 
 admin:
   start-requested: '<color:#91ff6d><shadow:#163916:1>ꜱᴛᴀʀᴛ ᴀʀᴍᴇᴅ</shadow></color> <dark_gray>•</dark_gray> <gray>Drop flow queued.</gray>'
@@ -39,6 +40,12 @@ admin:
   chest-teleported: '<color:#91ff6d>Teleported</color> <gray>to</gray> <color:#ffdf6b>{tier}★</color> <dark_gray>{x} {y} {z}</dark_gray>'
   chest-spawned: '<color:#91ff6d>Spawned</color> <color:#ffdf6b>{tier}★</color> <gray>chest.</gray> <dark_gray>{x} {y} {z}</dark_gray>'
   chest-spawn-failed: '<color:#ff4f68>No clean nearby surface for a loot chest.</color>'
+  scoreboard-usage: '<color:#ffdf6b>Usage</color> <gray>/{label} scoreboard preview [lobby|active|moving]</gray> <dark_gray>/</dark_gray> <gray>/{label} scoreboard keys</gray> <dark_gray>/</dark_gray> <gray>/{label} scoreboard set <key> <text></gray>'
+  scoreboard-preview-header: '<gray>Sidebar preview</gray> <dark_gray>›</dark_gray> <color:#7dd7ff>{state}</color>'
+  scoreboard-keys: '<gray>Editable keys</gray> <dark_gray>›</dark_gray> <color:#ffdf6b>{keys}</color>'
+  scoreboard-key-unknown: '<color:#ff4f68>Unknown key</color> <white>{key}</white> <dark_gray>›</dark_gray> <gray>{keys}</gray>'
+  scoreboard-set: '<color:#91ff6d>Sidebar line updated.</color> <dark_gray>›</dark_gray> <white>{key}</white>'
+  scoreboard-set-failed: '<color:#ff4f68>Could not save sidebar line.</color> <dark_gray>›</dark_gray> <white>{key}</white>'
 
 stats:
   unavailable: '<color:#ff4f68>Stats service unavailable.</color>'
@@ -218,6 +225,7 @@ scoreboard:
 
 languages:
   zh:
+    prefix: '<color:#E70939><shadow:#3A0612:1>重锤</shadow></color> <dark_gray>›</dark_gray> '
     general:
       no-permission: '<color:#ff4f68>没有权限。</color>'
       player-only: '<color:#ff4f68>只有玩家能用。</color>'
@@ -226,6 +234,47 @@ languages:
       player-or-invitation-not-found: '<color:#ff4f68>玩家或邀请不存在。</color>'
       config-reloaded: '<color:#91ff6d>已重载。</color> <gray>缺失默认文件已补齐。</gray>'
       config-reload-failed: '<color:#ff4f68>重载失败。</color> <gray>看控制台。</gray>'
+    command:
+      team-usage: '<color:#ffdf6b>用法</color> <gray>/{label} team [invite|accept|decline|leave|kick|transfer|list] [玩家]</gray>'
+      stats-usage: '<color:#ffdf6b>用法</color> <gray>/{label} stats [玩家]</gray>'
+    help:
+      header: '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>重锤大逃杀</shadow></color> <gray>⚔</gray> <dark_gray>|</dark_gray> <white>命令</white>'
+      team: '<gray>/{label} team</gray> <dark_gray>-</dark_gray> <white>队伍菜单和组队命令</white>'
+      loadout: '<gray>/{label} loadout</gray> <dark_gray>-</dark_gray> <white>调整开局武器槽位</white>'
+      stats: '<gray>/{label} stats [玩家]</gray> <dark_gray>-</dark_gray> <white>查看累计数据</white>'
+      admin-start: '<color:#ff4f68>/{label} start</color> <dark_gray>-</dark_gray> <white>强制进入正常开局流程</white>'
+      admin-stop: '<color:#ff4f68>/{label} stop</color> <dark_gray>-</dark_gray> <white>停止当前游戏</white>'
+      admin-reload: '<color:#ff4f68>/{label} reload</color> <dark_gray>-</dark_gray> <white>重载配置文件</white>'
+      admin-setlobby: '<color:#ff4f68>/{label} setlobby</color> <dark_gray>-</dark_gray> <white>设置大厅出生点</white>'
+      admin-chest: '<color:#ff4f68>/{label} chest [nearest|tp|spawn]</color> <dark_gray>-</dark_gray> <white>调试战利品箱</white>'
+      admin-scoreboard: '<color:#ff4f68>/{label} scoreboard [preview|keys|set]</color> <dark_gray>-</dark_gray> <white>预览或修改记分板文字</white>'
+    admin:
+      start-requested: '<color:#91ff6d><shadow:#163916:1>开局已启动</shadow></color> <dark_gray>•</dark_gray> <gray>投放流程已排队。</gray>'
+      start-failed: '<color:#ffdf6b>当前阶段不能开始。</color>'
+      stop-complete: '<color:#ff4f68>游戏已停止。</color>'
+      stop-none: '<color:#ffdf6b>没有正在进行的游戏。</color>'
+      setlobby-player-only: '<color:#ff4f68>请在游戏内设置大厅。</color>'
+      setlobby-complete: '<color:#91ff6d>大厅出生点已更新。</color>'
+      chest-usage: '<color:#ffdf6b>用法</color> <gray>/{label} chest nearest [any|1|2|3]</gray> <dark_gray>/</dark_gray> <gray>/{label} chest tp [any|1|2|3]</gray> <dark_gray>/</dark_gray> <gray>/{label} chest spawn [1|2|3]</gray>'
+      chest-none: '<color:#ff4f68>当前世界没有托管战利品箱。</color>'
+      chest-nearest: '<gray>最近</gray> <color:#ffdf6b>{tier}★</color> <gray>箱子:</gray> <color:#7dd7ff>{world}</color> <white>{x}</white> <white>{y}</white> <white>{z}</white> <dark_gray>({distance}m)</dark_gray>'
+      chest-teleported: '<color:#91ff6d>已传送</color> <gray>到</gray> <color:#ffdf6b>{tier}★</color> <dark_gray>{x} {y} {z}</dark_gray>'
+      chest-spawned: '<color:#91ff6d>已生成</color> <color:#ffdf6b>{tier}★</color> <gray>箱子。</gray> <dark_gray>{x} {y} {z}</dark_gray>'
+      chest-spawn-failed: '<color:#ff4f68>附近没有干净的箱子生成表面。</color>'
+      scoreboard-usage: '<color:#ffdf6b>用法</color> <gray>/{label} scoreboard preview [lobby|active|moving]</gray> <dark_gray>/</dark_gray> <gray>/{label} scoreboard keys</gray> <dark_gray>/</dark_gray> <gray>/{label} scoreboard set <key> <文本></gray>'
+      scoreboard-preview-header: '<gray>记分板预览</gray> <dark_gray>›</dark_gray> <color:#7dd7ff>{state}</color>'
+      scoreboard-keys: '<gray>可改项目</gray> <dark_gray>›</dark_gray> <color:#ffdf6b>{keys}</color>'
+      scoreboard-key-unknown: '<color:#ff4f68>未知项目</color> <white>{key}</white> <dark_gray>›</dark_gray> <gray>{keys}</gray>'
+      scoreboard-set: '<color:#91ff6d>记分板文字已更新。</color> <dark_gray>›</dark_gray> <white>{key}</white>'
+      scoreboard-set-failed: '<color:#ff4f68>记分板文字保存失败。</color> <dark_gray>›</dark_gray> <white>{key}</white>'
+    stats:
+      unavailable: '<color:#ff4f68>数据服务不可用。</color>'
+      player-not-found: '<color:#ff4f68>没有找到</color> <white>{player}</white> <color:#ff4f68>的数据。</color>'
+      view:
+        - '<color:#7dd7ff>{player}</color> <dark_gray>•</dark_gray> <white>数据</white>'
+        - '<gray>场次</gray> <white>{games}</white> <dark_gray>|</dark_gray> <gray>胜利</gray> <color:#91ff6d>{wins}</color> <dark_gray>|</dark_gray> <gray>胜率</gray> <color:#a7efff>{win_rate}%</color>'
+        - '<gray>击杀</gray> <white>{kills}</white> <dark_gray>|</dark_gray> <gray>死亡</gray> <color:#ff4f68>{deaths}</color> <dark_gray>|</dark_gray> <gray>K/D</gray> <color:#ffdf6b>{kd}</color>'
+        - '<gray>排名</gray> <white>#{rank}</white>'
     lobby:
       joined: '<color:#9adfff><shadow:#153344:1>已进入等待</shadow></color> <dark_gray>•</dark_gray> <gray>队伍和开局物品已准备。</gray>'
       countdown-cancelled: '<color:#ffdf6b>等待暂停。</color> <gray>人数不足。</gray>'
@@ -270,6 +319,16 @@ languages:
       list: '<gray>队伍</gray> <white>{size}/{max}</white> <dark_gray>•</dark_gray> <aqua>{members}</aqua>'
       full: '<color:#ff4f68>队伍已满。</color>'
       friendly-hit: '<color:#a7efff>已阻止队友伤害。</color>'
+      result:
+        locked: '<color:#ff4f68>队伍已锁定。</color>'
+        not-leader: '<color:#ff4f68>只有队长能操作。</color>'
+        not-in-team: '<color:#ffdf6b>你不在队伍里。</color>'
+        not-a-member: '<color:#ff4f68>这个玩家不在你的队伍里。</color>'
+        team-full: '<color:#ff4f68>队伍已满。</color>'
+        target-already-in-team: '<color:#ff4f68>这个玩家已经有队伍了。</color>'
+        already-member: '<color:#ffdf6b>已经在你的队伍里。</color>'
+        cannot-target-self: '<color:#ff4f68>不能选择自己。</color>'
+        invitation-not-found: '<color:#ff4f68>邀请已经不存在。</color>'
     game:
       countdown: '<color:#ffdf6b><shadow:#4b3400:1>投放</shadow></color> <white>{seconds}s</white>'
       stopped: '<color:#ff4f68>游戏已停止。</color>'
@@ -297,6 +356,64 @@ languages:
       near-actionbar: '<color:#ff4f68><shadow:#401818:1>边界</shadow></color> <dark_gray>›</dark_gray> <gray>距离边界 {distance}m</gray>'
       outside-actionbar: '<color:#650000><shadow:#160000:1>圈外</shadow></color> <dark_gray>›</dark_gray> <color:#ff4f68>{distance}m</color>'
       damage-actionbar: '<color:#650000><shadow:#160000:1>圈外扣血</shadow></color> <dark_gray>›</dark_gray> <color:#ff4f68>离圈 {distance}m</color>'
+    title:
+      victory: '<color:#91ff6d><shadow:#1e4b20:1>胜 利</shadow></color>'
+      victory-subtitle: '<gray>你的队伍活到了最后。</gray>'
+      defeat: '<color:#ff4f68><shadow:#401818:1>淘 汰</shadow></color>'
+      defeat-subtitle: '<gray>正在旁观剩余玩家。</gray>'
+    death:
+      mace: '<{killer_color}>{killer}</{killer_color}> <gray>用重锤砸碎了</gray> <red><strikethrough>{victim}</strikethrough></red>'
+      sword: '<{killer_color}>{killer}</{killer_color}> <gray>用剑斩倒了</gray> <red><strikethrough>{victim}</strikethrough></red>'
+      axe: '<{killer_color}>{killer}</{killer_color}> <gray>用斧头劈倒了</gray> <red><strikethrough>{victim}</strikethrough></red>'
+      spear: '<{killer_color}>{killer}</{killer_color}> <gray>用长矛贯穿了</gray> <red><strikethrough>{victim}</strikethrough></red>'
+      generic: '<red><strikethrough>{victim}</strikethrough></red> <gray>倒在了战场中。</gray>'
+    combat:
+      enchant-applied: '<gray>已应用</gray> <aqua>{enchantment} {level}</aqua>'
+      armor-equipped: '<gray>已装备</gray> <aqua>{item}</aqua>'
+      durability-combined: '<color:#91ff6d>耐久已合并。</color>'
+      weapon-absorbed: '<color:#d68cff>武器属性已吸收。</color>'
+      armor-enchanted: '<gray>盔甲获得</gray> <aqua>{enchantment} {level}</aqua>'
+      boost-damage: '<color:#ff4f68>永久伤害 +{percent}%</color>'
+      boost-healing: '<color:#91ff6d>永久治疗 +{percent}%</color>'
+      boost-next-kill: '<color:#7dd7ff>下一次击杀增益已储存。</color>'
+      boost-triggered: '<color:#7dd7ff>猎手增益:</color> {boost}'
+      boost-triggered-damage: '<color:#ff4f68>+{percent}% 伤害</color>'
+      boost-triggered-healing: '<color:#91ff6d>+{percent}% 治疗</color>'
+      boost-item:
+        damage:
+          name: '<color:#ff4f68>残暴</color>'
+          lore: '<gray>获得永久伤害加成。</gray>'
+        healing:
+          name: '<color:#91ff6d>活力</color>'
+          lore: '<gray>获得永久治疗加成。</gray>'
+        next-kill:
+          name: '<color:#7dd7ff>猎手增益</color>'
+          lore: '<gray>下一次击杀获得永久加成。</gray>'
+      bundle-name: '<color:#7dd7ff>备用收纳袋</color>'
+      bundle-capacity: '<gray>{count}/{capacity} 件装备</gray>'
+      bundle-eject: '<dark_gray>右键丢出最后一件物品。</dark_gray>'
+      bundle-stored: '<color:#7dd7ff>多余装备已放入备用收纳袋。</color>'
+    loot:
+      item-name: '<{color}><shadow:#191919:1>{stars}</shadow></{color}> <white>{name}</white>'
+      item-lore:
+        tier: '<dark_gray>等级</dark_gray> <{color}>{stars}</{color}>'
+        supply: '<gray>下一波交战用的补给。</gray>'
+        potion: '<gray>开打前用，别拖。</gray>'
+        gear: '<gray>有限耐久，拿来打压制。</gray>'
+        armor: '<gray>比当前盔甲强就自动装备。</gray>'
+        spear: '<gray>带突进的长矛，攻击伤害随机。</gray>'
+        weapon-book: '<gray>背包里右键武器附魔。</gray>'
+        armor-book: '<gray>自动打到一件已装备盔甲上。</gray>'
+        boost: '<gray>拾取后立即获得整局加成。</gray>'
+    chat:
+      format: '<dark_gray>‹</dark_gray><{color}>{player}</{color}><dark_gray>›</dark_gray> <gray>:</gray> <white>{message}</white>'
+    tab:
+      player: '<dark_gray>[</dark_gray><{color}>{team_label}</{color}><dark_gray>]</dark_gray> <white>{player}</white>'
+      header:
+        - '<gray>⚔</gray> <color:#E70939><shadow:#3A0612:1>重锤大逃杀</shadow></color> <gray>⚔</gray>'
+        - '<dark_gray>mcqi.top</dark_gray> <gray>•</gray> <color:#ffdf6b><shadow:#4b3400:1>{phase}</shadow></color>'
+      footer:
+        - '<gray>{online}</gray><dark_gray>/</dark_gray><white>{max}</white> <dark_gray>在线</dark_gray> <dark_gray>|</dark_gray> <color:#a7efff>存活</color> <white>{alive}</white> <dark_gray>|</dark_gray> <color:#91ff6d>队伍</color> <{color}>{team_size}/4</{color}>'
     scoreboard:
       title: '<color:#E70939><shadow:#3A0612:1>重锤大逃杀</shadow></color> <dark_gray>#</dark_gray><white>{rank}</white>'
       lobby-status: '<color:#8bdcff>◷</color> <gray>等待</gray> <white>{waiting}</white><dark_gray>/</dark_gray><color:#91ff6d>{minimum}</color>'

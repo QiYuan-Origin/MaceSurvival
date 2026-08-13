@@ -191,7 +191,12 @@ class ReloadableLootTableTest {
 
         assertFalse(result.fallbackUsed());
         assertTrue(result.problems().isEmpty(), () -> "Invalid loot entries: " + result.problems());
-        assertTrue(result.loadedEntries() >= 40, "Default loot table was unexpectedly truncated");
+        assertTrue(result.loadedEntries() >= 35, "Default loot table was unexpectedly truncated");
+        assertEquals(List.of("NETHERITE_SPEAR"), table.definitions().stream()
+            .map(ReloadableLootTable.Definition::material)
+            .filter(material -> material != null && material.endsWith("_SPEAR"))
+            .distinct()
+            .toList());
         for (ReloadableLootTable.Definition definition : table.definitions()) {
             assertTrue(definition.weight(LootTier.ONE) > 0,
                 () -> definition.id() + " has no one-star weight");

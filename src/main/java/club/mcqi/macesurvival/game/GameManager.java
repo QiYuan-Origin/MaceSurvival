@@ -429,6 +429,18 @@ public final class GameManager implements GameFacade, BorderController.Listener,
             String commandLine = command.startsWith("/") ? command.substring(1) : command;
             boolean accepted = plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), commandLine);
             if (accepted) {
+                int fallbackTicks = Math.max(0,
+                    plugin.getConfig().getInt("server.restart-fallback-shutdown-delay-ticks", 100));
+                if (fallbackTicks > 0) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                        if (!plugin.isEnabled()) {
+                            return;
+                        }
+                        plugin.getLogger().warning(
+                            "Restart command did not stop the server; shutting down so the wrapper can restart it.");
+                        plugin.getServer().shutdown();
+                    }, fallbackTicks);
+                }
                 return;
             }
             plugin.getLogger().warning("Configured restart command was not accepted; falling back to shutdown.");

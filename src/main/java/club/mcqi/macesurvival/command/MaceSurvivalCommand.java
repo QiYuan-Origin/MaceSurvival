@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -43,11 +44,29 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
     public static final String PERMISSION_RELOAD = "macesurvival.admin.reload";
     public static final String PERMISSION_SET_LOBBY = "macesurvival.admin.setlobby";
     public static final String PERMISSION_CHEST = "macesurvival.admin.chest";
+    public static final String PERMISSION_SCOREBOARD = "macesurvival.admin.scoreboard";
     public static final String PERMISSION_TEAM = "macesurvival.team";
     public static final String PERMISSION_USE = "macesurvival.use";
     public static final String PERMISSION_STATS = "macesurvival.stats";
     public static final String PERMISSION_STATS_OTHERS = "macesurvival.stats.others";
     public static final String PERMISSION_ADMIN = "macesurvival.admin";
+    private static final List<String> SCOREBOARD_KEYS = List.of(
+        "title",
+        "lobby-status",
+        "lobby-needed",
+        "lobby-countdown",
+        "lobby-team",
+        "time-border",
+        "time-border-moving",
+        "alive",
+        "kills",
+        "team-kills",
+        "teammates",
+        "teammate",
+        "teammate-unknown",
+        "teammate-dead",
+        "server"
+    );
 
     private final TeamManager teamManager;
     private final MenuManager menuManager;
@@ -102,6 +121,7 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
             case "reload" -> handleReload(sender);
             case "setlobby" -> handleSetLobby(sender);
             case "chest" -> handleChest(sender, label, args);
+            case "scoreboard" -> handleScoreboard(sender, label, args);
             default -> {
                 sendConfigured(sender, "general.unknown-command", Map.of("label", label));
                 yield true;
@@ -309,6 +329,7 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
         sendAdminHelp(sender, PERMISSION_RELOAD, "help.admin-reload", placeholders);
         sendAdminHelp(sender, PERMISSION_SET_LOBBY, "help.admin-setlobby", placeholders);
         sendAdminHelp(sender, PERMISSION_CHEST, "help.admin-chest", placeholders);
+        sendAdminHelp(sender, PERMISSION_SCOREBOARD, "help.admin-scoreboard", placeholders);
     }
 
     private void sendAdminHelp(
@@ -477,6 +498,123 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
         return true;
     }
 
+    private boolean handleScoreboard(CommandSender sender, String label, String[] args) {
+        if (!hasAdminPermission(sender, PERMISSION_SCOREBOARD)) {
+            sendConfigured(sender, "general.unknown-command-hidden", Map.of());
+            return true;
+        }
+        if (args.length < 2) {
+            sendConfigured(sender, "admin.scoreboard-usage", Map.of("label", label));
+            return true;
+        }
+        return switch (args[1].toLowerCase(Locale.ROOT)) {
+            case "preview" -> handleScoreboardPreview(sender, label, args);
+            case "keys" -> {
+                sendConfigured(sender, "admin.scoreboard-keys", Map.of(
+                    "keys", String.join(", ", SCOREBOARD_KEYS)
+                ));
+                yield true;
+            }
+            case "set" -> handleScoreboardSet(sender, label, args);
+            default -> {
+                sendConfigured(sender, "admin.scoreboard-usage", Map.of("label", label));
+                yield true;
+            }
+        };
+    }
+
+    private boolean handleScoreboardPreview(CommandSender sender, String label, String[] args) {
+        String state = args.length >= 3 ? args[2].toLowerCase(Locale.ROOT) : "lobby";
+        List<String> keys = switch (state) {
+            case "lobby" -> List.of(
+                "title", "", "lobby-status", "lobby-team", "lobby-countdown", "", "server"
+            );
+            case "active" -> List.of(
+                "title", "", "time-border", "alive", "", "kills", "team-kills",
+                "", "teammates", "teammate", "teammate-dead", "", "server"
+            );
+            case "moving" -> List.of(
+                "title", "", "time-border-moving", "alive", "", "kills", "team-kills",
+                "", "teammates", "teammate", "teammate-unknown", "", "server"
+            );
+            default -> {
+                sendConfigured(sender, "admin.scoreboard-usage", Map.of("label", label));
+                yield null;
+            }
+        };
+        if (keys == null) {
+            return true;
+        }
+        sendConfigured(sender, "admin.scoreboard-preview-header", Map.of("state", state));
+        for (String key : keys) {
+            if (key.isEmpty()) {
+                sender.sendMessage(Component.empty());
+                continue;
+            }
+            sender.sendMessage(scoreboardPreviewLine(sender, key));
+        }
+        return true;
+    }
+
+    private boolean handleScoreboardSet(CommandSender sender, String label, String[] args) {
+        if (args.length < 4) {
+            sendConfigured(sender, "admin.scoreboard-usage", Map.of("label", label));
+            return true;
+        }
+        String key = normalizeScoreboardKey(args[2]);
+        if (!SCOREBOARD_KEYS.contains(key)) {
+            sendConfigured(sender, "admin.scoreboard-key-unknown", Map.of(
+                "key", args[2],
+                "keys", String.join(", ", SCOREBOARD_KEYS)
+            ));
+            return true;
+        }
+        String value = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+        try {
+            actions.setScoreboardLine(key, value);
+            sendConfigured(sender, "admin.scoreboard-set", Map.of("key", key));
+            sender.sendMessage(scoreboardPreviewLine(sender, key));
+        } catch (RuntimeException exception) {
+            Bukkit.getLogger().log(Level.SEVERE, "Could not update MaceSurvival scoreboard line", exception);
+            sendConfigured(sender, "admin.scoreboard-set-failed", Map.of("key", key));
+        }
+        return true;
+    }
+
+    private Component scoreboardPreviewLine(CommandSender sender, String key) {
+        Player player = sender instanceof Player target ? target : null;
+        String template = actions.scoreboardLine(key);
+        return text.parse(player, template, scoreboardPreviewPlaceholders());
+    }
+
+    private static String normalizeScoreboardKey(String value) {
+        String normalized = Objects.requireNonNullElse(value, "")
+            .toLowerCase(Locale.ROOT)
+            .replace("scoreboard.", "");
+        return normalized.strip();
+    }
+
+    private static Map<String, Object> scoreboardPreviewPlaceholders() {
+        return Map.ofEntries(
+            Map.entry("rank", 18),
+            Map.entry("phase", "LOBBY"),
+            Map.entry("waiting", 73),
+            Map.entry("minimum", 100),
+            Map.entry("needed", 27),
+            Map.entry("seconds", 45),
+            Map.entry("team_size", 3),
+            Map.entry("max_size", 4),
+            Map.entry("time", "12:34"),
+            Map.entry("border", 128),
+            Map.entry("alive", 37),
+            Map.entry("kills", 5),
+            Map.entry("color", "#55ffaa"),
+            Map.entry("direction", "↗"),
+            Map.entry("name", "efn_liy"),
+            Map.entry("distance", 83)
+        );
+    }
+
     private Optional<LootChestSnapshot> nearestChest(Location origin, @Nullable LootTier tier) {
         return actions.lootChests().stream()
             .filter(chest -> tier == null || chest.tier() == tier)
@@ -614,7 +752,19 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
             addPermitted(subcommands, sender, PERMISSION_RELOAD, "reload");
             addPermitted(subcommands, sender, PERMISSION_SET_LOBBY, "setlobby");
             addPermitted(subcommands, sender, PERMISSION_CHEST, "chest");
+            addPermitted(subcommands, sender, PERMISSION_SCOREBOARD, "scoreboard");
             return filter(subcommands, args[0]);
+        }
+        if (args[0].equalsIgnoreCase("scoreboard") && hasAdminPermission(sender, PERMISSION_SCOREBOARD)) {
+            if (args.length == 2) {
+                return filter(List.of("preview", "keys", "set"), args[1]);
+            }
+            if (args.length == 3 && args[1].equalsIgnoreCase("preview")) {
+                return filter(List.of("lobby", "active", "moving"), args[2]);
+            }
+            if (args.length == 3 && args[1].equalsIgnoreCase("set")) {
+                return filter(SCOREBOARD_KEYS, normalizeScoreboardKey(args[2]));
+            }
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("chest") && hasAdminPermission(sender, PERMISSION_CHEST)) {
             return filter(List.of("nearest", "tp", "spawn", "list"), args[1]);
@@ -735,5 +885,9 @@ public final class MaceSurvivalCommand implements CommandExecutor, TabCompleter 
         List<LootChestSnapshot> lootChests();
 
         LootChestSnapshot spawnChest(Location location, LootTier tier);
+
+        String scoreboardLine(String key);
+
+        void setScoreboardLine(String key, String value);
     }
 }
