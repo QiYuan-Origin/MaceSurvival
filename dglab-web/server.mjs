@@ -535,7 +535,7 @@ function buttplugDeviceFeatures() {
       FeatureDescription: 'DG-LAB A 通道',
       Output: {
         Vibrate: {
-          Value: [HARD_LIMIT],
+          Value: [0, HARD_LIMIT],
         },
       },
     },
@@ -544,7 +544,7 @@ function buttplugDeviceFeatures() {
       FeatureDescription: 'DG-LAB B 通道',
       Output: {
         Vibrate: {
-          Value: [HARD_LIMIT],
+          Value: [0, HARD_LIMIT],
         },
       },
     },
