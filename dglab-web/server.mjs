@@ -18,7 +18,7 @@ const PUBLIC_DIR = join(fileURLToPath(new URL('.', import.meta.url)), 'public');
 const WATCHDOG_MS = 8000;
 const PULSE_DURATION_MS = 3000;
 const PULSE_IDLE_MS = 80;
-const HARD_LIMIT = 100;
+const HARD_LIMIT = 200;
 
 const mimeTypes = new Map([
   ['.html', 'text/html; charset=utf-8'],
@@ -484,12 +484,12 @@ function buttplugDeviceMessages(messageVersion) {
     {
       FeatureDescriptor: 'DG-LAB A 通道',
       ActuatorType: 'Vibrate',
-      StepCount: 100,
+      StepCount: 200,
     },
     {
       FeatureDescriptor: 'DG-LAB B 通道',
       ActuatorType: 'Vibrate',
-      StepCount: 100,
+      StepCount: 200,
     },
   ];
   const deviceMessages = {
