@@ -1,4 +1,5 @@
-const socket = new WebSocket(`ws://${location.host}/control`);
+let socket;
+let reconnectTimer = null;
 
 const els = {
   statusPill: document.querySelector('#statusPill'),
@@ -34,6 +35,29 @@ function send(message) {
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(message));
   }
+}
+
+function connectControlSocket() {
+  socket = new WebSocket(`ws://${location.host}/control`);
+
+  socket.addEventListener('open', () => {
+    els.log.textContent = '本地控制页已连接。';
+  });
+
+  socket.addEventListener('message', (event) => {
+    const message = JSON.parse(event.data);
+    if (message.type === 'state') {
+      render(message);
+    } else if (message.type === 'error') {
+      els.log.textContent = message.message;
+    }
+  });
+
+  socket.addEventListener('close', () => {
+    els.statusPill.textContent = '本地服务断开';
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(connectControlSocket, 1000);
+  });
 }
 
 function stateName(value) {
@@ -121,23 +145,6 @@ function render(state) {
   els.log.textContent = JSON.stringify(log, null, 2);
 }
 
-socket.addEventListener('open', () => {
-  els.log.textContent = '本地控制页已连接。';
-});
-
-socket.addEventListener('message', (event) => {
-  const message = JSON.parse(event.data);
-  if (message.type === 'state') {
-    render(message);
-  } else if (message.type === 'error') {
-    els.log.textContent = message.message;
-  }
-});
-
-socket.addEventListener('close', () => {
-  els.statusPill.textContent = '本地服务断开';
-});
-
 els.connectDglab.addEventListener('click', () => {
   send({ type: 'connect-dglab' });
 });
@@ -212,3 +219,5 @@ window.addEventListener('beforeunload', () => {
     send({ type: 'stop' });
   }
 });
+
+connectControlSocket();

@@ -45,9 +45,16 @@ let bridgeEnabled = true;
 let waveformKey = COYOTE_WAVEFORM.BUBBLE;
 let pulseLoops = { A: null, B: null };
 let watchdogTimer = null;
+let dglabConnectionId = 0;
 
 const webClients = new Set();
 const buttplugClients = new Set();
+
+function getAppSocketUrl(nextTargetId) {
+  const baseUrl = DGLAB_URL.replace(/\/+$/, '');
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${separator}tid=${encodeURIComponent(nextTargetId)}`;
+}
 
 function clamp(value, min, max) {
   if (!Number.isFinite(value)) {
@@ -103,9 +110,7 @@ function updateDevices(nextDevices, nextClientId) {
     }
   }
   broadcastState();
-  if (isDglabReady()) {
-    notifyButtplugDeviceAdded();
-  }
+  notifyButtplugDeviceAvailable();
 }
 
 function getStatePayload() {
@@ -158,37 +163,56 @@ function isDglabReady() {
   return Boolean(dglab && clientId && slotId);
 }
 
+function isActiveDglab(socket, connectionId) {
+  return dglab === socket && dglabConnectionId === connectionId;
+}
+
 async function connectDglab() {
-  if (dglab && state !== 'disconnected' && state !== 'idle') {
+  if (dglab && state === 'paired') {
     return getStatePayload();
   }
 
   await disconnectDglab(false);
+  const currentConnectionId = ++dglabConnectionId;
+  lastError = null;
   setState('connecting');
 
-  dglab = new DglabSocket({
+  const socket = new DglabSocket({
     url: DGLAB_URL,
     connectTimeout: 10000,
     responseTimeout: 5000,
   });
+  dglab = socket;
 
-  dglab.on('state', (nextState) => {
+  socket.on('state', (nextState) => {
+    if (!isActiveDglab(socket, currentConnectionId)) {
+      return;
+    }
     state = String(nextState);
     broadcastState();
   });
 
-  dglab.on('client-attached', async (nextClientId) => {
+  socket.on('client-attached', async (nextClientId) => {
+    if (!isActiveDglab(socket, currentConnectionId)) {
+      return;
+    }
     clientId = nextClientId;
     setState('paired');
     try {
-      const response = await dglab.requestDevices(clientId);
+      const response = await socket.requestDevices(clientId);
+      if (!isActiveDglab(socket, currentConnectionId)) {
+        return;
+      }
       updateDevices(response.devices || [], clientId);
     } catch (error) {
       setError(error);
     }
   });
 
-  dglab.on('client-disconnected', (nextClientId) => {
+  socket.on('client-disconnected', (nextClientId) => {
+    if (!isActiveDglab(socket, currentConnectionId)) {
+      return;
+    }
     if (nextClientId === clientId) {
       notifyButtplugDeviceRemoved();
       clientId = null;
@@ -202,11 +226,17 @@ async function connectDglab() {
     }
   });
 
-  dglab.on('devices', (nextDevices, nextClientId) => {
+  socket.on('devices', (nextDevices, nextClientId) => {
+    if (!isActiveDglab(socket, currentConnectionId)) {
+      return;
+    }
     updateDevices(nextDevices || [], nextClientId);
   });
 
-  dglab.on('device', (device, nextClientId) => {
+  socket.on('device', (device, nextClientId) => {
+    if (!isActiveDglab(socket, currentConnectionId)) {
+      return;
+    }
     if (!device || (nextClientId && nextClientId !== clientId)) {
       return;
     }
@@ -219,17 +249,35 @@ async function connectDglab() {
     updateDevices(devices, nextClientId);
   });
 
-  dglab.on('error', (error) => {
+  socket.on('error', (error) => {
+    if (!isActiveDglab(socket, currentConnectionId)) {
+      return;
+    }
     setError(error);
   });
 
-  dglab.on('close', () => {
+  socket.on('close', () => {
+    if (!isActiveDglab(socket, currentConnectionId)) {
+      return;
+    }
+    dglab = null;
+    targetId = null;
+    appSocketUrl = null;
+    qrCode = null;
+    clientId = null;
+    slotId = null;
+    devices = [];
+    knownIntensity = { A: 0, B: 0 };
+    desiredIntensity = { A: 0, B: 0 };
     setState('disconnected');
   });
 
-  const response = await dglab.connect();
+  const response = await socket.connect();
+  if (!isActiveDglab(socket, currentConnectionId)) {
+    return getStatePayload();
+  }
   targetId = response.targetId;
-  appSocketUrl = `${DGLAB_URL}/?tid=${encodeURIComponent(targetId)}`;
+  appSocketUrl = getAppSocketUrl(targetId);
   const scanUrl = `https://dungeon-lab.cn/s/?v=1&action=socket&url=${encodeURIComponent(appSocketUrl)}`;
   qrCode = await QRCode.toDataURL(scanUrl, { margin: 1, width: 280 });
   setState('waiting-for-peer');
@@ -237,6 +285,7 @@ async function connectDglab() {
 }
 
 async function disconnectDglab(notify = true) {
+  dglabConnectionId += 1;
   stopPulseLoop('A');
   stopPulseLoop('B');
   if (watchdogTimer) {
@@ -479,53 +528,101 @@ async function handleControlMessage(socket, raw) {
   }
 }
 
-function buttplugDeviceMessages(messageVersion) {
-  const scalarFeatures = [
-    {
-      FeatureDescriptor: 'DG-LAB A 通道',
-      ActuatorType: 'Vibrate',
-      StepCount: 200,
+function buttplugDeviceFeatures() {
+  return {
+    0: {
+      FeatureIndex: 0,
+      FeatureDescription: 'DG-LAB A 通道',
+      Output: {
+        Vibrate: {
+          Value: [HARD_LIMIT],
+        },
+      },
     },
-    {
-      FeatureDescriptor: 'DG-LAB B 通道',
-      ActuatorType: 'Vibrate',
-      StepCount: 200,
+    1: {
+      FeatureIndex: 1,
+      FeatureDescription: 'DG-LAB B 通道',
+      Output: {
+        Vibrate: {
+          Value: [HARD_LIMIT],
+        },
+      },
     },
-  ];
-  const deviceMessages = {
-    ScalarCmd: scalarFeatures,
+  };
+}
+
+function buttplugDeviceMessages() {
+  return {
+    ScalarCmd: [
+      {
+        FeatureDescriptor: 'DG-LAB A 通道',
+        ActuatorType: 'Vibrate',
+        StepCount: HARD_LIMIT,
+      },
+      {
+        FeatureDescriptor: 'DG-LAB B 通道',
+        ActuatorType: 'Vibrate',
+        StepCount: HARD_LIMIT,
+      },
+    ],
     StopDeviceCmd: {},
     VibrateCmd: {
       FeatureCount: 2,
     },
+    BatteryLevelCmd: {},
   };
-  if (messageVersion >= 3) {
-    deviceMessages.BatteryLevelCmd = {};
-  }
-  return deviceMessages;
 }
 
-function buttplugDevice(messageVersion) {
-  return {
+function buttplugDevice(socket) {
+  const device = {
     DeviceName: 'DG-LAB Coyote Socket Bridge',
     DeviceIndex: 0,
-    DeviceMessages: buttplugDeviceMessages(messageVersion),
+    DeviceDisplayName: 'DG-LAB Coyote',
+    DeviceMessageTimingGap: 0,
+    DeviceFeatures: buttplugDeviceFeatures(),
   };
+  if (socket?.usesMessageVersion) {
+    device.DeviceMessages = buttplugDeviceMessages();
+  }
+  return device;
 }
 
-function currentButtplugDevices(messageVersion) {
-  return isDglabReady() ? [buttplugDevice(messageVersion)] : [];
+function currentButtplugDevices(socket) {
+  const device = buttplugDevice(socket);
+  return socket?.usesMessageVersion ? [device] : { 0: device };
 }
 
-function notifyButtplugDeviceAdded() {
+function isLegacyButtplugClient(socket) {
+  return socket?.usesMessageVersion === false;
+}
+
+function hasButtplugHandshake(socket) {
+  return typeof socket?.usesMessageVersion === 'boolean';
+}
+
+function notifyButtplugDeviceAvailable() {
   for (const socket of buttplugClients) {
-    const version = Number(socket.messageVersion || 3);
-    sendButtplug(socket, { DeviceAdded: { Id: 0, ...buttplugDevice(version) } });
+    if (!hasButtplugHandshake(socket)) {
+      continue;
+    }
+    if (isLegacyButtplugClient(socket)) {
+      sendButtplug(socket, {
+        DeviceList: {
+          Id: 0,
+          Devices: currentButtplugDevices(socket),
+        },
+      });
+      continue;
+    }
+    sendButtplug(socket, { DeviceAdded: { Id: 0, ...buttplugDevice(socket) } });
   }
 }
 
 function notifyButtplugDeviceRemoved() {
   for (const socket of buttplugClients) {
+    if (!hasButtplugHandshake(socket) || isLegacyButtplugClient(socket)) {
+      continue;
+    }
     sendButtplug(socket, {
       DeviceRemoved: {
         Id: 0,
@@ -555,6 +652,14 @@ function errorMessage(id, message, code = 1) {
   };
 }
 
+function readProtocolMajor(payload) {
+  return Number(payload.ProtocolVersionMajor || payload.MessageVersion || 3);
+}
+
+function readProtocolMinor(payload) {
+  return Number(payload.ProtocolVersionMinor || 0);
+}
+
 function readButtplugMessage(entry) {
   const [kind, payload] = Object.entries(entry || {})[0] || [];
   return { kind, payload: payload || {} };
@@ -576,34 +681,49 @@ async function handleButtplugMessage(socket, raw) {
   for (const frame of frames) {
     const { kind, payload } = readButtplugMessage(frame);
     const id = Number(payload.Id) || 0;
-    const version = Number(socket.messageVersion || payload.MessageVersion || 3);
 
     try {
       switch (kind) {
         case 'RequestServerInfo':
+          socket.usesMessageVersion = Number.isFinite(Number(payload.MessageVersion));
           socket.messageVersion = clamp(Number(payload.MessageVersion) || 3, 1, 3);
-          responses.push({
-            ServerInfo: {
+          socket.protocolMajor = clamp(readProtocolMajor(payload), 1, 4);
+          socket.protocolMinor = readProtocolMinor(payload);
+          {
+            const serverInfo = {
               Id: id,
-              ServerName: 'DG-LAB Coyote Socket Bridge',
-              MessageVersion: socket.messageVersion,
               MaxPingTime: 0,
-            },
-          });
+              ServerName: 'DG-LAB Coyote Socket Bridge',
+            };
+            if (socket.usesMessageVersion) {
+              serverInfo.MessageVersion = socket.messageVersion;
+            } else {
+              serverInfo.ProtocolVersionMajor = socket.protocolMajor;
+              serverInfo.ProtocolVersionMinor = socket.protocolMinor;
+            }
+            responses.push({ ServerInfo: serverInfo });
+          }
           break;
         case 'RequestDeviceList':
           responses.push({
             DeviceList: {
               Id: id,
-              Devices: currentButtplugDevices(version),
+              Devices: currentButtplugDevices(socket),
             },
           });
           break;
         case 'StartScanning':
           responses.push(ok(id));
           setTimeout(() => {
-            if (isDglabReady()) {
-              sendButtplug(socket, { DeviceAdded: { Id: 0, ...buttplugDevice(version) } });
+            if (isLegacyButtplugClient(socket)) {
+              sendButtplug(socket, {
+                DeviceList: {
+                  Id: 0,
+                  Devices: currentButtplugDevices(socket),
+                },
+              });
+            } else {
+              sendButtplug(socket, { DeviceAdded: { Id: 0, ...buttplugDevice(socket) } });
             }
             sendButtplug(socket, { ScanningFinished: { Id: 0 } });
           }, 100);
@@ -614,6 +734,7 @@ async function handleButtplugMessage(socket, raw) {
           break;
         case 'StopDeviceCmd':
         case 'StopAllDevices':
+        case 'StopCmd':
           await stopAllOutput();
           responses.push(ok(id));
           break;
@@ -623,6 +744,10 @@ async function handleButtplugMessage(socket, raw) {
           break;
         case 'VibrateCmd':
           await applyVibrateCommand(payload);
+          responses.push(ok(id));
+          break;
+        case 'OutputCmd':
+          await applyOutputCommand(payload);
           responses.push(ok(id));
           break;
         case 'BatteryLevelCmd':
@@ -683,6 +808,22 @@ async function applyVibrateCommand(payload) {
     const value = Math.round(normalized * maxIntensity[channelName]);
     await setChannelIntensity(channelName, value);
   }
+}
+
+async function applyOutputCommand(payload) {
+  if (!bridgeEnabled) {
+    return;
+  }
+  refreshWatchdog();
+  const featureIndex = Number(payload.FeatureIndex) || 0;
+  const channelName = featureIndex === 1 ? 'B' : 'A';
+  const command = payload.Command || {};
+  const vibrate = command.Vibrate || command.vibrate || command;
+  const rawValue = Number(vibrate.Value ?? vibrate.value ?? 0);
+  const value = rawValue > 1
+    ? rawValue
+    : Math.round(clamp(rawValue, 0, 1) * maxIntensity[channelName]);
+  await setChannelIntensity(channelName, value);
 }
 
 async function serveStatic(request, response) {
