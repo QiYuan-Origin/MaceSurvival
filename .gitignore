@@ -21,6 +21,9 @@ console-restart-*.out
 console-restart-*.err
 /runtime/
 
+# Local DG-LAB bridge dependencies
+/dglab-web/node_modules/
+
 # Operating system metadata
 .DS_Store
 Thumbs.db

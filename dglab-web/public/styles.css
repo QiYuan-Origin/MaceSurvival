@@ -1,0 +1,276 @@
+:root {
+  color-scheme: dark;
+  --bg: #101114;
+  --panel: #1a1d23;
+  --panel-2: #20242b;
+  --line: #343a46;
+  --text: #edf1f5;
+  --muted: #9aa4b2;
+  --aqua: #56d6c9;
+  --green: #78d86f;
+  --gold: #f3c267;
+  --red: #f07070;
+  --blue: #6aa8ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  background: #2a2f38;
+  color: var(--text);
+  padding: 0 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--aqua);
+}
+
+button.primary {
+  background: #17665f;
+  border-color: #238e84;
+}
+
+button.danger {
+  background: #6a2428;
+  border-color: #98434a;
+}
+
+input,
+select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #111318;
+  color: var(--text);
+  padding: 0 10px;
+}
+
+input[readonly] {
+  color: var(--muted);
+}
+
+.app {
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 24px 0 40px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.top-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--aqua);
+  font-size: 13px;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 18px;
+}
+
+.status-stack {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(86, 214, 201, 0.16);
+  color: var(--aqua);
+  border: 1px solid rgba(86, 214, 201, 0.45);
+}
+
+.status-pill.muted {
+  color: var(--muted);
+  background: #20242b;
+  border-color: var(--line);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.qr-panel {
+  min-height: 420px;
+}
+
+.qr-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 292px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.qr-wrap img {
+  width: min(280px, 90%);
+  height: auto;
+  display: none;
+  border-radius: 6px;
+}
+
+.qr-placeholder {
+  color: var(--muted);
+}
+
+.copy-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.hint,
+.device-info {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  color: var(--muted);
+}
+
+.toggle input {
+  min-height: auto;
+  width: 18px;
+  height: 18px;
+}
+
+.device-box {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.channel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 74px 1fr 42px;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  color: var(--muted);
+}
+
+input[type="range"] {
+  width: 100%;
+  padding: 0;
+}
+
+output {
+  text-align: right;
+  color: var(--gold);
+}
+
+.manual-channel {
+  display: grid;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.log-panel {
+  margin-top: 16px;
+}
+
+pre {
+  margin: 0;
+  min-height: 120px;
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: var(--muted);
+  background: #111318;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+@media (max-width: 760px) {
+  .top-panel,
+  .grid,
+  .channel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .top-panel {
+    display: grid;
+  }
+
+  .status-stack {
+    justify-content: flex-start;
+  }
+}

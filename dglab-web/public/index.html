@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DG-LAB Socket Bridge</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel top-panel">
+        <div>
+          <p class="eyebrow">DG-LAB Socket Bridge</p>
+          <h1>郊狼本地连接</h1>
+        </div>
+        <div class="status-stack">
+          <span id="statusPill" class="status-pill">未连接</span>
+          <span id="mcPill" class="status-pill muted">MC 0</span>
+        </div>
+      </section>
+
+      <section class="grid">
+        <section class="panel qr-panel">
+          <div class="section-head">
+            <h2>App 连接</h2>
+            <button id="connectDglab" class="primary">连接 DG-LAB</button>
+          </div>
+          <div class="qr-wrap">
+            <img id="qrCode" alt="DG-LAB Socket 二维码">
+            <div id="qrPlaceholder" class="qr-placeholder">等待生成二维码</div>
+          </div>
+          <div class="copy-line">
+            <input id="appUrl" readonly value="">
+            <button id="copyAppUrl">复制</button>
+          </div>
+          <p id="hint" class="hint">打开 DG-LAB 4 App，先蓝牙连接郊狼，再扫这里的 Socket 二维码。</p>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>MC Socket</h2>
+            <button id="copyMcUrl">复制</button>
+          </div>
+          <input id="mcUrl" readonly value="ws://127.0.0.1:12345">
+          <label class="toggle">
+            <input id="bridgeEnabled" type="checkbox" checked>
+            <span>允许 Minecraft 控制 A/B 通道</span>
+          </label>
+          <div class="device-box">
+            <label for="deviceSelect">设备</label>
+            <select id="deviceSelect"></select>
+          </div>
+          <div id="deviceInfo" class="device-info">还没有设备接入</div>
+        </section>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>强度上限</h2>
+          <button id="saveLimits">保存</button>
+        </div>
+        <div class="channel-grid">
+          <label class="slider-row">
+            <span>A 通道</span>
+            <input id="limitA" type="range" min="0" max="60" value="20">
+            <output id="limitAValue">20</output>
+          </label>
+          <label class="slider-row">
+            <span>B 通道</span>
+            <input id="limitB" type="range" min="0" max="60" value="20">
+            <output id="limitBValue">20</output>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>手动测试</h2>
+          <button id="stopAll" class="danger">停止输出</button>
+        </div>
+        <div class="channel-grid">
+          <div class="manual-channel">
+            <label class="slider-row">
+              <span>A 输出</span>
+              <input id="intensityA" type="range" min="0" max="60" value="0">
+              <output id="intensityAValue">0</output>
+            </label>
+            <button data-pulse="A">测试波形 A</button>
+          </div>
+          <div class="manual-channel">
+            <label class="slider-row">
+              <span>B 输出</span>
+              <input id="intensityB" type="range" min="0" max="60" value="0">
+              <output id="intensityBValue">0</output>
+            </label>
+            <button data-pulse="B">测试波形 B</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="section-head">
+          <h2>状态</h2>
+          <button id="refreshDevices">刷新设备</button>
+        </div>
+        <pre id="log">启动中...</pre>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
