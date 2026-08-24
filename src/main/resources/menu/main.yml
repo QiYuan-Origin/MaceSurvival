@@ -1,0 +1,112 @@
+# ═══════════════════════════════════════════════════════════
+#              MaceSurvival  ·  Main Menu
+#   Slots are 0-based. A 6-row chest is 0-53, so 0 is the top-left
+#   corner and 53 is the bottom-right one.
+#   Text fields accept  &a  §a  &x&F&F&0&0&0&0  <#FF0000>
+#   <gradient>  <shadow:#404040:1>  and full JSON components.
+# ═══════════════════════════════════════════════════════════
+
+config_version: 1
+
+title: '<#C9A227><shadow:#404040:1>✦ MACE SURVIVAL</shadow></#C9A227>'
+rows: 6
+
+# Played when the menu opens. Format is  SOUND,volume,pitch,delayTicks
+open-sound:
+  - 'BLOCK_AMETHYST_BLOCK_CHIME,0.7,1.0,0'
+  - 'ITEM_BOOK_PAGE_TURN,0.6,1.0,0'
+  - 'ITEM_BOOK_PAGE_TURN,0.5,1.1,6'
+
+# ─────────────── Frame ───────────────
+# Corner panes carry the accent colour of the page, the rest stay dark.
+frame:
+  corner-material: YELLOW_STAINED_GLASS_PANE
+  corner-name: '<#F0C674>Nothing to see here'
+  corner-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+  filler-material: BLACK_STAINED_GLASS_PANE
+  filler-name: '<#5F6368>Nothing to see here'
+  filler-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+
+items:
+  brief:
+    slot: 4
+    material: MACE
+    name: '<#C9A227>❰ Round Brief ❱'
+    lore:
+      - '<#9AA0A6>Forty divers, one arena, one mace each.'
+      - '<#9AA0A6>Loot the star-rated caches to keep swinging.'
+      - '<#9AA0A6>State: <#F0C674>{state}'
+      - '<#9AA0A6>In lobby: <#F0C674>{players}</#F0C674><#5F6368>/</#5F6368><#9AA0A6>{max}'
+      - ''
+      - '<#5F6368>Left-click to refresh the numbers.'
+    action: refresh
+
+  squad:
+    slot: 20
+    material: WHITE_BANNER
+    name: '<#7FD962>❰ Squad Tools ❱'
+    lore:
+      - '<#9AA0A6>Four to a squad. Invite before the drop.'
+      - '<#9AA0A6>Squad: <#F0C674>{squad}'
+      - ''
+      - '<#5F6368>Left-click to open.'
+    action: 'menu:team'
+
+  layout:
+    slot: 22
+    material: CHEST
+    name: '<#7FC9D9>❰ Hotbar Layout ❱'
+    lore:
+      - '<#9AA0A6>Decide where the mace, food, blocks'
+      - '<#9AA0A6>and wind charges land on your hotbar.'
+      - ''
+      - '<#5F6368>Left-click to open.'
+    action: 'menu:layout'
+
+  stats:
+    slot: 24
+    material: BOOK
+    name: '<#B48EAD>❰ Records ❱'
+    lore:
+      - '<#9AA0A6>Wins, kills and best streaks.'
+      - '<#9AA0A6>Your wins: <#F0C674>{wins}'
+      - '<#9AA0A6>Your kills: <#F0C674>{kills}'
+      - ''
+      - '<#5F6368>Left-click to open.'
+    action: 'menu:stats'
+
+  spectate:
+    slot: 30
+    material: ENDER_EYE
+    name: '<#E0A45C>❰ Spectate ❱'
+    lore:
+      - '<#9AA0A6>Watch the divers still in the fight.'
+      - '<#9AA0A6>Alive: <#F0C674>{alive}'
+      - ''
+      - '<#5F6368>Left-click to open.'
+    action: 'menu:spectate'
+
+  balance:
+    slot: 32
+    material: GOLD_INGOT
+    name: '<#F0C674>❰ Your Purse ❱'
+    lore:
+      - '<#9AA0A6>Wins, kills and taking part all pay out.'
+      - '<#9AA0A6>Balance: <#F0C674>{balance} {currency}'
+      - ''
+      - '<#5F6368>Left-click to refresh.'
+    action: refresh
+
+  # Shown as a back button when menu.close-as-back is on, close otherwise.
+  close:
+    slot: 49
+    material: BARRIER
+    name: '<#E05C5C>❰ Close ❱'
+    lore:
+      - '<#9AA0A6>Put the menu away.'
+    back-material: ARROW
+    back-name: '<#E0A45C>❰ Back ❱'
+    back-lore:
+      - '<#9AA0A6>Return to the server menu.'

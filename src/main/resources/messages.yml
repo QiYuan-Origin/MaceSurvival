@@ -1,0 +1,223 @@
+# ═══════════════════════════════════════════════════════════
+#              MaceSurvival  ·  Messages
+#   Every chat line lives here. The prefix from config.yml is added
+#   automatically, except for help entries which are sent raw.
+#   You may mix &a  §a  &x&F&F&0&0&0&0  <#FF0000>  <gradient>  <shadow>.
+#   {name} style variables are filled by the plugin.
+# ═══════════════════════════════════════════════════════════
+
+config_version: 1
+
+general:
+  no-permission: '<#E05C5C>You do not have permission to do that.'
+  player-only: '<#E05C5C>Only a player can run this.'
+  player-not-found: '<#E05C5C>No player named <#F0C674>{target}</#F0C674> is online.'
+  unknown-command: '<#E05C5C>Unknown argument. Try <#F0C674>/mace help</#F0C674>.'
+  invalid-number: '<#E05C5C>That is not a valid number: <#F0C674>{input}</#F0C674>'
+  reloaded: '<#7FD962>Configuration reloaded in <#F0C674>{ms}ms</#F0C674>.'
+  reloaded-restored: '<#7FD962>Reloaded and restored <#F0C674>{count}</#F0C674> missing file(s): <#9AA0A6>{files}'
+  reload-failed: '<#E05C5C>Reload failed: <#9AA0A6>{error}'
+
+lobby:
+  join: '<#7FD962>{player}</#7FD962> <#9AA0A6>joined the lobby <#5F6368>(<#F0C674>{current}</#F0C674>/<#9AA0A6>{max}</#9AA0A6>)'
+  quit: '<#E0A45C>{player}</#E0A45C> <#9AA0A6>left the lobby <#5F6368>(<#F0C674>{current}</#F0C674>/<#9AA0A6>{max}</#9AA0A6>)'
+  waiting: '<#9AA0A6>Waiting for <#F0C674>{needed}</#F0C674> more player(s) to start.'
+  countdown: '<#C9A227>Match starts in <#F0C674>{seconds}</#F0C674> second(s).'
+  countdown-cancelled: '<#E05C5C>Not enough players. Countdown cancelled.'
+  full: '<#E05C5C>This round is full. You have been placed as a spectator.'
+  already-running: '<#E0A45C>A round is already in progress. Enjoy the show.'
+  force-start: '<#C9A227>{player}</#C9A227> <#9AA0A6>force-started the round.'
+  force-stop: '<#E05C5C>{player}</#E05C5C> <#9AA0A6>force-stopped the round.'
+
+arena:
+  generating: '<#9AA0A6>Forging the arena, hold on...'
+  generated: '<#7FD962>Arena ready. <#9AA0A6>{structures} structures, {chests} chests.'
+  generate-failed: '<#E05C5C>Arena generation failed: <#9AA0A6>{error}'
+  regenerating: '<#C9A227>Rebuilding the arena...'
+
+drop:
+  title: '<#C9A227><shadow:#404040:1>DIVE</shadow></#C9A227>'
+  subtitle: '<#9AA0A6>Look around to steer'
+  parachute: '<#7FD962>Parachute open'
+  parachute-open: '<#7FD962>Parachute deployed. <#9AA0A6>Steer for a soft landing.'
+  landed: '<#7FD962>Feet on the ground. <#9AA0A6>Grab a mace and start hunting.'
+  blackout-title: '<#5F6368><shadow:#101010:1>STAND BY</shadow></#5F6368>'
+  blackout-subtitle: '<#9AA0A6>The arena is being forged'
+  actionbar-diving: '<#7FC9D9>Diving <#5F6368>| <#9AA0A6>Altitude <#F0C674>{altitude}m</#F0C674> <#5F6368>| <#9AA0A6>Look around to steer'
+  actionbar-parachute: '<#7FD962>Parachute <#5F6368>| <#9AA0A6>Altitude <#F0C674>{altitude}m</#F0C674> <#5F6368>| <#9AA0A6>Pick your landing spot'
+
+chest:
+  hologram: '{stars} <#5F6368>| {tier}'
+  tier:
+    one-star: '<#9AA0A6>Scrap Cache'
+    two-star: '<#5FBF6A>Supply Cache'
+    three-star: '<#4C8CE8>Armoury Cache'
+    four-star: '<#C9A227>Siege Cache'
+
+game:
+  start-title: '<#C9A227><shadow:#404040:1>MACE SURVIVAL</shadow></#C9A227>'
+  start-subtitle: '<#9AA0A6>Last squad standing takes it'
+  grace-over: '<#E05C5C>Grace period over. <#9AA0A6>PvP is live.'
+  time-remaining: '<#9AA0A6>Time remaining: <#F0C674>{time}'
+  players-remaining: '<#9AA0A6>Squads alive: <#F0C674>{squads}</#F0C674> <#5F6368>| <#9AA0A6>Players: <#F0C674>{players}'
+  spectator-mode: '<#9AA0A6>You are spectating. Use <#F0C674>/mace menu</#F0C674> to look around.'
+  not-in-game: '<#E05C5C>You are not in an active round.'
+
+kill:
+  # Death messages stay in the vanilla "A did X to B" shape on purpose.
+  by-mace: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>was flattened by</#9AA0A6> <#E05C5C>{killer}</#E05C5C><#9AA0A6>''s mace'
+  by-smash: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>was driven into the ground by</#9AA0A6> <#E05C5C>{killer}</#E05C5C>'
+  by-explosion: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>was shattered when their weapon gave out'
+  by-fall: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>misjudged the drop'
+  by-void: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>fell out of the arena'
+  by-other: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>is out'
+  killer-feedback: '<#7FD962>You took down <#F0C674>{victim}</#F0C674>. <#9AA0A6>Kills: <#F0C674>{kills}'
+  victim-feedback: '<#E05C5C>You were eliminated by <#F0C674>{killer}</#F0C674>.'
+
+loadout:
+  mace-name: '<#C9A227>❰ Siege Mace ❱'
+  mace-lore:
+    - '<#9AA0A6>Heavy strikes scale with the height you fall from.'
+    - '<#9AA0A6>Charge: <#7FD962>{remaining}</#7FD962><#5F6368>/</#5F6368><#9AA0A6>{max}'
+    - '<#5F6368>Runs dry and the head detonates.'
+  food-name: '<#E0A45C>❰ Field Ration ❱'
+  food-lore:
+    - '<#9AA0A6>Keeps the bar full between fights.'
+  block-name: '<#8FB86B>❰ Scaffold Stack ❱'
+  block-lore:
+    - '<#9AA0A6>Stack it up, then bring the hammer down.'
+  wind-charge-name: '<#7FC9D9>❰ Wind Charge ❱'
+  wind-charge-lore:
+    - '<#9AA0A6>Launch yourself skyward for a heavier hit.'
+  lobby-info-name: '<#C9A227>❰ Round Brief ❱'
+  lobby-info-lore:
+    - '<#9AA0A6>Drop in, loot the caches, hold the last ground.'
+    - '<#9AA0A6>Players: <#F0C674>{players}</#F0C674><#5F6368>/</#5F6368><#9AA0A6>{max}'
+    - '<#5F6368>Squads are drawn when the countdown ends.'
+  lobby-stats-name: '<#7FD962>❰ Your Record ❱'
+  lobby-stats-lore:
+    - '<#9AA0A6>Wins: <#F0C674>{wins}'
+    - '<#9AA0A6>Kills: <#F0C674>{kills}'
+    - '<#9AA0A6>Best streak: <#F0C674>{streak}'
+  lobby-menu-name: '<#B48EAD>❰ Navigator ❱'
+  lobby-menu-lore:
+    - '<#9AA0A6>Leaderboards, squad tools and settings.'
+
+loot:
+  chest-opened: '<#9AA0A6>Opened a <#F0C674>{stars}</#F0C674> <#9AA0A6>cache.'
+  chest-empty: '<#9AA0A6>This cache has already been picked clean.'
+  durability-merged: '<#7FD962>Durability merged. <#9AA0A6>Your {item} is now at <#F0C674>{durability}</#F0C674>.'
+  durability-low: '<#E0A45C>Your {item} is about to give out <#5F6368>(<#E05C5C>{durability}</#E05C5C>)'
+  durability-broke: '<#E05C5C>Your {item} exploded in your hands.'
+  book-applied: '<#7FD962>Applied <#F0C674>{enchant} {level}</#F0C674> <#9AA0A6>to your {item}.'
+  book-no-weapon: '<#E0A45C>Hold a weapon to bind that book.'
+  book-incompatible: '<#E05C5C>That book does not fit this weapon.'
+  book-max-level: '<#E0A45C>{enchant} is already at its ceiling on this weapon.'
+
+team:
+  created: '<#7FD962>Squad created. <#9AA0A6>Invite with <#F0C674>/mace team invite <player>'
+  disbanded: '<#E0A45C>Squad disbanded.'
+  invited: '<#7FD962>Invited <#F0C674>{target}</#F0C674> to your squad.'
+  invite-received: '<#F0C674>{player}</#F0C674> <#9AA0A6>invited you. <#7FD962>/mace team accept {player}'
+  joined: '<#7FD962>{player}</#7FD962> <#9AA0A6>joined the squad <#5F6368>(<#F0C674>{current}</#F0C674>/<#9AA0A6>{max}</#9AA0A6>)'
+  left: '<#E0A45C>{player}</#E0A45C> <#9AA0A6>left the squad.'
+  full: '<#E05C5C>That squad is full.'
+  not-in-team: '<#E05C5C>You are not in a squad.'
+  already-in-team: '<#E0A45C>You are already in a squad.'
+  no-invite: '<#E05C5C>You have no pending invite from that player.'
+  mate-down: '<#E05C5C>{player}</#E05C5C> <#9AA0A6>is down.'
+  wiped: '<#E05C5C>Your squad has been wiped.'
+  label-solo: '<#9AA0A6>Diving solo'
+  label-formed: '<#7FD962>Formed'
+  role-you: '<#7FD962>You'
+  role-mate: '<#7FC9D9>Squadmate'
+
+# ─────────────── Leaderboards ───────────────
+# Board names shown on the cycling button in the records menu.
+leaderboard:
+  board:
+    wins: 'Wins'
+    kills: 'Kills'
+    kd: 'K/D'
+    streak: 'Best streak'
+    games: 'Rounds played'
+  unranked: '<#5F6368>Unranked'
+
+# ─────────────── Squads (broadcast) ───────────────
+squad:
+  wiped: '<#E05C5C>Squad {squad}</#E05C5C> <#9AA0A6>has been wiped out.'
+
+# ─────────────── Round state labels ───────────────
+# Used by menus and the scoreboard. One label per GameState value.
+state:
+  booting: '<#9AA0A6>Preparing'
+  waiting: '<#7FC9D9>Waiting'
+  countdown: '<#F0C674>Starting'
+  dropping: '<#E0A45C>Dropping'
+  running: '<#7FD962>In progress'
+  ending: '<#B48EAD>Wrapping up'
+
+end:
+  win-title: '<#C9A227><shadow:#404040:1>VICTORY</shadow></#C9A227>'
+  win-subtitle: '<#9AA0A6>Last squad standing'
+  lose-title: '<#E05C5C><shadow:#404040:1>DEFEATED</shadow></#E05C5C>'
+  lose-subtitle: '<#9AA0A6>Better luck next drop'
+  draw-title: '<#9AA0A6><shadow:#404040:1>NO WINNER</shadow></#9AA0A6>'
+  draw-subtitle: '<#5F6368>Time ran out'
+  broadcast-winner: '<#C9A227>{winner}</#C9A227> <#9AA0A6>wins the round with <#F0C674>{kills}</#F0C674> <#9AA0A6>kill(s).'
+  broadcast-timeout: '<#9AA0A6>Time is up. No squad could close it out.'
+  reward: '<#7FD962>+{amount}</#7FD962> <#9AA0A6>{currency}'
+  restarting: '<#9AA0A6>Restarting in <#F0C674>{seconds}</#F0C674>s to reset the arena.'
+
+stats:
+  header: '<#C9A227><shadow:#404040:1>Stats · {player}</shadow></#C9A227>'
+  wins: '<#9AA0A6>Wins: <#F0C674>{wins}'
+  kills: '<#9AA0A6>Kills: <#F0C674>{kills}'
+  deaths: '<#9AA0A6>Deaths: <#F0C674>{deaths}'
+  kdr: '<#9AA0A6>K/D: <#F0C674>{kdr}'
+  played: '<#9AA0A6>Rounds played: <#F0C674>{played}'
+
+spectate:
+  now-watching: '<#7FC9D9>Now watching <#F0C674>{player}</#F0C674>.'
+  free-camera: '<#7FD962>Free camera. <#9AA0A6>Fly wherever you like.'
+  target-offline: '<#E05C5C>That diver just went offline.'
+  nobody-alive: '<#9AA0A6>Nobody is diving right now.'
+  not-spectator: '<#E05C5C>Only spectators can do that.'
+
+input:
+  prompt-title: '<#C9A227>Type it in chat'
+  prompt-subtitle: '<#9AA0A6>Sneak to confirm · type cancel to abort'
+  cancelled: '<#E0A45C>Input cancelled.'
+  timeout: '<#E0A45C>Input timed out.'
+  accepted: '<#7FD962>Got it.'
+  waiting: '<#C9A227>Waiting for your message <#5F6368>(<#F0C674>{seconds}s</#F0C674>)'
+
+# ─────────────── Help ───────────────
+# Help lines are sent WITHOUT the prefix. Admin blocks are only shown
+# to players holding macesurvival.admin.
+help:
+  header:
+    - ''
+    - '  <#C9A227><shadow:#404040:1>✦ MACE SURVIVAL</shadow></#C9A227> <#5F6368>v{version}'
+    - '  <#9AA0A6>Drop in, loot up, be the last squad standing.'
+    - ''
+  player:
+    - '  <#F0C674>/mace</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>open the main menu'
+    - '  <#F0C674>/mace help</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>show this page'
+    - '  <#F0C674>/mace menu</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>open the navigation menu'
+    - '  <#F0C674>/mace stats [player]</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>view round stats'
+    - '  <#F0C674>/mace team</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>squad menu and invites'
+    - '  <#F0C674>/mace spectate</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>watch the current round'
+    - ''
+  admin:
+    - '  <#E0A45C><shadow:#404040:1>Admin</shadow></#E0A45C>'
+    - '  <#F0C674>/mace start</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>force-start the round'
+    - '  <#F0C674>/mace stop</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>force-stop the round'
+    - '  <#F0C674>/mace reload</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>reload configs and restore missing files'
+    - '  <#F0C674>/mace map regen</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>rebuild the arena'
+    - '  <#F0C674>/mace map info</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>arena size, structures, chests'
+    - '  <#F0C674>/mace loot test <stars></#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>roll a loot table'
+    - ''
+  footer:
+    - '  <#5F6368>Aliases: /macesurvival · /mace · /ms'
+    - ''

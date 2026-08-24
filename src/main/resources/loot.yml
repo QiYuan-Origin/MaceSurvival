@@ -1,0 +1,156 @@
+# ═══════════════════════════════════════════════════════════
+#              MaceSurvival  ·  Loot tables
+#   One table per chest tier. Higher stars roll more slots and
+#   unlock the heavier gear.
+#
+#   Entry format:
+#     material: vanilla material name, or MACE for a weapon that
+#               carries the plugin durability counter
+#     weight:   relative chance inside the table
+#     min/max:  stack size rolled per pick
+#     durability: only read for MACE, sets the charge counter
+#     enchant:  ENCHANT_KEY:LEVEL, applied straight to the item
+#     book:     ENCHANT_KEY:LEVEL, produces an enchanted book
+# ═══════════════════════════════════════════════════════════
+
+config_version: 1
+
+# Slots rolled per chest. A slot may come up empty on the low tiers,
+# which is what makes a one-star cache feel like a gamble.
+rolls:
+  one-star: 3
+  two-star: 4
+  three-star: 5
+  four-star: 6
+
+# Chance for a rolled slot to come up empty, percent.
+empty-chance:
+  one-star: 30
+  two-star: 15
+  three-star: 5
+  four-star: 0
+
+tables:
+  one-star:
+    - material: COOKED_BEEF
+      weight: 20
+      min: 2
+      max: 5
+    - material: OAK_PLANKS
+      weight: 18
+      min: 8
+      max: 24
+    - material: WIND_CHARGE
+      weight: 14
+      min: 1
+      max: 3
+    - material: LEATHER_HELMET
+      weight: 8
+    - material: LEATHER_CHESTPLATE
+      weight: 8
+    - material: GOLDEN_APPLE
+      weight: 6
+      min: 1
+      max: 1
+    - material: MACE
+      weight: 5
+      durability: 18
+    - material: BOOK
+      weight: 4
+      book: KNOCKBACK:1
+
+  two-star:
+    - material: COOKED_BEEF
+      weight: 16
+      min: 4
+      max: 8
+    - material: OAK_PLANKS
+      weight: 14
+      min: 16
+      max: 32
+    - material: WIND_CHARGE
+      weight: 16
+      min: 3
+      max: 6
+    - material: CHAINMAIL_HELMET
+      weight: 9
+    - material: CHAINMAIL_CHESTPLATE
+      weight: 9
+    - material: CHAINMAIL_LEGGINGS
+      weight: 8
+    - material: GOLDEN_APPLE
+      weight: 8
+      min: 1
+      max: 2
+    - material: MACE
+      weight: 8
+      durability: 32
+    - material: BOOK
+      weight: 6
+      book: DENSITY:2
+    - material: BOOK
+      weight: 6
+      book: FIRE_ASPECT:1
+
+  three-star:
+    - material: GOLDEN_APPLE
+      weight: 14
+      min: 2
+      max: 3
+    - material: WIND_CHARGE
+      weight: 14
+      min: 6
+      max: 10
+    - material: IRON_HELMET
+      weight: 10
+    - material: IRON_CHESTPLATE
+      weight: 10
+    - material: IRON_LEGGINGS
+      weight: 9
+    - material: IRON_BOOTS
+      weight: 9
+    - material: MACE
+      weight: 12
+      durability: 55
+      enchant: DENSITY:2
+    - material: BOOK
+      weight: 8
+      book: BREACH:2
+    - material: BOOK
+      weight: 8
+      book: WIND_BURST:1
+    - material: ENDER_PEARL
+      weight: 10
+      min: 2
+      max: 4
+
+  four-star:
+    - material: ENCHANTED_GOLDEN_APPLE
+      weight: 12
+      min: 1
+      max: 2
+    - material: WIND_CHARGE
+      weight: 12
+      min: 10
+      max: 16
+    - material: DIAMOND_HELMET
+      weight: 10
+    - material: DIAMOND_CHESTPLATE
+      weight: 10
+    - material: DIAMOND_LEGGINGS
+      weight: 9
+    - material: DIAMOND_BOOTS
+      weight: 9
+    - material: MACE
+      weight: 16
+      durability: 80
+      enchant: DENSITY:4
+    - material: BOOK
+      weight: 8
+      book: WIND_BURST:3
+    - material: BOOK
+      weight: 8
+      book: BREACH:4
+    - material: BOOK
+      weight: 6
+      book: DENSITY:5

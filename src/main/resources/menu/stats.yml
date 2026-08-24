@@ -1,0 +1,86 @@
+# ═══════════════════════════════════════════════════════════
+#              MaceSurvival  ·  Records
+#   One button cycles every board, so the menu never sprouts
+#   five near-identical buttons. Left-click steps forward,
+#   right-click steps back, and both wrap around.
+# ═══════════════════════════════════════════════════════════
+
+config_version: 1
+
+title: '<#B48EAD><shadow:#404040:1>Records</shadow></#B48EAD>'
+rows: 6
+
+open-sound:
+  - 'BLOCK_TRIAL_SPAWNER_AMBIENT,0.6,1.0,0'
+  - 'ITEM_BOOK_PAGE_TURN,0.5,1.0,3'
+
+frame:
+  corner-material: PURPLE_STAINED_GLASS_PANE
+  corner-name: '<#B48EAD>Nothing to see here'
+  corner-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+  filler-material: BLACK_STAINED_GLASS_PANE
+  filler-name: '<#5F6368>Nothing to see here'
+  filler-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+
+items:
+  header:
+    slot: 4
+    material: BOOK
+    name: '<#B48EAD>❰ Records ❱'
+    lore:
+      - '<#9AA0A6>Board: <#F0C674>{board}'
+      - '<#9AA0A6>Your rank: <#F0C674>{rank}'
+
+  # The cycle button lists every board and ticks the active one.
+  board:
+    slot: 49
+    material: COMPARATOR
+    name: '<#F0C674>❰ Change Board ❱'
+    lore:
+      - '{boards}'
+      - ''
+      - '<#5F6368>Left-click next board, right-click previous.'
+    action: 'cycle:board'
+  board-line: '<#5F6368>- </#5F6368>{marker}'
+  board-selected: '<#7FD962>[ {name} ] ✔'
+  board-idle: '<#9AA0A6>[ {name} ]'
+
+  # Ten entries, centred across the two middle rows.
+  entry-slots: [ 19, 20, 21, 22, 23, 24, 25, 30, 31, 32 ]
+  entry:
+    material: PLAYER_HEAD
+    name: '<#F0C674>❰ #{rank} {player} ❱'
+    lore:
+      - '<#9AA0A6>Wins: <#F0C674>{wins}'
+      - '<#9AA0A6>Kills: <#F0C674>{kills}'
+      - '<#9AA0A6>Deaths: <#F0C674>{deaths}'
+      - '<#9AA0A6>K/D: <#F0C674>{kd}'
+      - '<#9AA0A6>Best streak: <#F0C674>{streak}'
+  empty:
+    slot: 22
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: '<#9AA0A6>❰ Nothing Here Yet ❱'
+    lore:
+      - '<#5F6368>Nobody has finished a round on this board.'
+
+  self:
+    slot: 45
+    material: PLAYER_HEAD
+    name: '<#7FD962>❰ Your Record ❱'
+    lore:
+      - '<#9AA0A6>Wins: <#F0C674>{wins}'
+      - '<#9AA0A6>Kills: <#F0C674>{kills}'
+      - '<#9AA0A6>Deaths: <#F0C674>{deaths}'
+      - '<#9AA0A6>K/D: <#F0C674>{kd}'
+      - '<#9AA0A6>Rounds: <#F0C674>{played}'
+      - '<#9AA0A6>Best streak: <#F0C674>{streak}'
+
+  back:
+    slot: 53
+    material: ARROW
+    name: '<#E0A45C>❰ Back ❱'
+    lore:
+      - '<#9AA0A6>Return to the main menu.'
+    action: 'menu:main'

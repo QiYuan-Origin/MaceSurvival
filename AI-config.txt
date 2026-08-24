@@ -1,0 +1,15 @@
+# MaceSurvival AI 工程配置
+# up-Version: 是否自动升级版本号（true = 做完一整件事后自动 +0.0.1，不再询问）
+up-Version: false
+
+# auto-Upload-github: 是否每次做完自动同步到 GitHub 仓库
+# 仓库: https://github.com/QiYuan-Origin/MaceSurvival
+auto-Upload-github: true
+
+# ── 工程约定（AI 每次进来先读这里）────────────────────────────
+# 类型: 单端插件（进服直接进等待大厅，游戏中进服变旁观）
+# 平台: Paper 1.21.11 / Java 21 / Maven
+# 地图: 插件随机生成（无需管理员建图、无世界复制）
+# 组队: 4 人一队
+# 部署: 只构建到 target/，不复制到 QiCheng server 目录
+# 文本: 全部支持 & / § / MiniMessage / JSON，主语言英文，mcpvp.club 阴影字风格

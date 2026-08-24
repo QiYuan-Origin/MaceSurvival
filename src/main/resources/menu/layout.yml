@@ -1,0 +1,101 @@
+# ═══════════════════════════════════════════════════════════
+#              MaceSurvival  ·  Hotbar Layout
+#   Players pick which hotbar slot each starting item lands in.
+#   Left-click moves an item right, right-click moves it left,
+#   and both wrap around the nine hotbar slots.
+# ═══════════════════════════════════════════════════════════
+
+config_version: 1
+
+title: '<#7FC9D9><shadow:#404040:1>Hotbar Layout</shadow></#7FC9D9>'
+rows: 5
+
+open-sound:
+  - 'BLOCK_SMITHING_TABLE_USE,0.7,1.0,0'
+  - 'BLOCK_GRINDSTONE_USE,0.4,1.2,5'
+
+frame:
+  corner-material: CYAN_STAINED_GLASS_PANE
+  corner-name: '<#7FC9D9>Nothing to see here'
+  corner-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+  filler-material: BLACK_STAINED_GLASS_PANE
+  filler-name: '<#5F6368>Nothing to see here'
+  filler-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+
+items:
+  header:
+    slot: 4
+    material: CHEST
+    name: '<#7FC9D9>❰ Hotbar Layout ❱'
+    lore:
+      - '<#9AA0A6>Four items, nine slots, your call.'
+      - '<#5F6368>Two items may share a slot, the mace wins.'
+
+  # Every entry shows the nine slots with the chosen one marked.
+  slot-list-line: '<#5F6368>- </#5F6368>{marker}'
+  slot-list-selected: '<#7FD962>[ Slot {slot} ] ✔'
+  slot-list-idle: '<#9AA0A6>[ Slot {slot} ]'
+
+  mace:
+    slot: 19
+    material: MACE
+    name: '<#C9A227>❰ Siege Mace ❱'
+    lore:
+      - '<#9AA0A6>The whole point of the round.'
+      - '{slots}'
+      - ''
+      - '<#5F6368>Left-click next slot, right-click previous.'
+    action: 'cycle:mace-slot'
+
+  food:
+    slot: 21
+    material: COOKED_BEEF
+    name: '<#E0A45C>❰ Field Ration ❱'
+    lore:
+      - '<#9AA0A6>Keeps the bar full between fights.'
+      - '{slots}'
+      - ''
+      - '<#5F6368>Left-click next slot, right-click previous.'
+    action: 'cycle:food-slot'
+
+  blocks:
+    slot: 23
+    material: OAK_PLANKS
+    name: '<#8FB86B>❰ Scaffold Stack ❱'
+    lore:
+      - '<#9AA0A6>Stack it up, then bring the hammer down.'
+      - '{slots}'
+      - ''
+      - '<#5F6368>Left-click next slot, right-click previous.'
+    action: 'cycle:block-slot'
+
+  wind-charge:
+    slot: 25
+    material: WIND_CHARGE
+    name: '<#7FC9D9>❰ Wind Charge ❱'
+    lore:
+      - '<#9AA0A6>Launch yourself skyward for a heavier hit.'
+      - '{slots}'
+      - ''
+      - '<#5F6368>Left-click next slot, right-click previous.'
+    action: 'cycle:wind-charge-slot'
+
+  reset:
+    slot: 31
+    material: GRINDSTONE
+    name: '<#E05C5C>❰ Reset Layout ❱'
+    lore:
+      - '<#9AA0A6>Put the four items back where they started.'
+      - ''
+      - '<#5F6368>Left-click to reset.'
+    action: 'layout:reset'
+
+  back:
+    slot: 40
+    material: ARROW
+    name: '<#E0A45C>❰ Back ❱'
+    lore:
+      - '<#9AA0A6>Return to the main menu.'
+    action: 'menu:main'
