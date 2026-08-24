@@ -97,7 +97,7 @@ public final class ArenaManager {
                 .generateStructures(false)
                 .generator(new VoidGenerator());
         if (!"random".equalsIgnoreCase(plugin.configs().main().getString("arena.seed-mode", "random"))) {
-            creator.seed(plugin.configs().main().getLong("arena.seed", 0L));
+            creator.seed(plugin.configs().main().getLong("arena.seed", 20241121L));
         }
 
         world = creator.createWorld();

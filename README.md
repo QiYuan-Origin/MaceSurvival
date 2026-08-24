@@ -135,11 +135,13 @@ plugins/MaceSurvival/
 | `game.grace-period` | `20` | Seconds of protection after landing |
 | `game.time-limit` | `1800` | Round length before a forced finish |
 | `game.restart-on-end` | `true` | Restart the server after the end screen |
+| `game.friendly-fire-disabled` | `true` | Block damage between squad mates |
 | `drop.height` | `320` | Skydive start height |
 | `drop.fall-speed` | `1.6` | Free-fall speed in blocks per tick |
 | `drop.open-at-height` | `14` | Height at which the parachute opens |
 | `arena.radius` | `400` | Arena radius in blocks |
 | `arena.structures` | `26` | Structures placed per generation |
+| `arena.seed-mode` | `random` | `random` rolls a new map each round, anything else reuses `arena.seed` |
 | `loot.merge-durability` | `true` | Merge duplicate loot into carried gear |
 | `loot.durability-explosion` | `true` | Detonate an overloaded mace |
 | `loot.absolute-max-level` | `10` | Enchantment ceiling when vanilla caps are ignored |

@@ -9,7 +9,7 @@
 # ═══════════════════════════════════════════════════════════
 
 # Config version, do not edit by hand. Missing keys are merged in on upgrade.
-config_version: 1
+config_version: 2
 
 # Chat prefix used by every message that is not a help entry.
 prefix: '<#C9A227><shadow:#404040:1>✦ MACE</shadow></#C9A227> <#9AA0A6><shadow:#404040:1>»</shadow></#9AA0A6> '
@@ -43,6 +43,9 @@ game:
   # Spectators of a finished round keep flying instead of being frozen.
   spectator-fly: true
 
+  # Squad mates cannot damage each other. Ignored in solo rounds.
+  friendly-fire-disabled: true
+
 # ─────────────── Skydive ───────────────
 drop:
   # Black screen while the arena is being generated.
@@ -73,7 +76,10 @@ arena:
   # Border shrink is disabled by default, this mode ends on kills and timer.
   shrink-border: false
 
+  # 'random' rolls a new arena every round. Anything else reuses 'seed' below,
+  # so every restart generates the exact same map.
   seed-mode: random
+  seed: 20241121
   # Loot buildings scattered across the arena.
   structures: 26
   min-structure-distance: 48
