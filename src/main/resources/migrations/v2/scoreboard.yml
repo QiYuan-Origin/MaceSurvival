@@ -1,0 +1,12 @@
+# Previous bundled sidebar text; only an unchanged default list is upgraded.
+lines:
+  waiting:
+  - ''
+  - <gray>阶段 <white>{phase}</white>
+  - <gray>玩家 <white>{players}</white><dark_gray> / </dark_gray>{maximum}
+  - <gray>{waiting_hint}</gray>
+  - ''
+  - <gray>队伍 <white>{squad}</white>
+  - ''
+  - <gray>单人 / 最多 4 人自由组队
+  - ''

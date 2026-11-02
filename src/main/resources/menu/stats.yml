@@ -1,86 +1,119 @@
-# ═══════════════════════════════════════════════════════════
-#              MaceSurvival  ·  Records
-#   One button cycles every board, so the menu never sprouts
-#   five near-identical buttons. Left-click steps forward,
-#   right-click steps back, and both wrap around.
-# ═══════════════════════════════════════════════════════════
-
-config_version: 1
-
-title: '<#B48EAD><shadow:#404040:1>Records</shadow></#B48EAD>'
-rows: 6
-
-open-sound:
-  - 'BLOCK_TRIAL_SPAWNER_AMBIENT,0.6,1.0,0'
-  - 'ITEM_BOOK_PAGE_TURN,0.5,1.0,3'
-
-frame:
-  corner-material: PURPLE_STAINED_GLASS_PANE
-  corner-name: '<#B48EAD>Nothing to see here'
-  corner-lore:
-    - '<#5F6368>Clicking does nothing, promise.'
-  filler-material: BLACK_STAINED_GLASS_PANE
-  filler-name: '<#5F6368>Nothing to see here'
-  filler-lore:
-    - '<#5F6368>Clicking does nothing, promise.'
-
+config_version: 2
+title: <!i><white><shadow:#404040:1>重锤大逃杀 · 我的战绩</shadow></white>
+size: 54
+open_sound:
+  enabled: true
+  sound: block.chest.open
+  volume: 0.4
+  pitch: 1.0
+click_sound:
+  enabled: true
+  sound: ui.button.click
+  volume: 0.35
+  pitch: 1.0
 items:
-  header:
-    slot: 4
-    material: BOOK
-    name: '<#B48EAD>❰ Records ❱'
-    lore:
-      - '<#9AA0A6>Board: <#F0C674>{board}'
-      - '<#9AA0A6>Your rank: <#F0C674>{rank}'
-
-  # The cycle button lists every board and ticks the active one.
-  board:
-    slot: 49
-    material: COMPARATOR
-    name: '<#F0C674>❰ Change Board ❱'
-    lore:
-      - '{boards}'
-      - ''
-      - '<#5F6368>Left-click next board, right-click previous.'
-    action: 'cycle:board'
-  board-line: '<#5F6368>- </#5F6368>{marker}'
-  board-selected: '<#7FD962>[ {name} ] ✔'
-  board-idle: '<#9AA0A6>[ {name} ]'
-
-  # Ten entries, centred across the two middle rows.
-  entry-slots: [ 19, 20, 21, 22, 23, 24, 25, 30, 31, 32 ]
-  entry:
-    material: PLAYER_HEAD
-    name: '<#F0C674>❰ #{rank} {player} ❱'
-    lore:
-      - '<#9AA0A6>Wins: <#F0C674>{wins}'
-      - '<#9AA0A6>Kills: <#F0C674>{kills}'
-      - '<#9AA0A6>Deaths: <#F0C674>{deaths}'
-      - '<#9AA0A6>K/D: <#F0C674>{kd}'
-      - '<#9AA0A6>Best streak: <#F0C674>{streak}'
-  empty:
-    slot: 22
-    material: LIGHT_GRAY_STAINED_GLASS_PANE
-    name: '<#9AA0A6>❰ Nothing Here Yet ❱'
-    lore:
-      - '<#5F6368>Nobody has finished a round on this board.'
-
+  border:
+    material: GRAY_STAINED_GLASS_PANE
+    slots:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 45
+    - 46
+    - 47
+    - 48
+    - 49
+    - 50
+    - 51
+    - 52
+    - 53
+    display_name: ' '
   self:
-    slot: 45
-    material: PLAYER_HEAD
-    name: '<#7FD962>❰ Your Record ❱'
+    material: PAPER
+    slot: 40
+    display_name: <!i><white><shadow:#404040:1>我的完整记录</shadow></white>
     lore:
-      - '<#9AA0A6>Wins: <#F0C674>{wins}'
-      - '<#9AA0A6>Kills: <#F0C674>{kills}'
-      - '<#9AA0A6>Deaths: <#F0C674>{deaths}'
-      - '<#9AA0A6>K/D: <#F0C674>{kd}'
-      - '<#9AA0A6>Rounds: <#F0C674>{played}'
-      - '<#9AA0A6>Best streak: <#F0C674>{streak}'
-
+    - <!i><gray>胜利 <white>{wins}</white> / 参与 <white>{games}</white></gray>
+    - <!i><gray>击杀 <white>{kills}</white> / 阵亡 <white>{deaths}</white></gray>
+    - <!i><gray>击杀阵亡比 <white>{kd}</white> / 胜率 <white>{win_rate}%</white></gray>
+    - <!i><gray></gray>
+    - <!i><gray>{currency}：<white>{balance}</white></gray>
   back:
-    slot: 53
     material: ARROW
-    name: '<#E0A45C>❰ Back ❱'
-    lore:
-      - '<#9AA0A6>Return to the main menu.'
-    action: 'menu:main'
+    slot: 49
+    display_name: <!i><white><shadow:#404040:1>返回玩法菜单</shadow></white>
+    lore: []
+record-header:
+  material: PLAYER_HEAD
+  slot: 4
+  display_name: <!i><white><shadow:#404040:1>{player} 的生存记录</shadow></white>
+  lore:
+  - <!i><gray>当前榜单：<white>{board}</white></gray>
+  - <!i><gray>我的排名：<white>{rank}</white></gray>
+  - <!i><gray></gray>
+  - <!i><gray>有效对局与战绩跨局保存。</gray>
+selector:
+  material: COMPARATOR
+  slot: 13
+  display_name: <!i><white><shadow:#404040:1>切换排行榜 · {board}</shadow></white>
+  lore: []
+selector-selected: <!i><white>● {board}　当前</white>
+selector-idle: <!i><dark_gray>○ {board}</dark_gray>
+selector-hint:
+- ''
+- <!i><gray>左键下一项 · 右键上一项</gray>
+board-labels:
+  wins: 胜场榜
+  kills: 击杀榜
+  kd: 击杀阵亡比榜
+  streak: 单局最高击杀榜
+  games: 参与场次榜
+unranked: 暂无排名
+content-slots:
+- 19
+- 20
+- 21
+- 22
+- 23
+- 24
+- 25
+- 28
+- 29
+- 30
+- 31
+- 32
+- 33
+- 34
+entry:
+  material: PLAYER_HEAD
+  display_name: <!i><white><shadow:#404040:1>#{rank}　{player}</shadow></white>
+  lore:
+  - <!i><gray>胜利 <white>{wins}</white> / 参与 <white>{games}</white></gray>
+  - <!i><gray>击杀 <white>{kills}</white> / 阵亡 <white>{deaths}</white></gray>
+  - <!i><gray>击杀阵亡比 <white>{kd}</white></gray>
+  - <!i><gray>单局最高击杀 <white>{streak}</white></gray>
+empty:
+  material: LIGHT_GRAY_DYE
+  slot: 22
+  display_name: <!i><white><shadow:#404040:1>暂无排名记录</shadow></white>
+  lore:
+  - <!i><gray>还没有产生有效战绩。</gray>
+  - <!i><gray>完成一场对局后即可参与排名。</gray>
+previous:
+  material: ARROW
+  slot: 45
+  display_name: <!i><white><shadow:#404040:1>上一页</shadow></white>
+  lore:
+  - <!i><gray>第 {page} / {pages} 页</gray>
+next:
+  material: ARROW
+  slot: 53
+  display_name: <!i><white><shadow:#404040:1>下一页</shadow></white>
+  lore:
+  - <!i><gray>第 {page} / {pages} 页</gray>

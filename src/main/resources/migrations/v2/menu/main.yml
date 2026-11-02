@@ -1,0 +1,41 @@
+# Previous bundled v2 text, compared exactly to preserve owner-customized lore.
+config_version: 2
+size: 45
+items:
+  border:
+    slots:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+  info:
+    lore:
+    - <!i><gray>当前阶段：<white>{phase}</white></gray>
+    - <!i><gray>等待人数：<white>{players}</white> / 最少 {minimum} 人</gray>
+    - <!i><gray>我的队伍：<white>{squad}</white></gray>
+    - <!i><gray></gray>
+    - <!i><gray>从高空选择落点，争夺星级补给。</gray>
+    - <!i><gray>使用风弹与重锤，在最后的战场存活。</gray>
+  team:
+    lore:
+    - <!i><gray>当前：<white>{squad}</white></gray>
+    - <!i><gray>自由组队，每队最多 <white>{squad_size}</white> 人</gray>
+    - <!i><gray></gray>
+    - <!i><gray>单人可直接等待开局。</gray>
+    - <!i><gray>点击创建或加入队伍</gray>
+  close:
+    slot: 40

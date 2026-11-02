@@ -1,55 +1,54 @@
 name: MaceSurvival
 version: '${project.version}'
 main: org.qiyuan.macesurvival.MaceSurvival
-api-version: '1.21'
-authors: [ QiYuan-Origin ]
-description: Single-server Mace Battle Royale. Drop, loot, forge, smash.
-softdepend: [ PlaceholderAPI, Vault, LuckPerms ]
-
+api-version: '1.21.11'
+author: QiYuan
+description: 重锤大逃杀 · 单端天空降落与小队生存竞技
+softdepend: [PlaceholderAPI, Vault, LuckPerms]
 commands:
   macesurvival:
-    description: MaceSurvival main command
+    description: 重锤大逃杀
+    aliases: [mace, ms]
     usage: /macesurvival help
-    aliases: [ mace, ms ]
-
 permissions:
-  macesurvival.play:
-    description: Join and play Mace Battle Royale
+  macesurvival.player:
+    description: 使用重锤大逃杀玩家功能
     default: true
+    children:
+      macesurvival.menu: true
+      macesurvival.stats: true
+      macesurvival.team: true
+      macesurvival.spectate: true
+      macesurvival.layout: true
+      macesurvival.leaderboard: true
   macesurvival.menu:
-    description: Open the MaceSurvival menus
-    default: true
-  macesurvival.team:
-    description: Create and manage a squad
     default: true
   macesurvival.stats:
-    description: View personal stats
+    default: true
+  macesurvival.team:
+    default: true
+  macesurvival.spectate:
+    default: true
+  macesurvival.layout:
+    default: true
+  macesurvival.leaderboard:
     default: true
   macesurvival.admin:
-    description: All administrative commands
+    description: 全部重锤大逃杀管理权限
     default: op
     children:
-      macesurvival.admin.reload: true
       macesurvival.admin.start: true
       macesurvival.admin.stop: true
+      macesurvival.admin.reload: true
       macesurvival.admin.map: true
       macesurvival.admin.loot: true
-      macesurvival.admin.spectate: true
-  macesurvival.admin.reload:
-    description: Reload configuration files
-    default: op
   macesurvival.admin.start:
-    description: Force-start the current round
     default: op
   macesurvival.admin.stop:
-    description: Force-stop the current round
+    default: op
+  macesurvival.admin.reload:
     default: op
   macesurvival.admin.map:
-    description: Regenerate or inspect the arena
     default: op
   macesurvival.admin.loot:
-    description: Inspect and test loot tables
-    default: op
-  macesurvival.admin.spectate:
-    description: Toggle spectator mode freely
     default: op

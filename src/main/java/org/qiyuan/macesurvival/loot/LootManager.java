@@ -2,262 +2,298 @@ package org.qiyuan.macesurvival.loot;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionType;
 import org.qiyuan.macesurvival.MaceSurvival;
 import org.qiyuan.macesurvival.arena.ChestTier;
-import org.qiyuan.macesurvival.config.MessageManager;
-import org.qiyuan.macesurvival.util.ItemBuilder;
-import org.qiyuan.macesurvival.util.Sounds;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * 战利品。开箱滚表、背包内合并重锤耐久、耐久耗尽当场炸掉。
- * 表结构全部来自 loot.yml，代码不内置任何一条战利品。
+ * Loot comes from loot.yml, including the original tables.* list format.
+ * Transactions consume their exact source once. Custom counters are authoritative;
+ * native damage is only the visual mirror, refreshed without changing enchants.
  */
 public final class LootManager {
-
     private final MaceSurvival plugin;
-    private final Random random = new Random();
+    private final NamespacedKey durabilityKey;
+    private final NamespacedKey capacityKey;
+    private final NamespacedKey oldDurabilityKey;
+    private final NamespacedKey oldCapacityKey;
+    private final NamespacedKey loreKey;
+    private final Set<String> reported = new HashSet<>();
 
     public LootManager(MaceSurvival plugin) {
         this.plugin = plugin;
+        durabilityKey = new NamespacedKey(plugin, "durability");
+        capacityKey = new NamespacedKey(plugin, "max-durability");
+        oldDurabilityKey = new NamespacedKey(plugin, "custom_durability");
+        oldCapacityKey = new NamespacedKey(plugin, "max_durability");
+        loreKey = new NamespacedKey(plugin, "durability_lore");
     }
 
-    // ─────────────── 开箱 ───────────────
+    public static String tierKey(int stars) {
+        return switch (Math.max(1, Math.min(4, stars))) {
+            case 1 -> "one-star";
+            case 2 -> "two-star";
+            case 3 -> "three-star";
+            default -> "four-star";
+        };
+    }
 
-    /** 滚一箱战利品。空槽由 empty-chance 决定，滚不出东西的箱子也算开过。 */
-    public List<ItemStack> roll(ChestTier tier) {
-        List<LootEntry> table = tableOf(tier);
-        List<ItemStack> out = new ArrayList<>();
-        if (table.isEmpty()) {
-            return out;
+    /** Accept the original tables.* lists and the previous rewrite's keyed maps. */
+    List<ConfigurationSection> table(int stars) {
+        var config = plugin.configs().loot();
+        String key = tierKey(stars);
+        List<ConfigurationSection> result = new ArrayList<>();
+        for (String path : List.of("tables." + key, key, stars + "-star")) {
+            if (config.isList(path)) {
+                for (Map<?, ?> map : config.getMapList(path)) {
+                    MemoryConfiguration section = new MemoryConfiguration();
+                    map.forEach((k, v) -> section.set(String.valueOf(k), v));
+                    result.add(section);
+                }
+            } else {
+                ConfigurationSection section = config.getConfigurationSection(path);
+                if (section != null) {
+                    for (String child : section.getKeys(false)) {
+                        ConfigurationSection entry = section.getConfigurationSection(child);
+                        if (entry != null) result.add(entry);
+                    }
+                }
+            }
+            if (!result.isEmpty()) break;
         }
-        int rolls = Math.max(1, plugin.configs().loot()
-                .getInt("rolls." + tier.configKey(), 3 + tier.stars()));
-        int empty = clampPercent(plugin.configs().loot()
-                .getInt("empty-chance." + tier.configKey(), 0));
+        return result.isEmpty() && stars >= 4 ? table(3) : result;
+    }
 
-        int total = table.stream().mapToInt(LootEntry::weight).sum();
-        for (int i = 0; i < rolls; i++) {
-            if (empty > 0 && random.nextInt(100) < empty) {
+    public List<ItemStack> generateLoot(int stars) {
+        List<WeightedEntry> entries = new ArrayList<>();
+        long total = 0;
+        for (ConfigurationSection section : table(stars)) {
+            int weight = section.getInt("weight", 1);
+            if (weight <= 0) continue;
+            Material material = Material.matchMaterial(section.getString("material", "BOOK"));
+            if (material == null || material.isAir() || !material.isItem()) {
+                warn("material:" + section.getString("material"), "Invalid loot material: " + section.getString("material"));
                 continue;
             }
-            LootEntry picked = pick(table, total);
-            if (picked != null) {
-                out.add(build(picked));
+            entries.add(new WeightedEntry(section, material, weight));
+            total += weight;
+        }
+        if (entries.isEmpty()) {
+            warn("table:" + stars, "No valid loot entries for " + tierKey(stars));
+            return List.of();
+        }
+        var config = plugin.configs().loot();
+        int rolls = Math.max(0, Math.min(54, config.getInt("rolls." + tierKey(stars), 2 + stars * 2)));
+        double empty = Math.max(0, Math.min(100, config.getDouble("empty-chance." + tierKey(stars), 0)));
+        List<ItemStack> output = new ArrayList<>();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for (int i = 0; i < rolls; i++) {
+            if (random.nextDouble(100) < empty) continue;
+            long cursor = random.nextLong(total);
+            for (WeightedEntry entry : entries) {
+                cursor -= entry.weight();
+                if (cursor < 0) {
+                    ItemStack item = build(entry.section(), entry.material());
+                    if (item != null) output.add(item);
+                    break;
+                }
             }
         }
-        return out;
+        return output;
     }
 
-    /** 管理员 /mace loot test 用的滚表预览。 */
-    public List<ItemStack> preview(int stars) {
-        return roll(ChestTier.byStars(stars));
+    public List<ItemStack> roll(ChestTier tier) { return generateLoot(tier.getStars()); }
+    public List<ItemStack> preview(int stars) { return generateLoot(stars); }
+
+    public void fillChest(Inventory inventory, ChestTier tier) {
+        inventory.clear();
+        List<Integer> slots = new ArrayList<>();
+        for (int slot = 0; slot < inventory.getSize(); slot++) slots.add(slot);
+        Collections.shuffle(slots, ThreadLocalRandom.current());
+        List<ItemStack> items = generateLoot(tier.getStars());
+        for (int i = 0; i < Math.min(slots.size(), items.size()); i++) inventory.setItem(slots.get(i), items.get(i));
     }
 
-    private List<LootEntry> tableOf(ChestTier tier) {
-        List<LootEntry> entries = new ArrayList<>();
-        for (Map<?, ?> map : plugin.configs().loot().getMapList("tables." + tier.configKey())) {
-            LootEntry entry = LootEntry.from(asSection(map));
-            if (entry != null) {
-                entries.add(entry);
-            }
+    private ItemStack build(ConfigurationSection entry, Material material) {
+        String passive = entry.getString("passive", "");
+        if (!passive.isBlank()) return plugin.enchants().createPassiveBook(passive, entry.getInt("level", 1));
+        String book = entry.getString("book", "");
+        if (!book.isBlank() || material == Material.ENCHANTED_BOOK) {
+            if (book.isBlank()) book = entry.getString("enchant", "");
+            EnchantManager.EnchantSpec spec = plugin.enchants().parseSpec(book, entry.getInt("level", 1));
+            if (spec == null) { warn("book:" + book, "Invalid or empty loot enchantment book: " + book); return null; }
+            return plugin.enchants().createEnchantBook(spec.enchantment(), spec.level(), entry.getBoolean("auto-apply", false));
         }
-        return entries;
+        int min = Math.max(1, Math.min(material.getMaxStackSize(), entry.getInt("min", entry.getInt("amount", 1))));
+        int max = Math.max(min, Math.min(material.getMaxStackSize(), entry.getInt("max", min)));
+        ItemStack item = new ItemStack(material, ThreadLocalRandom.current().nextInt(min, max + 1));
+        if (entry.getInt("durability", 0) > 0 && material.getMaxDurability() > 0) initializeDurability(item, entry.getInt("durability"));
+        String enchant = entry.getString("enchant", "");
+        if (!enchant.isBlank()) {
+            EnchantManager.EnchantSpec spec = plugin.enchants().parseSpec(enchant, entry.getInt("level", 1));
+            if (spec != null) plugin.enchants().applyEnchantment(item, spec.enchantment(), spec.level());
+        }
+        String potion = entry.getString("potion", "");
+        if (!potion.isBlank() && item.getItemMeta() instanceof PotionMeta meta) {
+            try {
+                meta.setBasePotionType(PotionType.valueOf(potion.toUpperCase(Locale.ROOT)));
+                item.setItemMeta(meta);
+            } catch (IllegalArgumentException exception) { warn("potion:" + potion, "Invalid loot potion: " + potion); return null; }
+        }
+        return item;
     }
 
-    /** 把 yaml 里的 Map 包成 ConfigurationSection，好让 LootEntry 只认一种入参。 */
-    private ConfigurationSection asSection(Map<?, ?> map) {
-        var config = new org.bukkit.configuration.MemoryConfiguration();
-        for (Map.Entry<?, ?> entry : map.entrySet()) {
-            config.set(String.valueOf(entry.getKey()), entry.getValue());
-        }
-        return config;
+    public ItemStack createDurableItem(Material material, int durability) {
+        ItemStack item = new ItemStack(material);
+        initializeDurability(item, durability);
+        return item;
     }
 
-    private LootEntry pick(List<LootEntry> table, int total) {
-        int cursor = random.nextInt(Math.max(1, total));
-        for (LootEntry entry : table) {
-            cursor -= entry.weight();
-            if (cursor < 0) {
-                return entry;
-            }
-        }
-        return table.isEmpty() ? null : table.get(table.size() - 1);
+    public void initializeDurability(ItemStack item, int durability) {
+        if (item == null || item.getType().getMaxDurability() <= 0) return;
+        ItemMeta meta = item.getItemMeta();
+        int capacity = Math.max(1, durability);
+        meta.getPersistentDataContainer().set(capacityKey, PersistentDataType.INTEGER, capacity);
+        meta.getPersistentDataContainer().set(oldCapacityKey, PersistentDataType.INTEGER, capacity);
+        item.setItemMeta(meta);
+        setCustomDurability(item, capacity);
     }
 
-    private int clampPercent(int value) {
-        return Math.max(0, Math.min(100, value));
+    public boolean hasCustomDurability(ItemStack item) {
+        if (item == null || item.getAmount() <= 0 || item.getType().isAir() || !item.hasItemMeta()) return false;
+        var pdc = item.getItemMeta().getPersistentDataContainer();
+        return pdc.has(durabilityKey, PersistentDataType.INTEGER) || pdc.has(oldDurabilityKey, PersistentDataType.INTEGER);
     }
 
-    /** 把一条战利品变成物品。重锤走 LoadoutManager 以保证 PDC 一致。 */
-    private ItemStack build(LootEntry entry) {
-        int amount = entry.min() >= entry.max()
-                ? entry.min()
-                : entry.min() + random.nextInt(entry.max() - entry.min() + 1);
-
-        if (entry.isBook()) {
-            ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
-            if (book.getItemMeta() instanceof EnchantmentStorageMeta meta) {
-                meta.addStoredEnchant(entry.book(), entry.bookLevel(), true);
-                book.setItemMeta(meta);
-            }
-            return book;
-        }
-        if (entry.isWeapon()) {
-            int durability = entry.durability() > 0
-                    ? entry.durability()
-                    : plugin.configs().main().getInt("loadout.mace-durability", 40);
-            ItemStack mace = plugin.loadout().mace(durability);
-            if (entry.enchant() != null) {
-                mace = ItemBuilder.copyOf(mace)
-                        .enchant(entry.enchant(), entry.enchantLevel())
-                        .build();
-            }
-            return mace;
-        }
-        ItemBuilder builder = ItemBuilder.of(entry.material(), amount);
-        if (entry.enchant() != null) {
-            builder.enchant(entry.enchant(), entry.enchantLevel());
-        }
-        return builder.build();
+    public int getCustomDurability(ItemStack item) {
+        if (!hasCustomDurability(item)) return 0;
+        var pdc = item.getItemMeta().getPersistentDataContainer();
+        return Math.max(0, pdc.getOrDefault(durabilityKey, PersistentDataType.INTEGER,
+            pdc.getOrDefault(oldDurabilityKey, PersistentDataType.INTEGER, 0)));
     }
 
-    /** 玩家开箱。箱子一次性，开完从台账摘掉并清掉悬浮文本。 */
-    public boolean openChest(Player player, Location location) {
-        ChestTier tier = plugin.arena().tierAt(location);
-        if (tier == null) {
-            return false;
-        }
-        plugin.arena().consumeChest(location);
+    public int getMaxDurability(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return 0;
+        var pdc = item.getItemMeta().getPersistentDataContainer();
+        return Math.max(1, pdc.getOrDefault(capacityKey, PersistentDataType.INTEGER,
+            pdc.getOrDefault(oldCapacityKey, PersistentDataType.INTEGER, Math.max(1, getCustomDurability(item)))));
+    }
 
-        List<ItemStack> loot = roll(tier);
-        if (loot.isEmpty()) {
-            plugin.messages().send(player, "loot.chest-empty");
-            Sounds.play(plugin, player, Sounds.deny());
-            return true;
+    /** Refresh only our lore line, preserving enchantments and other item data. */
+    public void setCustomDurability(ItemStack item, int durability) {
+        if (item == null || item.getType().isAir()) return;
+        ItemMeta meta = item.getItemMeta();
+        int remaining = Math.max(0, durability);
+        int capacity = Math.max(getMaxDurability(item), remaining);
+        var pdc = meta.getPersistentDataContainer();
+        pdc.set(durabilityKey, PersistentDataType.INTEGER, remaining);
+        pdc.set(oldDurabilityKey, PersistentDataType.INTEGER, remaining);
+        pdc.set(capacityKey, PersistentDataType.INTEGER, capacity);
+        pdc.set(oldCapacityKey, PersistentDataType.INTEGER, capacity);
+        if (meta instanceof Damageable damageable && item.getType().getMaxDurability() > 0) {
+            int vanillaMax = item.getType().getMaxDurability();
+            // 1.21.11 stops gliding at maxDamage - 1, before another wear event
+            // can reach us. A merged high-capacity elytra must remain usable
+            // until its authoritative custom counter is consumed completely.
+            int lastUsableDamage = vanillaMax - (item.getType() == Material.ELYTRA ? 2 : 1);
+            damageable.setDamage(Math.max(0, Math.min(lastUsableDamage,
+                (int) Math.round(vanillaMax * (1D - (double) remaining / capacity)))));
         }
-        for (ItemStack stack : loot) {
-            give(player, stack);
-        }
-        plugin.messages().send(player, "loot.chest-opened",
-                MessageManager.vars("stars", tier.starBar()));
-        Sounds.play(plugin, player, Sounds.chestOpen(tier.stars()));
+        List<net.kyori.adventure.text.Component> lore = meta.lore();
+        lore = lore == null ? new ArrayList<>() : new ArrayList<>(lore);
+        int previous = pdc.getOrDefault(loreKey, PersistentDataType.INTEGER, -1);
+        var line = plugin.messages().get("loot.item-durability", Map.of("durability", String.valueOf(remaining), "max", String.valueOf(capacity)))
+            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false);
+        if (previous >= 0 && previous < lore.size()) lore.set(previous, line);
+        else { previous = lore.size(); lore.add(line); }
+        pdc.set(loreKey, PersistentDataType.INTEGER, previous);
+        meta.lore(lore);
+        item.setItemMeta(meta);
+    }
+
+    /** One cursor item grants half its remaining durability to the exact target. */
+    public boolean merge(Player player, ItemStack source, ItemStack target) {
+        if (!plugin.configs().main().getBoolean("loot.merge-durability", true)
+            || source == target || !hasCustomDurability(source) || !hasCustomDurability(target)
+            || source.getType() != target.getType() || target.getAmount() != 1
+            || getCustomDurability(target) >= getMaxDurability(target)) return false;
+        int gain = getCustomDurability(source) / 2;
+        if (gain < 1 || getCustomDurability(target) < 1) return false;
+        setCustomDurability(target, (int) Math.min(Integer.MAX_VALUE, (long) getCustomDurability(target) + gain));
+        source.setAmount(source.getAmount() - 1);
+        player.sendMessage(plugin.messages().prefixed("loot.merged", Map.of("durability", String.valueOf(getCustomDurability(target)))));
         return true;
     }
 
-    /**
-     * 发一件战利品。重锤优先并进背包里那把，附魔书按配置即时生效，
-     * 背包满了就掉在脚下，绝不静默吞掉。
-     */
-    public void give(Player player, ItemStack stack) {
-        if (stack == null || stack.getType().isAir()) {
-            return;
-        }
-        if (plugin.loadout().hasCustomDurability(stack) && mergeInto(player, stack)) {
-            return;
-        }
-        if (stack.getType() == Material.ENCHANTED_BOOK
-                && plugin.configs().main().getBoolean("loot.books-apply-on-pickup", true)
-                && plugin.enchants().applyFromBook(player, stack)) {
-            return;
-        }
-        Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
-        for (ItemStack rest : leftover.values()) {
-            player.getWorld().dropItemNaturally(player.getLocation(), rest);
-        }
-    }
-
-    // ─────────────── 耐久合并 ───────────────
-
-    /**
-     * 把捡到的重锤次数并进背包里已有的那把，避免玩家拿着两把半残武器。
-     * 合并成功返回 true，调用方就不该再把物品塞进背包。
-     */
-    public boolean mergeInto(Player player, ItemStack pickup) {
-        if (!plugin.configs().main().getBoolean("loot.merge-durability", true)) {
-            return false;
-        }
-        var loadout = plugin.loadout();
-        int gain = loadout.remaining(pickup);
-        if (gain <= 0) {
-            return false;
-        }
-        ItemStack[] contents = player.getInventory().getContents();
-        for (int slot = 0; slot < contents.length; slot++) {
-            ItemStack existing = contents[slot];
-            if (existing == null || existing.getType() != pickup.getType()) {
-                continue;
-            }
-            if (!loadout.hasCustomDurability(existing)) {
-                continue;
-            }
-            int merged = loadout.remaining(existing) + gain;
-            ItemStack updated = loadout.withCapacity(existing, merged);
-            player.getInventory().setItem(slot, updated);
-            plugin.messages().send(player, "loot.durability-merged", MessageManager.vars(
-                    "item", loadout.displayName(updated),
-                    "durability", String.valueOf(loadout.remaining(updated))));
-            Sounds.play(plugin, player, Sounds.repairMerge());
-            return true;
-        }
+    public boolean tryMerge(Player player, ItemStack pickup) {
+        for (ItemStack target : player.getInventory().getStorageContents()) if (merge(player, pickup, target)) return true;
         return false;
     }
+    public boolean mergeInto(Player player, ItemStack pickup) { return tryMerge(player, pickup); }
+    public void mergeMaceDurability(Player player, ItemStack pickup) { tryMerge(player, pickup); }
 
-    // ─────────────── 耐久消耗与爆炸 ───────────────
+    public void damageItem(ItemStack item, int amount) {
+        if (!hasCustomDurability(item) || amount <= 0) return;
+        setCustomDurability(item, Math.max(0, getCustomDurability(item) - amount));
+        if (getCustomDurability(item) == 0) item.setAmount(0);
+    }
 
-    /**
-     * 用掉一次重锤。归零时按配置在手里炸开，返回 true 表示武器已经没了。
-     * 爆炸只伤人不毁地形，除非服主打开 explosion-breaks-blocks。
-     */
-    public boolean consume(Player player, int slot, ItemStack weapon) {
-        var loadout = plugin.loadout();
-        if (!loadout.hasCustomDurability(weapon)) {
-            return false;
-        }
-        int left = loadout.remaining(weapon) - 1;
-        if (left > 0) {
-            player.getInventory().setItem(slot, loadout.withRemaining(weapon, left));
-            warnIfLow(player, weapon, left);
-            return false;
-        }
-        player.getInventory().setItem(slot, null);
-        shatter(player, weapon);
+    public boolean damage(Player player, ItemStack item, int amount) {
+        if (!hasCustomDurability(item) || amount <= 0) return false;
+        int remaining = Math.max(0, getCustomDurability(item) - amount);
+        if (remaining > 0) { setCustomDurability(item, remaining); return false; }
+        item.setAmount(0);
+        Location at = player.getLocation().clone();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            // The hit can eliminate the last opponent and finish the round in
+            // this same tick. Never detonate an expired use in a later phase.
+            if (!player.isOnline() || player.isDead() || !plugin.game().active() || !plugin.game().participant(player)
+                || plugin.arenas().getArenaWorld() != at.getWorld() || player.getWorld() != at.getWorld()) return;
+            player.sendMessage(plugin.messages().prefixed("loot.exploded"));
+            if (plugin.configs().main().getBoolean("loot.durability-explosion", true)) {
+                float power = (float) Math.max(0, Math.min(8, plugin.configs().main().getDouble("loot.explosion-power", 2.4)));
+                boolean blocks = plugin.configs().main().getBoolean("loot.explosion-breaks-blocks", false);
+                at.getWorld().createExplosion(at, power, false, blocks, player);
+            }
+        });
         return true;
     }
 
-    private void warnIfLow(Player player, ItemStack weapon, int left) {
-        int max = Math.max(1, plugin.loadout().maxDurability(weapon));
-        // 低于两成或只剩三次时提醒一次，避免每挥一下都刷屏
-        boolean low = left <= 3 || left <= max / 5;
-        if (!low) {
-            return;
+    public boolean consume(Player player, int slot, ItemStack item) { return damage(player, item, 1); }
+
+    /** A confirmed kill repairs carried custom items with Mending once. */
+    public void onKill(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (!hasCustomDurability(item) || item.getEnchantmentLevel(Enchantment.MENDING) <= 0) continue;
+            int max = getMaxDurability(item);
+            double fraction = Math.max(0, Math.min(1, plugin.configs().loot().getDouble("mending.kill-repair-fraction", 0.25)));
+            if (fraction == 0) continue;
+            long gain = Math.max(1, Math.round(max * fraction)) * item.getEnchantmentLevel(Enchantment.MENDING);
+            setCustomDurability(item, (int) Math.min(max, getCustomDurability(item) + gain));
         }
-        plugin.messages().send(player, "loot.durability-low", MessageManager.vars(
-                "item", plugin.loadout().displayName(weapon),
-                "durability", String.valueOf(left)));
     }
 
-    /** 武器在手里炸开。 */
-    private void shatter(Player player, ItemStack weapon) {
-        plugin.messages().send(player, "loot.durability-broke",
-                MessageManager.vars("item", plugin.loadout().displayName(weapon)));
-        Sounds.play(plugin, player, Sounds.itemShatter());
-
-        if (!plugin.configs().main().getBoolean("loot.durability-explosion", true)) {
-            return;
-        }
-        float power = (float) plugin.configs().main().getDouble("loot.explosion-power", 2.4);
-        boolean breakBlocks = plugin.configs().main()
-                .getBoolean("loot.explosion-breaks-blocks", false);
-        plugin.combat().markShatter(player);
-        player.getWorld().createExplosion(player.getLocation(), power, false, breakBlocks, player);
-    }
+    private void warn(String key, String message) { if (reported.add(key)) plugin.getLogger().warning(message); }
+    public void reload() { reported.clear(); }
+    private record WeightedEntry(ConfigurationSection section, Material material, int weight) { }
 }

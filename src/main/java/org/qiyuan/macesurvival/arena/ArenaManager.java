@@ -1,403 +1,305 @@
 package org.qiyuan.macesurvival.arena;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Difficulty;
 import org.bukkit.GameRules;
+import org.bukkit.HeightMap;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.WorldBorder;
 import org.bukkit.WorldCreator;
-import org.bukkit.WorldType;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.generator.ChunkGenerator;
-import org.bukkit.generator.WorldInfo;
+import org.bukkit.block.Chest;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.qiyuan.macesurvival.MaceSurvival;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Random;
-import java.util.function.Consumer;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * 竞技场。地图完全由插件生成，管理员不需要建图也不需要复制世界。
- * 生成分两步：prepare() 造世界与大厅平台，generate() 铺建筑和箱子。
- * 建筑与箱子都放在主线程分批铺，避免一次性放几万个方块把 tick 拖死。
- */
+/** Owns one disposable arena world; the lobby is never used as a build surface. */
 public final class ArenaManager {
-
     private final MaceSurvival plugin;
-    private final Random random = new Random();
-
-    private final Map<Location, ChestTier> chests = new LinkedHashMap<>();
-    private final List<Location> structureCentres = new ArrayList<>();
-
-    private World world;
-    private Location lobbySpawn;
-    private int structureCount;
+    private final HologramManager holograms;
+    private final List<Location> chestLocations = new ArrayList<>();
+    private final Map<Location, ChestTier> chestTiers = new HashMap<>();
+    private final List<Location> dropSpawns = new ArrayList<>();
+    private final Set<BukkitTask> buildTasks = new HashSet<>();
+    private World arenaWorld;
+    private Terrain terrain;
+    private Location arenaCenter;
+    private CompletableFuture<Void> preparation;
+    private long generation;
+    private int radius;
+    private boolean ready;
 
     public ArenaManager(MaceSurvival plugin) {
         this.plugin = plugin;
+        holograms = new HologramManager(plugin);
     }
 
-    public World world() {
-        return world;
-    }
-
-    public int structureCount() {
-        return structureCount;
-    }
-
-    public int chestCount() {
-        return chests.size();
-    }
-
-    public ChestTier tierAt(Location location) {
-        return chests.get(normalise(location));
-    }
-
-    public boolean isLootChest(Location location) {
-        return chests.containsKey(normalise(location));
-    }
-
-    /** 开过的箱子从台账里摘掉，悬浮文本也一起清掉。 */
-    public void consumeChest(Location location) {
-        Location key = normalise(location);
-        if (chests.remove(key) != null) {
-            plugin.holograms().remove(key);
+    /** Completes on the server thread after structures, loot and landing chunks are ready. */
+    public CompletableFuture<Void> prepareArena(long seed) {
+        if (!Bukkit.isPrimaryThread()) {
+            CompletableFuture<Void> scheduled = new CompletableFuture<>();
+            Bukkit.getScheduler().runTask(plugin, () -> prepareArena(seed).whenComplete((ok, error) -> {
+                if (error == null) scheduled.complete(null);
+                else scheduled.completeExceptionally(error);
+            }));
+            return scheduled;
         }
-    }
-
-    private Location normalise(Location location) {
-        return new Location(location.getWorld(),
-                location.getBlockX(), location.getBlockY(), location.getBlockZ());
-    }
-
-    // ─────────────── 世界 ───────────────
-
-    /**
-     * 造世界与等待大厅。世界用空区块生成器，地形由 generate() 自己铺，
-     * 这样每局地形都不同，也不依赖任何原版结构。
-     */
-    public void prepare(Consumer<Boolean> callback) {
-        String name = plugin.configs().main().getString("arena.world-name", "mace_arena");
-        World existing = Bukkit.getWorld(name);
-        if (existing != null) {
-            world = existing;
-            buildLobby();
-            callback.accept(true);
-            return;
-        }
-
-        WorldCreator creator = new WorldCreator(name)
-                .type(WorldType.FLAT)
+        if (preparation != null && !preparation.isDone()) return preparation;
+        cleanup();
+        long token = ++generation;
+        preparation = new CompletableFuture<>();
+        CompletableFuture<Void> result = preparation;
+        try {
+            FileConfiguration config = plugin.configs().main();
+            radius = Math.max(64, Math.min(800, config.getInt("arena.radius", 400)));
+            int baseY = Math.max(48, Math.min(150, config.getInt("arena.base-y", 72)));
+            String baseName = config.getString("arena.world-name", config.getString("arena.world", "mace_arena"));
+            if (baseName == null || !baseName.matches("[A-Za-z0-9_-]{1,48}")) baseName = "mace_arena";
+            String name = baseName + "_round_" + UUID.randomUUID().toString().substring(0, 8);
+            terrain = new Terrain(seed, baseY);
+            arenaWorld = new WorldCreator(name).environment(World.Environment.NORMAL).seed(seed)
                 .generateStructures(false)
-                .generator(new VoidGenerator());
-        if (!"random".equalsIgnoreCase(plugin.configs().main().getString("arena.seed-mode", "random"))) {
-            creator.seed(plugin.configs().main().getLong("arena.seed", 20241121L));
+                .generator(terrain).createWorld();
+            if (arenaWorld == null) throw new IllegalStateException("Cannot create the arena world");
+            World world = arenaWorld;
+            world.setAutoSave(false);
+            world.setTime(6000);
+            world.setStorm(false);
+            world.setThundering(false);
+            world.setGameRule(GameRules.ADVANCE_TIME, false);
+            world.setGameRule(GameRules.ADVANCE_WEATHER, false);
+            world.setGameRule(GameRules.SPAWN_MOBS, false);
+            world.setGameRule(GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER, 0);
+            world.setGameRule(GameRules.SPAWN_PHANTOMS, false);
+            world.setGameRule(GameRules.IMMEDIATE_RESPAWN, true);
+            world.setGameRule(GameRules.KEEP_INVENTORY, false);
+            arenaCenter = new Location(world, 0.5, baseY + 1, 0.5);
+            world.setSpawnLocation(arenaCenter);
+            world.getWorldBorder().setCenter(0.5, 0.5);
+            world.getWorldBorder().setSize(radius * 2D);
+            world.getWorldBorder().setDamageBuffer(1D);
+            world.getWorldBorder().setDamageAmount(1D);
+            world.getWorldBorder().setWarningDistance(12);
+            List<Site> sites = planSites(new Random(seed));
+            preload(world, chunksFor(sites), token, () -> build(world, sites, seed, token, result), result);
+        } catch (Exception error) {
+            result.completeExceptionally(error);
+            plugin.getLogger().severe("Arena preparation failed: " + error.getMessage());
         }
-
-        world = creator.createWorld();
-        if (world == null) {
-            plugin.getLogger().severe("Arena world could not be created, check the server logs.");
-            callback.accept(false);
-            return;
-        }
-        applyWorldRules();
-        buildLobby();
-        callback.accept(true);
+        return result;
     }
 
-    private void applyWorldRules() {
-        world.setDifficulty(Difficulty.NORMAL);
-        // 1.21.11 把 GameRule 常量搬到了 GameRules，旧常量已标记移除
-        world.setGameRule(GameRules.SPAWN_MOBS, false);
-        world.setGameRule(GameRules.ADVANCE_TIME, false);
-        world.setGameRule(GameRules.ADVANCE_WEATHER, false);
-        world.setGameRule(GameRules.KEEP_INVENTORY, false);
-        world.setGameRule(GameRules.SHOW_ADVANCEMENT_MESSAGES, false);
-        world.setGameRule(GameRules.IMMEDIATE_RESPAWN, true);
-        world.setGameRule(GameRules.FALL_DAMAGE, true);
-        world.setGameRule(GameRules.NATURAL_HEALTH_REGENERATION, false);
-        world.setTime(4000L);
-        world.setStorm(false);
-
-        int radius = plugin.configs().main().getInt("arena.radius", 400);
-        WorldBorder border = world.getWorldBorder();
-        border.setCenter(0.5, 0.5);
-        border.setSize(radius * 2D);
-        border.setWarningDistance(16);
-    }
-
-    /** 大厅是一块悬空平台，跟对局地形完全隔开，玩家掉不下去。 */
-    private void buildLobby() {
-        int y = 200;
-        lobbySpawn = new Location(world, 0.5, y + 1, 0.5);
-        world.setSpawnLocation(0, y + 1, 0);
-
-        for (int x = -6; x <= 6; x++) {
-            for (int z = -6; z <= 6; z++) {
-                boolean edge = Math.abs(x) == 6 || Math.abs(z) == 6;
-                world.getBlockAt(x, y, z).setType(edge
-                        ? Material.POLISHED_DEEPSLATE
-                        : Material.SMOOTH_STONE);
-                // 玻璃围栏挡住边缘，站在大厅里不会走出去
-                if (edge) {
-                    for (int h = 1; h <= 3; h++) {
-                        world.getBlockAt(x, y + h, z).setType(Material.TINTED_GLASS);
+    private List<Site> planSites(Random random) {
+        FileConfiguration config = plugin.configs().main();
+        int minimumStructures = Math.max(0, Math.min(100, config.getInt("arena.min-structures", 24)));
+        int maximumStructures = Math.max(0, Math.min(100, config.getInt("arena.max-structures", 32)));
+        int lower = Math.min(minimumStructures, maximumStructures);
+        int upper = Math.max(minimumStructures, maximumStructures);
+        int structures = config.isInt("arena.structures") ? Math.max(0, Math.min(100, config.getInt("arena.structures")))
+            : lower + random.nextInt(upper - lower + 1);
+        int[] counts = {count("one-star", "one-star-count", 36),
+            count("two-star", "two-star-count", 20), count("three-star", "three-star-count", 10)};
+        int total = Math.min(180, counts[0] + counts[1] + counts[2]);
+        double minimum = Math.max(18D, Math.min(35D, radius / 13D));
+        List<Site> sites = new ArrayList<>();
+        // Give each tier a separate pass so a crowded small arena still contains rare loot.
+        for (int star = 3; star >= 1; star--) {
+            for (int index = 0; index < counts[star - 1] && sites.size() < total; index++) {
+                for (int attempt = 0; attempt < 150; attempt++) {
+                    double angle = random.nextDouble() * Math.PI * 2D;
+                    double distance = Math.sqrt(random.nextDouble()) * (radius - 18);
+                    int x = (int) Math.round(Math.cos(angle) * distance);
+                    int z = (int) Math.round(Math.sin(angle) * distance);
+                    boolean occupied = sites.stream().anyMatch(site -> Math.hypot(site.x - x, site.z - z) < minimum);
+                    if (!occupied) {
+                        sites.add(new Site(x, z, tier(star), sites.size() < structures, random.nextInt(5)));
+                        break;
                     }
                 }
             }
         }
-        for (int x = -5; x <= 5; x += 5) {
-            for (int z = -5; z <= 5; z += 5) {
-                world.getBlockAt(x, y + 1, z).setType(Material.SEA_LANTERN);
-            }
+        if (sites.isEmpty()) sites.add(new Site(0, 0, ChestTier.ONE_STAR, true, 0));
+        for (int i = 0; i < 64; i++) {
+            double angle = Math.PI * 2D * i / 64D + random.nextDouble() * 0.06;
+            double distance = radius * (0.28 + random.nextDouble() * 0.42);
+            dropSpawns.add(new Location(arenaWorld, Math.cos(angle) * distance, 0,
+                Math.sin(angle) * distance, (float) Math.toDegrees(angle) + 90F, 0F));
         }
+        return sites;
     }
 
-    public Location lobbySpawn() {
-        if (lobbySpawn == null && world != null) {
-            buildLobby();
-        }
-        return lobbySpawn;
+    private int count(String name, String oldName, int fallback) {
+        FileConfiguration config = plugin.configs().main();
+        return Math.max(0, Math.min(120, config.getInt("arena.chests." + name,
+            config.getInt("chest." + oldName, fallback))));
     }
 
-    public void teleportToLobby(Player player) {
-        Location target = lobbySpawn();
-        if (target != null) {
-            player.teleport(target);
-        }
+    private ChestTier tier(int stars) {
+        return stars >= 3 ? ChestTier.THREE_STAR : stars == 2 ? ChestTier.TWO_STAR : ChestTier.ONE_STAR;
     }
 
-    /** 旁观点放在竞技场正上方，一进来就能俯瞰全场。 */
-    public void teleportToSpectate(Player player) {
-        if (world == null) {
-            return;
-        }
-        player.teleport(new Location(world, 0.5, 160, 0.5, 0f, 90f));
+    private Queue<Long> chunksFor(List<Site> sites) {
+        Set<Long> chunks = new HashSet<>();
+        for (Site site : sites) addArea(chunks, site.x >> 4, site.z >> 4, 1);
+        for (Location spawn : dropSpawns) addArea(chunks, spawn.getBlockX() >> 4, spawn.getBlockZ() >> 4, 1);
+        addArea(chunks, 0, 0, 2);
+        return new ArrayDeque<>(chunks);
     }
 
-    // ─────────────── 空世界生成器 ───────────────
-
-    /** 空区块。地形全部由 generate() 手动铺，保证每局都不一样。 */
-    private static final class VoidGenerator extends ChunkGenerator {
-        @Override
-        public boolean shouldGenerateNoise(WorldInfo worldInfo, Random random, int chunkX, int chunkZ) {
-            return false;
-        }
-
-        @Override
-        public boolean shouldGenerateSurface(WorldInfo worldInfo, Random random, int chunkX, int chunkZ) {
-            return false;
-        }
-
-        @Override
-        public boolean shouldGenerateCaves(WorldInfo worldInfo, Random random, int chunkX, int chunkZ) {
-            return false;
-        }
-
-        @Override
-        public boolean shouldGenerateDecorations(WorldInfo worldInfo, Random random, int chunkX, int chunkZ) {
-            return false;
-        }
-
-        @Override
-        public boolean shouldGenerateMobs(WorldInfo worldInfo, Random random, int chunkX, int chunkZ) {
-            return false;
-        }
-    }
-    // ─────────────── 地形与建筑 ───────────────
-
-    /**
-     * 铺一局的地图。地面用柏林式的高度扰动铺一层石头 + 地表方块，
-     * 再撒建筑，最后按配置数量放箱子。整个过程分批进行，回调在全部完成后触发。
-     */
-    public void generate(Consumer<Boolean> callback) {
-        if (world == null) {
-            callback.accept(false);
-            return;
-        }
-        chests.clear();
-        structureCentres.clear();
-        structureCount = 0;
-        plugin.holograms().clearAll();
-
-        int radius = plugin.configs().main().getInt("arena.radius", 400);
-        long seed = "random".equalsIgnoreCase(
-                plugin.configs().main().getString("arena.seed-mode", "random"))
-                ? System.nanoTime()
-                : plugin.configs().main().getLong("arena.seed", 20241121L);
-        random.setSeed(seed);
-        Terrain terrain = new Terrain(seed);
-
-        // 每批铺一条 x 带，60 条一 tick，铺完再撒建筑
-        List<Integer> columns = new ArrayList<>();
-        for (int x = -radius; x <= radius; x++) {
-            columns.add(x);
-        }
-        stripe(terrain, columns, radius, 0, () -> {
-            scatterStructures(terrain, radius);
-            scatterChests(terrain, radius);
-            callback.accept(true);
-        });
+    private void addArea(Set<Long> chunks, int x, int z, int reach) {
+        for (int dx = -reach; dx <= reach; dx++) for (int dz = -reach; dz <= reach; dz++)
+            chunks.add(((long) (x + dx) << 32) | ((z + dz) & 0xffffffffL));
     }
 
-    private void stripe(Terrain terrain, List<Integer> columns, int radius, int index, Runnable done) {
-        int batch = 24;
-        int end = Math.min(columns.size(), index + batch);
-        for (int i = index; i < end; i++) {
-            carveColumn(terrain, columns.get(i), radius);
-        }
-        if (end >= columns.size()) {
-            done.run();
-            return;
-        }
-        plugin.getServer().getScheduler().runTask(plugin,
-                () -> stripe(terrain, columns, radius, end, done));
-    }
-
-    private void carveColumn(Terrain terrain, int x, int radius) {
-        for (int z = -radius; z <= radius; z++) {
-            if (x * x + z * z > radius * radius) {
-                continue;
-            }
-            int height = terrain.heightAt(x, z);
-            Material surface = terrain.surfaceAt(x, z, height);
-            world.getBlockAt(x, height, z).setType(surface, false);
-            world.getBlockAt(x, height - 1, z).setType(Material.DIRT, false);
-            for (int y = height - 2; y >= height - 5; y--) {
-                world.getBlockAt(x, y, z).setType(Material.STONE, false);
-            }
-            world.getBlockAt(x, height - 6, z).setType(Material.DEEPSLATE, false);
-            if (height <= Terrain.WATER_LEVEL) {
-                for (int y = height + 1; y <= Terrain.WATER_LEVEL; y++) {
-                    world.getBlockAt(x, y, z).setType(Material.WATER, false);
+    /** Keep outstanding chunk generation bounded instead of flooding Paper's worker queue. */
+    private void preload(World world, Queue<Long> chunks, long token, Runnable done, CompletableFuture<Void> result) {
+        AtomicInteger pending = new AtomicInteger();
+        BukkitRunnable loader = new BukkitRunnable() {
+            @Override public void run() {
+                if (token != generation || result.isDone()) { cancel(); return; }
+                while (!chunks.isEmpty() && pending.get() < 8) {
+                    long key = chunks.remove();
+                    pending.incrementAndGet();
+                    world.getChunkAtAsync((int) (key >> 32), (int) key, true).whenComplete((chunk, error) -> {
+                        Runnable loaded = () -> {
+                            if (error != null) result.completeExceptionally(error);
+                            else if (token == generation && !result.isDone()) chunk.addPluginChunkTicket(plugin);
+                            pending.decrementAndGet();
+                        };
+                        if (Bukkit.isPrimaryThread()) loaded.run();
+                        else if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, loaded);
+                    });
                 }
+                if (chunks.isEmpty() && pending.get() == 0) { cancel(); done.run(); }
             }
-        }
-    }
-    /** 撒建筑。互相之间保持最小距离，避免挤成一团让某个区域物资过剩。 */
-    private void scatterStructures(Terrain terrain, int radius) {
-        int target = plugin.configs().main().getInt("arena.structures", 26);
-        int minDistance = plugin.configs().main().getInt("arena.min-structure-distance", 48);
-        int attempts = 0;
-
-        while (structureCentres.size() < target && attempts < target * 60) {
-            attempts++;
-            int x = random.nextInt(radius * 2) - radius;
-            int z = random.nextInt(radius * 2) - radius;
-            if (x * x + z * z > (radius - 24) * (radius - 24)) {
-                continue;
-            }
-            int y = terrain.heightAt(x, z);
-            if (y <= Terrain.WATER_LEVEL) {
-                continue;
-            }
-            Location centre = new Location(world, x, y + 1, z);
-            if (tooClose(centre, minDistance)) {
-                continue;
-            }
-            Structures.place(world, centre, random);
-            structureCentres.add(centre);
-        }
-        structureCount = structureCentres.size();
-    }
-
-    private boolean tooClose(Location candidate, int minDistance) {
-        double squared = (double) minDistance * minDistance;
-        for (Location existing : structureCentres) {
-            if (existing.distanceSquared(candidate) < squared) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 放箱子。低星散布在建筑里和野外，高星只放在建筑顶层这种显眼位置，
-     * 逼玩家为好物资去暴露自己。
-     */
-    private void scatterChests(Terrain terrain, int radius) {
-        for (ChestTier tier : ChestTier.values()) {
-            int amount = plugin.configs().main()
-                    .getInt("arena.chests." + tier.configKey(), defaultAmount(tier));
-            for (int i = 0; i < amount; i++) {
-                Location spot = pickChestSpot(terrain, radius, tier);
-                if (spot != null) {
-                    placeChest(spot, tier);
-                }
-            }
-        }
-    }
-
-    private int defaultAmount(ChestTier tier) {
-        return switch (tier) {
-            case ONE -> 60;
-            case TWO -> 34;
-            case THREE -> 16;
-            case FOUR -> 6;
         };
+        buildTasks.add(loader.runTaskTimer(plugin, 1L, 1L));
     }
 
-    private Location pickChestSpot(Terrain terrain, int radius, ChestTier tier) {
-        boolean preferStructure = tier.stars() >= 3;
-        for (int attempt = 0; attempt < 80; attempt++) {
-            Location base;
-            if (preferStructure && !structureCentres.isEmpty()) {
-                Location centre = structureCentres.get(random.nextInt(structureCentres.size()));
-                base = centre.clone().add(random.nextInt(7) - 3, 0, random.nextInt(7) - 3);
-            } else if (!structureCentres.isEmpty() && random.nextBoolean()) {
-                Location centre = structureCentres.get(random.nextInt(structureCentres.size()));
-                base = centre.clone().add(random.nextInt(17) - 8, 0, random.nextInt(17) - 8);
-            } else {
-                int x = random.nextInt(radius * 2) - radius;
-                int z = random.nextInt(radius * 2) - radius;
-                if (x * x + z * z > (radius - 16) * (radius - 16)) {
-                    continue;
-                }
-                base = new Location(world, x, terrain.heightAt(x, z) + 1, z);
+    private void build(World world, List<Site> sites, long seed, long token, CompletableFuture<Void> result) {
+        Queue<Structures.Change> changes = new ArrayDeque<>();
+        Random random = new Random(seed ^ 0x6A09E667F3BCC909L);
+        Queue<Site> pendingSites = new ArrayDeque<>(sites);
+        BukkitRunnable builder = new BukkitRunnable() {
+            @Override public void run() {
+                if (token != generation || result.isDone()) { cancel(); return; }
+                try {
+                    long deadline = System.nanoTime() + 3_000_000L;
+                    if (changes.isEmpty() && !pendingSites.isEmpty()) {
+                        Site site = pendingSites.remove();
+                        int ground = terrain.height(site.x, site.z);
+                        Location chest = Structures.plan(world, site.x, ground, site.z,
+                            site.structure, site.style, changes, random);
+                        chestLocations.add(chest);
+                        chestTiers.put(chest, site.tier);
+                    }
+                    int placed = 0;
+                    while (!changes.isEmpty() && placed++ < 500 && System.nanoTime() < deadline) {
+                        Structures.Change change = changes.remove();
+                        world.getBlockAt(change.x(), change.y(), change.z()).setBlockData(change.data(), false);
+                    }
+                    if (!changes.isEmpty() || !pendingSites.isEmpty()) return;
+                    for (Location location : chestLocations) {
+                        if (location.getBlock().getState() instanceof Chest chest) {
+                            plugin.loot().fillChest(chest.getBlockInventory(), chestTiers.get(location));
+                            if (plugin.configs().main().getBoolean("arena.chest-hologram", true))
+                                holograms.create(location.clone().add(0.5, hologramHeight(), 0.5), chestTiers.get(location));
+                        }
+                    }
+                    arenaCenter.setY(world.getHighestBlockYAt(0, 0, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1);
+                    world.setSpawnLocation(arenaCenter);
+                    ready = true;
+                    world.removePluginChunkTickets(plugin);
+                    cancel();
+                    plugin.getLogger().info("Arena ready: " + chestLocations.size() + " loot sites, seed " + seed);
+                    result.complete(null);
+                } catch (Exception error) { cancel(); result.completeExceptionally(error); }
             }
-            Location surface = highestFreeSpot(base);
-            if (surface != null && !chests.containsKey(normalise(surface))) {
-                return surface;
-            }
-        }
-        return null;
+        };
+        buildTasks.add(builder.runTaskTimer(plugin, 1L, 1L));
     }
 
-    /** 从候选点往上找第一个能站住箱子的位置，站不住就放弃。 */
-    private Location highestFreeSpot(Location base) {
-        int x = base.getBlockX();
-        int z = base.getBlockZ();
-        for (int y = Math.min(base.getBlockY() + 12, 250); y > Terrain.WATER_LEVEL; y--) {
-            Block block = world.getBlockAt(x, y, z);
-            Block below = world.getBlockAt(x, y - 1, z);
-            if (block.getType().isAir() && below.getType().isSolid()) {
-                return new Location(world, x, y, z);
-            }
-        }
-        return null;
+    private double hologramHeight() {
+        return plugin.configs().main().getDouble("arena.hologram-height", plugin.configs().main().getDouble("chest.hologram-height", 1.4));
     }
 
-    private void placeChest(Location location, ChestTier tier) {
-        Block block = world.getBlockAt(location);
-        block.setType(tier.material(), false);
-        chests.put(normalise(location), tier);
-        if (plugin.configs().main().getBoolean("arena.chest-hologram", true)) {
-            double height = plugin.configs().main().getDouble("arena.hologram-height", 1.4);
-            plugin.holograms().spawn(normalise(location), height, tier);
-        }
+    /** Legacy callers remain safe: their supplied world is never built over. */
+    public void generateArena(World ignoredWorld, Location ignoredCenter, int ignoredRadius, long seed) { prepareArena(seed); }
+
+    public Location spawnFor(int index, int total) {
+        if (!ready || arenaWorld == null || dropSpawns.isEmpty()) throw new IllegalStateException("Arena is not ready");
+        int step = Math.max(1, dropSpawns.size() / Math.max(1, total));
+        Location spawn = dropSpawns.get(Math.floorMod(index * step, dropSpawns.size())).clone();
+        double height = Math.max(arenaCenter.getY() + 80D, plugin.configs().main().getDouble("drop.height", 320D));
+        spawn.setY(Math.min(arenaWorld.getMaxHeight() - 4D, height));
+        return spawn;
     }
 
-    /** 结算或插件卸载时清掉悬浮文本，重启会重置世界所以方块不用管。 */
+    public void consumeChest(Location location) {
+        if (chestTiers.remove(location) != null) holograms.remove(location.clone().add(0.5, hologramHeight(), 0.5));
+    }
+
+    public ChestTier tierAt(Location location) { return chestTiers.get(location); }
+    public boolean isReady() { return ready; }
+    public int getRadius() { return radius; }
+    public World getArenaWorld() { return arenaWorld; }
+    public Location getArenaCenter() { return arenaCenter == null ? null : arenaCenter.clone(); }
+    public List<Location> getChestLocations() { return List.copyOf(chestLocations); }
+
     public void cleanup() {
-        plugin.holograms().clearAll();
-        chests.clear();
-        structureCentres.clear();
-        structureCount = 0;
+        generation++;
+        ready = false;
+        if (preparation != null && !preparation.isDone()) preparation.completeExceptionally(new CancellationException("Arena reset"));
+        for (BukkitTask task : buildTasks) task.cancel();
+        buildTasks.clear();
+        holograms.removeAll();
+        chestLocations.clear();
+        chestTiers.clear();
+        dropSpawns.clear();
+        World oldWorld = arenaWorld;
+        arenaWorld = null;
+        terrain = null;
+        arenaCenter = null;
+        if (oldWorld != null) retire(oldWorld, 0);
     }
+
+    private void retire(World world, int attempt) {
+        if (!world.getPlayers().isEmpty()) {
+            if (plugin.isEnabled() && attempt < 100) Bukkit.getScheduler().runTaskLater(plugin, () -> retire(world, attempt + 1), 20L);
+            return;
+        }
+        Path container = Bukkit.getWorldContainer().toPath().toAbsolutePath().normalize();
+        Path folder = world.getWorldFolder().toPath().toAbsolutePath().normalize();
+        if (!folder.getParent().equals(container) || !world.getName().contains("_round_")) return;
+        world.removePluginChunkTickets(plugin);
+        if (!Bukkit.unloadWorld(world, false)) return;
+        Runnable deletion = () -> {
+            try (var paths = Files.walk(folder)) {
+                for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) Files.deleteIfExists(path);
+            } catch (IOException error) {
+                plugin.getLogger().warning("Cannot remove retired arena " + world.getName() + ": " + error.getMessage());
+            }
+        };
+        if (plugin.isEnabled()) Bukkit.getScheduler().runTaskAsynchronously(plugin, deletion);
+        // During shutdown retain the unloaded folder instead of blocking on disk traversal.
+    }
+
+    private record Site(int x, int z, ChestTier tier, boolean structure, int style) { }
 }

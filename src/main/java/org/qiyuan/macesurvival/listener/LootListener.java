@@ -1,111 +1,143 @@
 package org.qiyuan.macesurvival.listener;
 
 import org.bukkit.Material;
-import org.bukkit.block.Block;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerItemMendEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.qiyuan.macesurvival.MaceSurvival;
-import org.qiyuan.macesurvival.game.GamePlayer;
 
-/** 战利品交互：开箱、附魔书右键、拾取合并。 */
+/**
+ * All loot actions are limited to living round participants. Menu previews and
+ * cancelled actions cannot grant items. Cursor transactions use cloned stacks,
+ * cancel vanilla movement first, then commit only the exact cursor and target.
+ */
 public final class LootListener implements Listener {
-
     private final MaceSurvival plugin;
 
-    public LootListener(MaceSurvival plugin) {
-        this.plugin = plugin;
+    public LootListener(MaceSurvival plugin) { this.plugin = plugin; }
+
+    private boolean playing(Player player) { return plugin.game().active() && plugin.game().participant(player) && !player.isDead()
+        && player.getGameMode() == GameMode.SURVIVAL && player.getWorld() == plugin.arenas().getArenaWorld() && !plugin.drops().isDropping(player); }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onChestOpen(InventoryOpenEvent event) {
+        if (!(event.getPlayer() instanceof Player player) || !playing(player)) return;
+        var location = event.getInventory().getLocation();
+        if (location != null && plugin.arenas().tierAt(location) != null) plugin.arenas().consumeChest(location);
     }
 
-    /** 开箱。战利品箱一次性，开完方块也一起收掉，避免玩家对着空箱子发呆。 */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        GamePlayer gp = plugin.game().of(player);
-        if (gp == null || !gp.role().isPlaying()) {
-            return;
-        }
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-            handleBookInHand(event, player, gp);
-            return;
-        }
-        Block block = event.getClickedBlock();
-        if (block == null || !plugin.arena().isLootChest(block.getLocation())) {
-            handleBookInHand(event, player, gp);
-            return;
-        }
+    public void onPickup(EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player player) || !playing(player)) return;
+        ItemStack source = event.getItem().getItemStack();
+        if (!plugin.enchants().isAutoApply(source)) return;
         event.setCancelled(true);
-        if (plugin.loot().openChest(player, block.getLocation())) {
-            gp.addChest();
-            block.setType(Material.AIR, false);
+        if (!plugin.enchants().applyFromBook(player, source)) {
+            event.setCancelled(false);
+            return;
+        }
+        // Decrement the entity itself, never a detached ItemStack copy only.
+        if (source.getAmount() <= 1) event.getItem().remove();
+        else {
+            ItemStack remainder = source.clone();
+            remainder.setAmount(remainder.getAmount() - 1);
+            event.getItem().setItemStack(remainder);
+            event.getItem().setPickupDelay(5);
         }
     }
 
-    /** 手持附魔书右键空气或方块，把附魔打到主手武器上。 */
-    private void handleBookInHand(PlayerInteractEvent event, Player player, GamePlayer gp) {
-        if (event.getAction() != Action.RIGHT_CLICK_AIR
-                && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-            return;
-        }
-        ItemStack book = event.getItem();
-        if (book == null || book.getType() != Material.ENCHANTED_BOOK) {
-            return;
-        }
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onInventoryRightClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player) || !playing(player)
+            || event.getClick() != ClickType.RIGHT || event.getClickedInventory() == null
+            || !event.getClickedInventory().equals(player.getInventory())
+            || plugin.menus().isMenu(event.getView().getTopInventory())) return;
+        ItemStack cursor = event.getCursor();
+        ItemStack target = event.getCurrentItem();
+        if (cursor.getType().isAir() || target == null || target.getType().isAir()) return;
+        boolean merge = plugin.loot().hasCustomDurability(cursor) && plugin.loot().hasCustomDurability(target)
+            && cursor.getType() == target.getType();
+        boolean book = cursor.getType() == Material.ENCHANTED_BOOK;
+        if (!merge && !book) return;
         event.setCancelled(true);
-        if (plugin.enchants().applyByHand(player, book)) {
-            gp.addBook();
-            consumeOne(player, book);
+        ItemStack sourceCopy = cursor.clone();
+        ItemStack targetCopy = target.clone();
+        boolean applied;
+        if (merge) applied = plugin.loot().merge(player, sourceCopy, targetCopy);
+        else {
+            applied = plugin.enchants().applyByHand(player, sourceCopy, targetCopy);
+            if (applied) sourceCopy.setAmount(sourceCopy.getAmount() - 1);
+            else player.sendMessage(plugin.messages().prefixed("enchant.incompatible"));
         }
-    }
-
-    /** 用掉一本书。整叠只减一本，剩下的留在手上继续用。 */
-    private void consumeOne(Player player, ItemStack book) {
-        if (book.getAmount() <= 1) {
-            player.getInventory().setItemInMainHand(null);
-            return;
-        }
-        book.setAmount(book.getAmount() - 1);
+        if (!applied) return;
+        event.setCurrentItem(targetCopy);
+        player.setItemOnCursor(sourceCopy.getAmount() <= 0 ? null : sourceCopy);
     }
 
     /**
-     * 地上捡东西也要走战利品逻辑：重锤合并耐久、附魔书按配置即时生效。
-     * 只在对局中接管，大厅和旁观不动。
+     * One main-hand event owns both hands. The paired off-hand event is ignored,
+     * preventing a book stack from being consumed twice by one right-click.
+     * Empty-air interaction can arrive pre-cancelled by vanilla because books
+     * have no native action, so this handler deliberately handles that case.
      */
-    @EventHandler(ignoreCancelled = true)
-    public void onPickup(EntityPickupItemEvent event) {
-        if (!(event.getEntity() instanceof Player player)) {
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND || !playing(event.getPlayer())
+            || (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK)) return;
+        Player player = event.getPlayer();
+        ItemStack main = player.getInventory().getItemInMainHand();
+        ItemStack offhand = player.getInventory().getItemInOffHand();
+        boolean mainBook = main.getType() == Material.ENCHANTED_BOOK;
+        ItemStack source = mainBook ? main : offhand;
+        ItemStack target = mainBook ? offhand : main;
+        if (source.getType() != Material.ENCHANTED_BOOK) return;
+        event.setCancelled(true);
+        if (!plugin.enchants().applyByHand(player, source, target)) {
+            player.sendMessage(plugin.messages().prefixed("enchant.incompatible"));
             return;
         }
-        GamePlayer gp = plugin.game().of(player);
-        if (gp == null || !gp.role().isPlaying()) {
-            return;
+        source.setAmount(source.getAmount() - 1);
+        if (mainBook) {
+            player.getInventory().setItemInMainHand(source.getAmount() <= 0 ? null : source);
+            player.getInventory().setItemInOffHand(target);
+        } else {
+            player.getInventory().setItemInOffHand(source.getAmount() <= 0 ? null : source);
+            player.getInventory().setItemInMainHand(target);
         }
-        ItemStack stack = event.getItem().getItemStack();
-        if (plugin.loadout().hasCustomDurability(stack)) {
-            if (plugin.loot().mergeInto(player, stack)) {
-                event.setCancelled(true);
-                event.getItem().remove();
-            }
-            return;
-        }
-        if (stack.getType() != Material.ENCHANTED_BOOK
-                || !plugin.configs().main().getBoolean("loot.books-apply-on-pickup", true)) {
-            return;
-        }
-        if (plugin.enchants().applyFromBook(player, stack)) {
-            gp.addBook();
-            event.setCancelled(true);
-            if (stack.getAmount() <= 1) {
-                event.getItem().remove();
-            } else {
-                stack.setAmount(stack.getAmount() - 1);
-                event.getItem().setItemStack(stack);
-            }
+    }
+
+    /** Native use covers mace hits, spear Lunge, shield blocks and elytra flight. */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onDurabilityDamage(PlayerItemDamageEvent event) {
+        if (!playing(event.getPlayer()) || !plugin.loot().hasCustomDurability(event.getItem())) return;
+        event.setCancelled(true);
+        // Native Unbreaking has already reduced the actual damage in this event.
+        plugin.loot().damage(event.getPlayer(), event.getItem(), event.getDamage());
+    }
+
+    /** This mode's Mending reward is confirmed kills, rather than loose XP orbs. */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onMend(PlayerItemMendEvent event) {
+        if (playing(event.getPlayer()) && plugin.loot().hasCustomDurability(event.getItem())) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onRegainHealth(EntityRegainHealthEvent event) {
+        if (event.getEntity() instanceof Player player && playing(player)) {
+            event.setAmount(event.getAmount() * plugin.enchants().healingMultiplier(player));
         }
     }
 }

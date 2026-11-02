@@ -1,322 +1,134 @@
 package org.qiyuan.macesurvival.command;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.Bukkit;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.qiyuan.macesurvival.MaceSurvival;
-import org.qiyuan.macesurvival.config.MessageManager;
 import org.qiyuan.macesurvival.data.StatsManager;
-import org.qiyuan.macesurvival.loadout.LoadoutManager;
-import org.qiyuan.macesurvival.menu.MainMenu;
-import org.qiyuan.macesurvival.menu.SpectateMenu;
-import org.qiyuan.macesurvival.menu.StatsMenu;
-import org.qiyuan.macesurvival.menu.TeamMenu;
+import org.qiyuan.macesurvival.game.Squad;
+import java.util.*;
 
-import java.util.List;
-
-/**
- * /mace 的全部分支。help 分支的消息一律不带前缀，
- * 管理员那一段只发给持有 macesurvival.admin 的人。
- */
-public final class MaceCommand implements CommandExecutor {
-
+/** Commands, help and completion use the same per-branch Bukkit/LuckPerms permissions. */
+public final class MaceCommand implements CommandExecutor, TabCompleter {
     private final MaceSurvival plugin;
-
-    public MaceCommand(MaceSurvival plugin) {
-        this.plugin = plugin;
-    }
-
-    @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
-                             @NotNull String label, String[] args) {
-        if (args.length == 0) {
-            return open(sender);
-        }
-        return switch (args[0].toLowerCase()) {
-            case "help" -> help(sender);
-            case "menu" -> open(sender);
-            case "stats" -> stats(sender, args);
-            case "team" -> team(sender, args);
-            case "spectate" -> spectate(sender);
-            case "start" -> start(sender);
-            case "stop" -> stop(sender);
-            case "reload" -> reload(sender);
-            case "map" -> map(sender, args);
-            case "loot" -> loot(sender, args);
-            default -> unknown(sender);
-        };
-    }
-
-    // ─────────────── 玩家分支 ───────────────
-
-    private boolean open(CommandSender sender) {
-        Player player = player(sender);
-        if (player == null || !allowed(player, "macesurvival.menu")) {
-            return true;
-        }
-        MainMenu.openMain(plugin, player);
-        return true;
-    }
-
-    private boolean help(CommandSender sender) {
-        // help 不加前缀，管理员段落按权限过滤
-        plugin.messages().sendPlainList(sender, "help.header",
-                MessageManager.vars("version", plugin.getPluginMeta().getVersion()));
-        plugin.messages().sendPlainList(sender, "help.player");
-        if (sender.hasPermission("macesurvival.admin")) {
-            plugin.messages().sendPlainList(sender, "help.admin");
-        }
-        plugin.messages().sendPlainList(sender, "help.footer");
-        return true;
-    }
-
-    private boolean stats(CommandSender sender, String[] args) {
-        Player player = player(sender);
-        if (player == null || !allowed(player, "macesurvival.stats")) {
-            return true;
-        }
-        if (args.length < 2) {
-            new StatsMenu(plugin, player).open();
-            return true;
-        }
-        Player target = plugin.getServer().getPlayerExact(args[1]);
-        if (target == null) {
-            plugin.messages().send(player, "general.player-not-found",
-                    MessageManager.vars("target", args[1]));
-            return true;
-        }
-        StatsManager.Record record = plugin.stats().of(target);
-        plugin.messages().send(player, "stats.header",
-                MessageManager.vars("player", record.name()));
-        plugin.messages().send(player, "stats.wins",
-                MessageManager.vars("wins", String.valueOf(record.wins())));
-        plugin.messages().send(player, "stats.kills",
-                MessageManager.vars("kills", String.valueOf(record.kills())));
-        plugin.messages().send(player, "stats.deaths",
-                MessageManager.vars("deaths", String.valueOf(record.deaths())));
-        plugin.messages().send(player, "stats.kdr",
-                MessageManager.vars("kdr", String.format("%.2f", record.kd())));
-        plugin.messages().send(player, "stats.played",
-                MessageManager.vars("played", String.valueOf(record.games())));
-        return true;
-    }
-
-    private boolean team(CommandSender sender, String[] args) {
-        Player player = player(sender);
-        if (player == null || !allowed(player, "macesurvival.team")) {
-            return true;
-        }
-        if (args.length < 2) {
-            new TeamMenu(plugin, player).open();
-            return true;
-        }
-        switch (args[1].toLowerCase()) {
-            case "create" -> {
-                plugin.squads().leavePreTeam(player.getUniqueId());
-                plugin.messages().send(player, "team.created");
-            }
-            case "invite" -> invite(player, args);
-            case "accept" -> accept(player, args);
-            case "leave" -> {
-                plugin.squads().leavePreTeam(player.getUniqueId());
-                plugin.messages().send(player, "team.disbanded");
-            }
-            default -> plugin.messages().send(player, "general.unknown-command");
-        }
-        return true;
-    }
-
-    private void invite(Player player, String[] args) {
-        if (args.length < 3) {
-            plugin.messages().send(player, "general.unknown-command");
-            return;
-        }
-        Player target = plugin.getServer().getPlayerExact(args[2]);
-        if (target == null || target.equals(player)) {
-            plugin.messages().send(player, "general.player-not-found",
-                    MessageManager.vars("target", args[2]));
-            return;
-        }
-        int max = plugin.squads().teamSize();
-        if (plugin.squads().preTeamOf(player.getUniqueId()).size() + 1 >= max) {
-            plugin.messages().send(player, "team.full");
-            return;
-        }
-        plugin.squads().offer(player, target);
-        plugin.messages().send(player, "team.invited",
-                MessageManager.vars("target", target.getName()));
-        plugin.messages().send(target, "team.invite-received",
-                MessageManager.vars("player", player.getName()));
-    }
-
-    private void accept(Player player, String[] args) {
-        if (args.length < 3) {
-            plugin.messages().send(player, "general.unknown-command");
-            return;
-        }
-        Player leader = plugin.getServer().getPlayerExact(args[2]);
-        if (leader == null) {
-            plugin.messages().send(player, "general.player-not-found",
-                    MessageManager.vars("target", args[2]));
-            return;
-        }
-        if (!plugin.squads().hasInvite(player.getUniqueId(), leader.getUniqueId())) {
-            plugin.messages().send(player, "team.no-invite");
-            return;
-        }
-        int max = plugin.squads().teamSize();
-        if (plugin.squads().preTeamOf(leader.getUniqueId()).size() + 1 >= max) {
-            plugin.messages().send(player, "team.full");
-            return;
-        }
-        plugin.squads().accept(player, leader);
-        int current = plugin.squads().preTeamOf(leader.getUniqueId()).size() + 1;
-        var vars = MessageManager.vars(
-                "player", player.getName(),
-                "current", String.valueOf(current),
-                "max", String.valueOf(max));
-        plugin.messages().send(player, "team.joined", vars);
-        plugin.messages().send(leader, "team.joined", vars);
-    }
-
-    private boolean spectate(CommandSender sender) {
-        Player player = player(sender);
-        if (player == null || !allowed(player, "macesurvival.play")) {
-            return true;
-        }
-        if (plugin.game().watching().stream().noneMatch(gp -> gp.uuid().equals(player.getUniqueId()))) {
-            plugin.messages().send(player, "spectate.not-spectator");
-            return true;
-        }
-        if (plugin.game().aliveCount() == 0) {
-            plugin.messages().send(player, "spectate.nobody-alive");
-            return true;
-        }
-        new SpectateMenu(plugin, player).open();
-        return true;
-    }
-
-    // ─────────────── 管理员分支 ───────────────
-
-    private boolean start(CommandSender sender) {
-        if (!allowed(sender, "macesurvival.admin.start")) {
-            return true;
-        }
-        plugin.game().forceStart(sender.getName());
-        return true;
-    }
-
-    private boolean stop(CommandSender sender) {
-        if (!allowed(sender, "macesurvival.admin.stop")) {
-            return true;
-        }
-        plugin.game().forceStop(sender.getName());
-        return true;
-    }
-
-    private boolean reload(CommandSender sender) {
-        if (!allowed(sender, "macesurvival.admin.reload")) {
-            return true;
-        }
-        long started = System.currentTimeMillis();
+    private static final List<String> PLAYER = List.of("help", "menu", "stats", "team", "spectate", "layout", "leaderboard");
+    private static final List<String> ADMIN = List.of("start", "stop", "reload", "map", "loot");
+    public MaceCommand(MaceSurvival plugin) { this.plugin = plugin; }
+    private boolean allowed(CommandSender s, String branch) { return branch.equals("help") || s.hasPermission("macesurvival." + (ADMIN.contains(branch) ? "admin." : "") + branch); }
+    @Override public boolean onCommand(@NotNull CommandSender s, @NotNull Command c, @NotNull String label, @NotNull String[] args) {
+        String branch = args.length == 0 ? "menu" : args[0].toLowerCase(Locale.ROOT);
+        if (!PLAYER.contains(branch) && !ADMIN.contains(branch)) { plugin.messages().send(s, "command.unknown"); return true; }
+        if (!allowed(s, branch)) { plugin.messages().send(s, "command.no-permission"); return true; }
         try {
-            List<String> restored = plugin.configs().reload();
-            long ms = System.currentTimeMillis() - started;
-            if (restored.isEmpty()) {
-                plugin.messages().send(sender, "general.reloaded",
-                        MessageManager.vars("ms", String.valueOf(ms)));
-            } else {
-                plugin.messages().send(sender, "general.reloaded-restored", MessageManager.vars(
-                        "count", String.valueOf(restored.size()),
-                        "files", String.join(", ", restored)));
+            switch (branch) {
+                case "help" -> help(s, args);
+                case "start" -> plugin.messages().send(s, plugin.game().startCountdown() ? "command.start.success" : "command.start.failed");
+                case "stop" -> plugin.messages().send(s, plugin.game().stopGame() ? "command.stop.success" : "command.stop.failed");
+                case "reload" -> {
+                    try { plugin.reloadAll(); plugin.messages().send(s, "command.reload.success"); }
+                    catch (IllegalStateException failure) { plugin.messages().send(s, "command.reload.failed"); plugin.getLogger().severe(failure.getMessage()); }
+                }
+                case "menu", "layout", "spectate" -> { if (s instanceof Player p) plugin.menus().open(p, branch.equals("menu") ? "main" : branch); else plugin.messages().send(s, "command.player-only"); }
+                case "stats" -> stats(s, args);
+                case "team" -> team(s, args);
+                case "leaderboard" -> leaderboard(s, args);
+                case "map" -> map(s, args);
+                case "loot" -> loot(s, args);
+                default -> { }
             }
-        } catch (RuntimeException exception) {
-            plugin.messages().send(sender, "general.reload-failed",
-                    MessageManager.vars("error", String.valueOf(exception.getMessage())));
-        }
+        } catch (NumberFormatException ex) { plugin.messages().send(s, "command.invalid-number"); }
         return true;
     }
-
-    private boolean map(CommandSender sender, String[] args) {
-        if (!allowed(sender, "macesurvival.admin.map")) {
-            return true;
+    private void help(CommandSender s, String[] args) {
+        int page = 1;
+        if (args.length > 1) try { page = Integer.parseInt(args[1]); }
+        catch (NumberFormatException exception) { s.sendMessage(plugin.messages().get("command.invalid-number")); return; }
+        List<String> entries = new ArrayList<>();
+        for (String b : PLAYER) if (!b.equals("help") && allowed(s,b)) entries.add(b);
+        for (String b : ADMIN) if (allowed(s,b)) entries.add(b);
+        int pages = Math.max(1, (entries.size()+6)/7); page = Math.max(1, Math.min(pages,page));
+        s.sendMessage(plugin.messages().get("command.help.header", Map.of("page", Integer.toString(page), "pages", Integer.toString(pages))));
+        for (int i=(page-1)*7;i<Math.min(page*7,entries.size());i++) s.sendMessage(plugin.messages().get("command.help." + entries.get(i)));
+        if (pages > 1) s.sendMessage(plugin.messages().get("command.help.footer", Map.of("page",Integer.toString(page),"pages",Integer.toString(pages))));
+    }
+    private void stats(CommandSender s, String[] a) {
+        UUID id = s instanceof Player p ? p.getUniqueId() : null;
+        if (a.length > 1) {
+            var found = plugin.stats().top(StatsManager.Board.GAMES, Integer.MAX_VALUE).stream().filter(r -> r.name().equalsIgnoreCase(a[1])).findFirst();
+            if (found.isEmpty()) { plugin.messages().send(s, "command.player-not-found"); return; } id = found.get().uuid();
         }
-        if (args.length < 2) {
-            return unknown(sender);
-        }
-        switch (args[1].toLowerCase()) {
-            case "regen" -> {
-                plugin.messages().send(sender, "arena.regenerating");
-                plugin.arena().generate(ok -> {
-                    if (ok) {
-                        plugin.messages().send(sender, "arena.generated", MessageManager.vars(
-                                "structures", String.valueOf(plugin.arena().structureCount()),
-                                "chests", String.valueOf(plugin.arena().chestCount())));
-                    } else {
-                        plugin.messages().send(sender, "arena.generate-failed",
-                                MessageManager.vars("error", "see console"));
-                    }
-                });
+        if (id == null) { plugin.messages().send(s,"command.player-only"); return; }
+        if (a.length == 1 && s instanceof Player p) { plugin.menus().open(p,"stats"); return; }
+        var r = plugin.stats().get(id);
+        plugin.messages().send(s,"command.stats.summary", Map.of("player",r.name(),"kills",Integer.toString(r.kills()),"deaths",Integer.toString(r.deaths()),"wins",Integer.toString(r.wins()),"games",Integer.toString(r.games())));
+    }
+    private void team(CommandSender s, String[] a) {
+        if (!(s instanceof Player p)) { plugin.messages().send(s,"command.player-only"); return; }
+        if (a.length == 1) { plugin.menus().open(p,"team"); return; }
+        switch (a[1].toLowerCase(Locale.ROOT)) {
+            case "create" -> { if (a.length > 2) plugin.game().createTeam(p,String.join(" ",Arrays.copyOfRange(a,2,a.length))); else plugin.game().beginTeamInput(p); }
+            case "join" -> {
+                if (a.length < 3) { plugin.messages().send(s,"command.team.usage"); break; }
+                String selection = String.join(" ", Arrays.copyOfRange(a, 2, a.length));
+                Squad target = plugin.game().squads().stream().filter(t -> t.name().equalsIgnoreCase(selection) || Integer.toString(t.id()).equals(selection)).findFirst().orElse(null);
+                if (target == null) plugin.messages().send(s,"squad.not-found"); else plugin.game().joinTeam(p,target.id());
             }
-            case "info" -> plugin.messages().send(sender, "arena.generated", MessageManager.vars(
-                    "structures", String.valueOf(plugin.arena().structureCount()),
-                    "chests", String.valueOf(plugin.arena().chestCount())));
-            default -> unknown(sender);
+            case "leave" -> plugin.game().leaveTeam(p);
+            case "invite" -> { var target = a.length > 2 ? Bukkit.getPlayerExact(a[2]) : null; if (target == null) plugin.messages().send(s,"command.player-not-found"); else plugin.game().invite(p,target); }
+            case "accept" -> plugin.game().accept(p);
+            case "list" -> {
+                if (plugin.game().squads().isEmpty()) plugin.messages().send(s,"squad.empty");
+                for (var t : plugin.game().squads()) plugin.messages().send(s,"squad.list-entry",Map.of("name",t.name(),"id",Integer.toString(t.id()),"size",Integer.toString(t.size())));
+            }
+            default -> plugin.messages().send(s,"command.team.usage");
         }
-        return true;
     }
-
-    private boolean loot(CommandSender sender, String[] args) {
-        if (!allowed(sender, "macesurvival.admin.loot")) {
-            return true;
+    private void leaderboard(CommandSender s, String[] a) {
+        StatsManager.Board board = StatsManager.Board.WINS;
+        if (a.length > 1) try { board = StatsManager.Board.valueOf(a[1].toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { plugin.messages().send(s,"command.leaderboard.usage"); return; }
+        var list = plugin.stats().top(board,10);
+        plugin.messages().send(s,"leaderboard.header",Map.of("board",plugin.messages().plain(board.messageKey())));
+        if (list.isEmpty()) plugin.messages().send(s,"leaderboard.empty");
+        int rank=0;
+        for (var r : list) {
+            String value = switch(board) { case WINS -> ""+r.wins(); case KILLS -> ""+r.kills(); case GAMES -> ""+r.games(); case STREAK -> ""+r.bestStreak(); case KD -> String.format(Locale.ROOT,"%.2f",r.kd()); };
+            plugin.messages().send(s,"leaderboard.entry",Map.of("rank",""+(++rank),"player",r.name(),"value",value));
         }
-        Player player = player(sender);
-        if (player == null) {
-            return true;
-        }
-        if (args.length < 3 || !args[1].equalsIgnoreCase("test")) {
-            return unknown(sender);
-        }
-        int stars;
-        try {
-            stars = Integer.parseInt(args[2]);
-        } catch (NumberFormatException exception) {
-            plugin.messages().send(sender, "general.invalid-number",
-                    MessageManager.vars("input", args[2]));
-            return true;
-        }
-        LoadoutManager loadout = plugin.loadout();
-        for (ItemStack stack : plugin.loot().preview(stars)) {
-            plugin.messages().send(player, "loot.durability-merged", MessageManager.vars(
-                    "item", loadout.displayName(stack),
-                    "durability", String.valueOf(stack.getAmount())));
-        }
-        return true;
     }
-
-    // ─────────────── 公用 ───────────────
-
-    private boolean unknown(CommandSender sender) {
-        plugin.messages().send(sender, "general.unknown-command");
-        return true;
-    }
-
-    private Player player(CommandSender sender) {
-        if (sender instanceof Player player) {
-            return player;
+    private void map(CommandSender s, String[] a) {
+        if (a.length > 1 && a[1].equalsIgnoreCase("regen")) {
+            if (!plugin.game().prepareMap(s)) plugin.messages().send(s,"command.map.busy");
+            return;
         }
-        plugin.messages().send(sender, "general.player-only");
-        return null;
+        var world = plugin.arenas().getArenaWorld();
+        plugin.messages().send(s,"command.map.info",Map.of("world",world == null ? "未生成" : world.getName(),"chests",""+plugin.arenas().getChestLocations().size(),"state",plugin.game().state().name()));
     }
-
-    private boolean allowed(CommandSender sender, String node) {
-        if (sender.hasPermission(node)) {
-            return true;
+    private void loot(CommandSender s, String[] a) {
+        if (!(s instanceof Player p)) { plugin.messages().send(s,"command.player-only"); return; }
+        if (a.length < 3 || !a[1].equalsIgnoreCase("test")) { plugin.messages().send(s,"command.loot.usage"); return; }
+        int tier = Integer.parseInt(a[2]);
+        if (tier < 1 || tier > 3) { plugin.messages().send(s,"command.loot.usage"); return; }
+        plugin.menus().openLootPreview(p, org.qiyuan.macesurvival.arena.ChestTier.values()[tier-1]);
+    }
+    @Override public List<String> onTabComplete(@NotNull CommandSender s,@NotNull Command c,@NotNull String label,@NotNull String[] a) {
+        List<String> candidates=new ArrayList<>();
+        if (a.length==1) { candidates.addAll(PLAYER); candidates.addAll(ADMIN); candidates.removeIf(b -> !allowed(s,b)); }
+        else if (!allowed(s,a[0].toLowerCase(Locale.ROOT))) return List.of();
+        else if (a.length==2) switch(a[0].toLowerCase(Locale.ROOT)) {
+            case "team" -> candidates.addAll(List.of("create","join","leave","invite","accept","list"));
+            case "map" -> candidates.addAll(List.of("info","regen"));
+            case "loot" -> candidates.add("test");
+            case "help" -> candidates.addAll(List.of("1","2"));
+            case "leaderboard" -> candidates.addAll(List.of("wins","kills","kd","streak","games"));
+            case "stats" -> plugin.stats().top(StatsManager.Board.GAMES,Integer.MAX_VALUE).forEach(r -> candidates.add(r.name()));
+            default -> { }
         }
-        plugin.messages().send(sender, "general.no-permission");
-        return false;
+        else if (a.length==3 && a[0].equalsIgnoreCase("team")) {
+            if (a[1].equalsIgnoreCase("join")) plugin.game().squads().forEach(t -> candidates.add(""+t.id()));
+            if (a[1].equalsIgnoreCase("invite")) Bukkit.getOnlinePlayers().forEach(p -> candidates.add(p.getName()));
+        } else if (a.length==3 && a[0].equalsIgnoreCase("loot")) candidates.addAll(List.of("1","2","3"));
+        String prefix=a[a.length-1].toLowerCase(Locale.ROOT);
+        return candidates.stream().filter(Objects::nonNull).filter(v -> v.toLowerCase(Locale.ROOT).startsWith(prefix)).toList();
     }
 }

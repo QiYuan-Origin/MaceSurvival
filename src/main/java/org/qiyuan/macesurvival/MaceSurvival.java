@@ -1,196 +1,170 @@
 package org.qiyuan.macesurvival;
 
-import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.qiyuan.macesurvival.arena.ArenaManager;
-import org.qiyuan.macesurvival.arena.HologramManager;
 import org.qiyuan.macesurvival.config.ConfigManager;
 import org.qiyuan.macesurvival.config.MessageManager;
-import org.qiyuan.macesurvival.data.StatsManager;
-import org.qiyuan.macesurvival.drop.DropManager;
-import org.qiyuan.macesurvival.economy.EconomyManager;
 import org.qiyuan.macesurvival.game.GameManager;
-import org.qiyuan.macesurvival.game.NametagManager;
-import org.qiyuan.macesurvival.game.SquadManager;
-import org.qiyuan.macesurvival.command.MaceCommand;
-import org.qiyuan.macesurvival.command.MaceCompleter;
-import org.qiyuan.macesurvival.enchant.EnchantManager;
-import org.qiyuan.macesurvival.input.InputListener;
-import org.qiyuan.macesurvival.input.InputManager;
-import org.qiyuan.macesurvival.listener.CombatListener;
-import org.qiyuan.macesurvival.listener.LootListener;
-import org.qiyuan.macesurvival.menu.MenuListener;
-import org.qiyuan.macesurvival.loadout.LayoutStore;
+import org.qiyuan.macesurvival.game.ScoreboardManager;
 import org.qiyuan.macesurvival.loadout.LoadoutManager;
-import org.qiyuan.macesurvival.loot.CombatManager;
+import org.qiyuan.macesurvival.loadout.LayoutStore;
 import org.qiyuan.macesurvival.loot.LootManager;
+import org.qiyuan.macesurvival.loot.EnchantManager;
+import org.qiyuan.macesurvival.arena.ArenaManager;
+import org.qiyuan.macesurvival.command.MaceCommand;
+import org.qiyuan.macesurvival.drop.DropManager;
+import org.qiyuan.macesurvival.listener.*;
+import org.qiyuan.macesurvival.menu.MenuManager;
+import org.qiyuan.macesurvival.data.StatsManager;
+import org.qiyuan.macesurvival.economy.EconomyManager;
+import org.qiyuan.macesurvival.input.InputManager;
+import org.qiyuan.macesurvival.game.LobbyManager;
 
 /**
- * 单端重锤大逃杀。进服即进等待大厅，游戏中进服转旁观。
- * 地图由插件随机生成，不依赖管理员预先建图。
+ * MaceSurvival - Mace Battle Royale for Paper 1.21.11
+ *
+ * Single-server battle royale with skydiving, durability-based loot,
+ * and procedurally generated arenas.
  */
 public final class MaceSurvival extends JavaPlugin {
 
-    private static MaceSurvival instance;
-
-    private ConfigManager configs;
-    private MessageManager messages;
-    private StatsManager stats;
-    private EconomyManager economy;
-    private SquadManager squads;
-    private NametagManager nametags;
-    private HologramManager holograms;
-    private ArenaManager arena;
-    private DropManager drop;
-    private LoadoutManager loadout;
-    private LayoutStore layouts;
-    private LootManager loot;
-    private EnchantManager enchants;
-    private CombatManager combat;
-    private InputManager input;
-    private GameManager game;
-
-    public static MaceSurvival get() {
-        return instance;
-    }
+    private ConfigManager configManager;
+    private MessageManager messageManager;
+    private GameManager gameManager;
+    private ScoreboardManager scoreboardManager;
+    private LoadoutManager loadoutManager;
+    private LayoutStore layoutStore;
+    private LootManager lootManager;
+    private EnchantManager enchantManager;
+    private ArenaManager arenaManager;
+    private DropManager dropManager;
+    private MenuManager menuManager;
+    private StatsManager statsManager;
+    private EconomyManager economyManager;
+    private InputManager inputManager;
+    private LobbyManager lobbyManager;
+    private org.qiyuan.macesurvival.text.MacePlaceholders placeholders;
 
     @Override
     public void onEnable() {
-        instance = this;
-        configs = new ConfigManager(this);
-        configs.reload();
-        messages = new MessageManager(configs);
+        getLogger().info("Loading MaceSurvival...");
 
-        stats = new StatsManager(this);
-        stats.load();
-        economy = new EconomyManager(this);
-        economy.load();
+        // Load configurations
+        configManager = new ConfigManager(this);
+        messageManager = new MessageManager(this);
+        statsManager = new StatsManager(this);
+        statsManager.load();
+        economyManager = new EconomyManager(this);
+        economyManager.load();
+        lobbyManager = new LobbyManager(this);
+        inputManager = new InputManager(this);
 
-        squads = new SquadManager(this);
-        nametags = new NametagManager(this);
-        holograms = new HologramManager(this);
-        arena = new ArenaManager(this);
-        drop = new DropManager(this);
-        loadout = new LoadoutManager(this);
-        layouts = new LayoutStore(this);
-        layouts.load();
-        enchants = new EnchantManager(this);
-        combat = new CombatManager(this);
-        loot = new LootManager(this);
-        input = new InputManager(this);
-        game = new GameManager(this);
-        game.boot();
-
-        getServer().getPluginManager().registerEvents(new LootListener(this), this);
-        getServer().getPluginManager().registerEvents(new CombatListener(this), this);
-        getServer().getPluginManager().registerEvents(new MenuListener(this), this);
-        getServer().getPluginManager().registerEvents(new InputListener(this), this);
-
-        var command = getCommand("macesurvival");
-        if (command != null) {
-            command.setExecutor(new MaceCommand(this));
-            command.setTabCompleter(new MaceCompleter());
+        // Initialize managers
+        layoutStore = new LayoutStore(this);
+        loadoutManager = new LoadoutManager(this);
+        lootManager = new LootManager(this);
+        enchantManager = new EnchantManager(this);
+        arenaManager = new ArenaManager(this);
+        dropManager = new DropManager(this);
+        menuManager = new MenuManager(this);
+        scoreboardManager = new ScoreboardManager(this);
+        gameManager = new GameManager(this);
+        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            placeholders = new org.qiyuan.macesurvival.text.MacePlaceholders(this);
+            placeholders.register();
         }
 
-        getLogger().info("MaceSurvival enabled.");
+        // Start scoreboard task
+        scoreboardManager.startUpdateTask();
+
+        // Register commands
+        var cmd = getCommand("macesurvival");
+        if (cmd != null) {
+            var executor = new MaceCommand(this);
+            cmd.setExecutor(executor);
+            cmd.setTabCompleter(executor);
+        }
+
+        // Register listeners
+        registerListeners();
+        getServer().getOnlinePlayers().forEach(gameManager::addPlayer);
+
+        getLogger().info("MaceSurvival enabled!");
     }
 
     @Override
     public void onDisable() {
-        // 关服时异步任务不会再执行，落盘必须同步
-        if (game != null) {
-            game.shutdown();
+        if (placeholders != null) placeholders.unregister();
+        if (gameManager != null) {
+            gameManager.shutdown();
         }
-        if (holograms != null) {
-            holograms.clearAll();
-        }
-        if (nametags != null) {
-            nametags.clearAll();
-        }
-        if (drop != null) {
-            drop.clear();
-        }
-        if (combat != null) {
-            combat.clear();
-        }
-        if (input != null) {
-            input.clearAll();
-        }
-        if (stats != null) {
-            stats.saveSync();
-        }
-        if (economy != null) {
-            economy.saveSync();
-        }
+        if (scoreboardManager != null) scoreboardManager.stop();
+        if (statsManager != null) statsManager.saveSync();
+        if (economyManager != null) economyManager.saveSync();
         getLogger().info("MaceSurvival disabled.");
-        instance = null;
+    }
+
+    private void registerListeners() {
+        var pm = getServer().getPluginManager();
+        pm.registerEvents(new JoinQuitListener(this), this);
+        pm.registerEvents(new CombatListener(this), this);
+        pm.registerEvents(new LootListener(this), this);
+        pm.registerEvents(new MenuListener(this), this);
+        pm.registerEvents(inputManager, this);
+        pm.registerEvents(new ProtectionListener(this), this);
     }
 
     public ConfigManager configs() {
-        return configs;
+        return configManager;
     }
 
     public MessageManager messages() {
-        return messages;
-    }
-
-    public StatsManager stats() {
-        return stats;
-    }
-
-    public EconomyManager economy() {
-        return economy;
-    }
-
-    public SquadManager squads() {
-        return squads;
-    }
-
-    public NametagManager nametags() {
-        return nametags;
-    }
-
-    public HologramManager holograms() {
-        return holograms;
-    }
-
-    public ArenaManager arena() {
-        return arena;
-    }
-
-    public DropManager drop() {
-        return drop;
-    }
-
-    public LoadoutManager loadout() {
-        return loadout;
-    }
-
-    public LayoutStore layouts() {
-        return layouts;
-    }
-
-    public LootManager loot() {
-        return loot;
-    }
-
-    public EnchantManager enchants() {
-        return enchants;
-    }
-
-    public CombatManager combat() {
-        return combat;
-    }
-
-    public InputManager input() {
-        return input;
+        return messageManager;
     }
 
     public GameManager game() {
-        return game;
+        return gameManager;
     }
 
-    public NamespacedKey key(String value) {
-        return new NamespacedKey(this, value);
+    public ScoreboardManager scoreboard() {
+        return scoreboardManager;
+    }
+
+    public LoadoutManager loadouts() {
+        return loadoutManager;
+    }
+
+    public LayoutStore layouts() {
+        return layoutStore;
+    }
+
+    public LootManager loot() {
+        return lootManager;
+    }
+
+    public EnchantManager enchants() {
+        return enchantManager;
+    }
+
+    public ArenaManager arenas() {
+        return arenaManager;
+    }
+
+    public DropManager drops() {
+        return dropManager;
+    }
+
+    public MenuManager menus() {
+        return menuManager;
+    }
+
+    public StatsManager stats() { return statsManager; }
+    public EconomyManager economy() { return economyManager; }
+    public InputManager input() { return inputManager; }
+    public LobbyManager lobby() { return lobbyManager; }
+
+    public void reloadAll() {
+        configs().reload(); messages().reload(); layouts().reload();
+        loot().reload(); enchants().reload(); menus().reload(); scoreboard().reload(); scoreboard().startUpdateTask();
+        economy().reload();
     }
 }

@@ -1,56 +1,83 @@
 package org.qiyuan.macesurvival.game;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import org.bukkit.entity.Player;
+
+import java.util.*;
 
 /**
- * 一支小队。成员用有序集合，记分板和结算列表的顺序才稳定。
+ * Represents a squad of players.
  */
 public final class Squad {
 
-    /**
-     * 队伍配色。hex 同时供聊天、名字和 Scoreboard Team 使用，
-     * Team 那边由 NamedTextColor.nearestTo 折算成最近的原版颜色。
-     */
-    public record Palette(String hex, String label) {
-    }
+    private final int id;
+    private UUID leader;
+    private final Set<UUID> members;
+    private final String name;
+    private final String color;
 
-    private final String id;
-    private final int number;
-    private final Palette palette;
-    private final Set<GamePlayer> members = new LinkedHashSet<>();
-
-    public Squad(String id, int number, Palette palette) {
+    public Squad(int id, UUID leader, String name, String color) {
         this.id = id;
-        this.number = number;
-        this.palette = palette;
+        this.leader = leader;
+        this.members = new LinkedHashSet<>();
+        this.members.add(leader);
+        this.name = name;
+        this.color = color;
     }
 
-    public String id() {
+    public int id() {
         return id;
     }
 
-    public int number() {
-        return number;
+    public UUID leader() {
+        return leader;
     }
 
-    public Palette palette() {
-        return palette;
+    public Set<UUID> members() {
+        return Collections.unmodifiableSet(members);
     }
 
-    public Set<GamePlayer> members() {
-        return members;
+    public void addMember(UUID uuid) {
+        members.add(uuid);
     }
 
-    public int aliveCount() {
-        return (int) members.stream().filter(m -> m.role().isPlaying()).count();
+    public void removeMember(UUID uuid) {
+        members.remove(uuid);
+        if (uuid.equals(leader) && !members.isEmpty()) leader = members.iterator().next();
     }
 
-    public int totalKills() {
-        return members.stream().mapToInt(GamePlayer::kills).sum();
+    public boolean isMember(UUID uuid) {
+        return members.contains(uuid);
     }
 
-    public boolean contains(GamePlayer gp) {
-        return members.contains(gp);
+    public int size() {
+        return members.size();
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public String color() {
+        return color;
+    }
+
+    public boolean isEmpty() {
+        return members.isEmpty();
+    }
+
+    public String getColoredName() {
+        return name;
+    }
+
+    public List<Player> getAliveMembers() {
+        List<Player> alive = new ArrayList<>();
+        for (UUID uuid : members) {
+            Player p = org.bukkit.Bukkit.getPlayer(uuid);
+            var plugin = org.qiyuan.macesurvival.MaceSurvival.getPlugin(org.qiyuan.macesurvival.MaceSurvival.class);
+            if (p != null && p.isOnline() && plugin.game().getPlayer(uuid).isAlive()) {
+                alive.add(p);
+            }
+        }
+        return alive;
     }
 }

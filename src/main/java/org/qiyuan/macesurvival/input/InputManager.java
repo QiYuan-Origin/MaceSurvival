@@ -1,154 +1,61 @@
 package org.qiyuan.macesurvival.input;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.*;
+import org.bukkit.event.player.*;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import org.qiyuan.macesurvival.MaceSurvival;
-import org.qiyuan.macesurvival.config.MessageManager;
-
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 聊天框输入。菜单里需要打字的地方一律走这里：先关菜单，
- * 给一层黑暗并把移速压到 0，再用标题提示玩家输入，
- * 蹲下或者打 cancel 都能中止，超时会自己收摊。
- * 输入内容不进聊天，也不会漏给其他玩家。
- */
-public final class InputManager {
-
-    /** 打字期间的等待记录。取消令牌就是这条记录本身。 */
-    private record Session(String type, BukkitTask ticker, int seconds) {
-    }
-
+/** All menu chat input shares one cancellable session; input is never broadcast as chat. */
+public final class InputManager implements Listener {
+    private record Session(String type, float speed, PotionEffect darkness, BukkitTask timeout) { }
     private final MaceSurvival plugin;
     private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
-
-    public InputManager(MaceSurvival plugin) {
-        this.plugin = plugin;
+    public InputManager(MaceSurvival plugin) { this.plugin = plugin; }
+    public boolean waiting(Player p) { return sessions.containsKey(p.getUniqueId()); }
+    public void request(Player p, String type) {
+        if (!plugin.game().lobbyOpen()) return;
+        release(p); p.closeInventory();
+        int seconds = Math.max(5, plugin.configs().main().getInt("menu.input-timeout", 30));
+        float speed = p.getWalkSpeed(); PotionEffect previous = p.getPotionEffect(PotionEffectType.DARKNESS);
+        p.setWalkSpeed(0); p.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, seconds * 20 + 40, 0, false, false, false));
+        BukkitTask timer = Bukkit.getScheduler().runTaskLater(plugin, () -> { if (waiting(p)) { release(p); plugin.messages().send(p, "input.timeout"); reopen(p); } }, seconds * 20L);
+        sessions.put(p.getUniqueId(), new Session(type, speed, previous, timer));
+        plugin.messages().title(p, "input.prompt-title", "input.prompt-subtitle", Map.of());
+        plugin.messages().send(p, "squad.create-prompt");
     }
-
-    public boolean waiting(Player player) {
-        return sessions.containsKey(player.getUniqueId());
+    public void release(Player p) {
+        Session s = sessions.remove(p.getUniqueId()); if (s == null) return; s.timeout().cancel();
+        p.setWalkSpeed(s.speed()); p.removePotionEffect(PotionEffectType.DARKNESS);
+        if (s.darkness() != null) p.addPotionEffect(s.darkness());
+        p.clearTitle();
     }
-
-    /** 开一次输入。重复调用会顶掉上一次，不会叠两层提示。 */
-    public void request(Player player, String type) {
-        release(player);
-        int timeout = Math.max(5, plugin.configs().main().getInt("menu.input-timeout", 30));
-
-        player.closeInventory();
-        player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS,
-                timeout * 20 + 40, 0, false, false, false));
-        player.setWalkSpeed(0f);
-        plugin.messages().sendTitle(player, "input.prompt-title", "input.prompt-subtitle");
-
-        BukkitTask ticker = plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable() {
-            private int left = timeout;
-
-            @Override
-            public void run() {
-                if (!player.isOnline() || !waiting(player)) {
-                    release(player);
-                    return;
-                }
-                if (left <= 0) {
-                    release(player);
-                    plugin.messages().send(player, "input.timeout");
-                    return;
-                }
-                plugin.messages().actionBar(player, "input.waiting",
-                        MessageManager.vars("seconds", String.valueOf(left)));
-                left--;
-            }
-        }, 0L, 20L);
-
-        sessions.put(player.getUniqueId(), new Session(type, ticker, timeout));
+    public void clearAll() { for (UUID id : List.copyOf(sessions.keySet())) { Player p = Bukkit.getPlayer(id); if (p != null) release(p); else { Session s = sessions.remove(id); if (s != null) s.timeout().cancel(); } } }
+    private void reopen(Player p) { if (p.isOnline() && plugin.game().lobbyOpen()) plugin.menus().open(p, "team"); }
+    private void submit(Player p, String raw, Session expected) {
+        if (sessions.get(p.getUniqueId()) != expected || !p.isOnline()) return;
+        release(p);
+        if (raw.isBlank() || raw.equalsIgnoreCase("cancel")) plugin.messages().send(p, "input.cancelled");
+        else if ("team-create".equals(expected.type())) plugin.game().createTeam(p, raw);
+        reopen(p);
     }
-
-    /** 玩家蹲下或者输入 cancel。 */
-    public void cancel(Player player) {
-        Session session = sessions.remove(player.getUniqueId());
-        if (session == null) {
-            return;
-        }
-        session.ticker().cancel();
-        clear(player);
-        plugin.messages().send(player, "input.cancelled");
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void chat(AsyncChatEvent e) {
+        var s = sessions.get(e.getPlayer().getUniqueId()); if (s == null) return;
+        e.setCancelled(true); String text = PlainTextComponentSerializer.plainText().serialize(e.message()).trim();
+        Bukkit.getScheduler().runTask(plugin, () -> submit(e.getPlayer(), text, s));
     }
-
-    /**
-     * 收下一行聊天内容。返回 true 表示这行是输入而不是聊天，
-     * 调用方必须把聊天事件取消掉。
-     */
-    public boolean submit(Player player, String raw) {
-        Session session = sessions.get(player.getUniqueId());
-        if (session == null) {
-            return false;
-        }
-        String text = raw == null ? "" : raw.trim();
-        if (text.isEmpty() || text.equalsIgnoreCase("cancel")) {
-            // 主线程里做取消，聊天事件本身是异步的
-            plugin.getServer().getScheduler().runTask(plugin, () -> cancel(player));
-            return true;
-        }
-        sessions.remove(player.getUniqueId());
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            clear(player);
-            plugin.messages().send(player, "input.accepted");
-            apply(player, session.type(), text);
-        });
-        return true;
+    @EventHandler public void sneak(PlayerToggleSneakEvent e) { if (e.isSneaking() && waiting(e.getPlayer())) { var s = sessions.get(e.getPlayer().getUniqueId()); submit(e.getPlayer(), "cancel", s); } }
+    @EventHandler(ignoreCancelled = true) public void move(PlayerMoveEvent e) {
+        if (!waiting(e.getPlayer()) || e.getFrom().getWorld() != e.getTo().getWorld()) return;
+        if (e.getFrom().distanceSquared(e.getTo()) > 0) { var at = e.getFrom(); at.setYaw(e.getTo().getYaw()); at.setPitch(e.getTo().getPitch()); e.setTo(at); }
     }
-
-    /** 输入内容的落点。新的输入类型往这里加一条分支。 */
-    private void apply(Player player, String type, String value) {
-        switch (type) {
-            case "team-invite" -> {
-                player.performCommand("mace team invite " + value);
-                new org.qiyuan.macesurvival.menu.TeamMenu(plugin, player).open();
-            }
-            default -> plugin.messages().send(player, "input.cancelled");
-        }
-    }
-
-    /** 玩家退出或者游戏状态变了，直接丢掉记录，不发任何消息。 */
-    public void release(Player player) {
-        Session session = sessions.remove(player.getUniqueId());
-        if (session != null) {
-            session.ticker().cancel();
-        }
-        clear(player);
-    }
-
-    public void clearAll() {
-        for (UUID uuid : Map.copyOf(sessions).keySet()) {
-            Session session = sessions.remove(uuid);
-            if (session != null) {
-                session.ticker().cancel();
-            }
-            Player player = plugin.getServer().getPlayer(uuid);
-            if (player != null) {
-                clear(player);
-            }
-        }
-    }
-
-    /** 撤掉输入期间加的那些限制。调用前记录应该已经摘掉了。 */
-    private void clear(Player player) {
-        if (!player.isOnline()) {
-            return;
-        }
-        player.removePotionEffect(PotionEffectType.DARKNESS);
-        player.setWalkSpeed(0.2f);
-        player.sendActionBar(net.kyori.adventure.text.Component.empty());
-    }
-
-    /** 聊天组件转纯文本，颜色和格式一律不要。 */
-    public static String plain(net.kyori.adventure.text.Component component) {
-        return PlainTextComponentSerializer.plainText().serialize(component);
-    }
+    @EventHandler public void quit(PlayerQuitEvent e) { release(e.getPlayer()); }
 }

@@ -1,0 +1,107 @@
+config_version: 3
+enabled: true
+update-ticks: 20
+text-shadow: true
+nametag:
+  squad-prefix: '[{team_id}] '
+  eliminated-prefix: '☠ '
+title: <white><shadow:#404040:1>重锤大逃杀</shadow></white>
+tab:
+  header: '<newline><white><shadow:#404040:1>重锤大逃杀</shadow></white><newline><gray>{phase} <dark_gray>·</dark_gray> {players} 位玩家</gray><newline>'
+  footer: '<newline><gray>高空降落 <dark_gray>·</dark_gray> 星级补给 <dark_gray>·</dark_gray> 最后幸存者</gray><newline><#D9B86F>你的队伍 · {squad}</#D9B86F><newline>'
+server-address: ''
+phases:
+  booting: 场地准备
+  waiting: 等待玩家
+  countdown: 即将开始
+  dropping: 高空降落
+  running: 生存对局
+  ending: 本局结算
+labels:
+  solo: 单人生存
+  unteamed: 尚未组队
+  solo-allowed-rule: '单人 / 最多 {squad_size} 人自由组队'
+  solo-disabled-rule: '需组队 / 每队最多 {squad_size} 人'
+  grace: 保护中
+  pvp: 战斗中
+  waiting-players: 还需 {needed} 人即可开始
+  waiting-team-players: 还需 {needed} 名已组队玩家
+  waiting-opponent: 等待另一支队伍加入
+  ready: 即将开始倒计时
+  paused: 等待管理员重新开启
+  grace-remaining: 保护中 · {grace} 秒
+  border-active: 收缩中
+lines:
+  booting:
+  - ''
+  - <gray>阶段 <white>{phase}</white>
+  - <gray>场地准备中，请稍候。
+  - ''
+  waiting:
+  - ''
+  - <gray>阶段 <white>{phase}</white>
+  - <gray>玩家 <white>{players}</white><dark_gray> / </dark_gray>{maximum}
+  - <gray>{waiting_hint}</gray>
+  - ''
+  - <gray>队伍 <white>{squad}</white>
+  - ''
+  - <gray>{squad_rule}
+  - ''
+  countdown:
+  - ''
+  - <gray>阶段 <white>{phase}</white>
+  - <gray>开始倒计时 <white>{countdown} 秒</white>
+  - <gray>玩家 <white>{players}</white><dark_gray> / </dark_gray>{maximum}
+  - ''
+  - <gray>队伍 <white>{squad}</white>
+  - ''
+  - <gray>检查布局，准备进入战场。
+  - ''
+  dropping:
+  - ''
+  - <gray>阶段 <white>{phase}</white>
+  - <gray>存活 <white>{alive}</white> 人
+  - <gray>队伍 <white>{alive_squads}</white> 支
+  - ''
+  - <gray>我的队伍 <white>{squad}</white>
+  - <gray>边界直径 <white>{border}</white> 格
+  - ''
+  - <gray>选择落点，准备争夺补给。
+  - ''
+  running:
+  - ''
+  - <gray>用时 <white>{elapsed}</white> <dark_gray>·</dark_gray> {combat_state}
+  - <gray>存活 <white>{alive}</white> 人 <dark_gray>·</dark_gray> {alive_squads} 队
+  - <gray>击杀 <white>{kills}</white>
+  - ''
+  - <gray>队伍 <white>{squad}</white>
+  - '{team_1}'
+  - '{team_2}'
+  - '{team_3}'
+  - '{team_4}'
+  - ''
+  - <gray>边界直径 <white>{border}</white> 格
+  - <gray>缩圈 <white>{border_state}</white>
+  - ''
+  ending:
+  - ''
+  - <gray>阶段 <white>{phase}</white>
+  - <gray>本局用时 <white>{elapsed}</white>
+  - <gray>本局击杀 <white>{kills}</white>
+  - ''
+  - <gray>队伍 <white>{squad}</white>
+  - ''
+  - <gray>战绩已记录，等待下一局。
+  - ''
+  spectator:
+  - ''
+  - <gray>身份 <white>旁观者</white>
+  - <gray>阶段 <white>{phase}</white>
+  - <gray>对局用时 <white>{elapsed}</white>
+  - ''
+  - <gray>存活 <white>{alive}</white> 人 <dark_gray>·</dark_gray> {alive_squads} 队
+  - <gray>本局击杀 <white>{kills}</white>
+  - ''
+  - <gray>边界直径 <white>{border}</white> 格
+  - <gray>/mace spectate 选择观战目标
+  - ''

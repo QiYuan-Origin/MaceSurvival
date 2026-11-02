@@ -1,112 +1,130 @@
-# ═══════════════════════════════════════════════════════════
-#              MaceSurvival  ·  Main Menu
-#   Slots are 0-based. A 6-row chest is 0-53, so 0 is the top-left
-#   corner and 53 is the bottom-right one.
-#   Text fields accept  &a  §a  &x&F&F&0&0&0&0  <#FF0000>
-#   <gradient>  <shadow:#404040:1>  and full JSON components.
-# ═══════════════════════════════════════════════════════════
-
-config_version: 1
-
-title: '<#C9A227><shadow:#404040:1>✦ MACE SURVIVAL</shadow></#C9A227>'
-rows: 6
-
-# Played when the menu opens. Format is  SOUND,volume,pitch,delayTicks
-open-sound:
-  - 'BLOCK_AMETHYST_BLOCK_CHIME,0.7,1.0,0'
-  - 'ITEM_BOOK_PAGE_TURN,0.6,1.0,0'
-  - 'ITEM_BOOK_PAGE_TURN,0.5,1.1,6'
-
-# ─────────────── Frame ───────────────
-# Corner panes carry the accent colour of the page, the rest stay dark.
-frame:
-  corner-material: YELLOW_STAINED_GLASS_PANE
-  corner-name: '<#F0C674>Nothing to see here'
-  corner-lore:
-    - '<#5F6368>Clicking does nothing, promise.'
-  filler-material: BLACK_STAINED_GLASS_PANE
-  filler-name: '<#5F6368>Nothing to see here'
-  filler-lore:
-    - '<#5F6368>Clicking does nothing, promise.'
-
+config_version: 4
+title: <!i><white><shadow:#404040:1>重锤大逃杀 · 大厅</shadow></white>
+size: 54
+open_sound:
+  enabled: true
+  sound: block.chest.open
+  volume: 0.4
+  pitch: 1.0
+click_sound:
+  enabled: true
+  sound: ui.button.click
+  volume: 0.35
+  pitch: 1.0
 items:
-  brief:
+  border:
+    material: GRAY_STAINED_GLASS_PANE
+    slots:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 45
+    - 46
+    - 47
+    - 48
+    - 49
+    - 50
+    - 51
+    - 52
+    - 53
+    display_name: ' '
+  info:
+    material: COMPASS
     slot: 4
-    material: MACE
-    name: '<#C9A227>❰ Round Brief ❱'
+    display_name: <!i><white><shadow:#404040:1>重锤大逃杀</shadow></white>
     lore:
-      - '<#9AA0A6>Forty divers, one arena, one mace each.'
-      - '<#9AA0A6>Loot the star-rated caches to keep swinging.'
-      - '<#9AA0A6>State: <#F0C674>{state}'
-      - '<#9AA0A6>In lobby: <#F0C674>{players}</#F0C674><#5F6368>/</#5F6368><#9AA0A6>{max}'
-      - ''
-      - '<#5F6368>Left-click to refresh the numbers.'
-    action: refresh
-
-  squad:
-    slot: 20
-    material: WHITE_BANNER
-    name: '<#7FD962>❰ Squad Tools ❱'
-    lore:
-      - '<#9AA0A6>Four to a squad. Invite before the drop.'
-      - '<#9AA0A6>Squad: <#F0C674>{squad}'
-      - ''
-      - '<#5F6368>Left-click to open.'
-    action: 'menu:team'
-
-  layout:
-    slot: 22
-    material: CHEST
-    name: '<#7FC9D9>❰ Hotbar Layout ❱'
-    lore:
-      - '<#9AA0A6>Decide where the mace, food, blocks'
-      - '<#9AA0A6>and wind charges land on your hotbar.'
-      - ''
-      - '<#5F6368>Left-click to open.'
-    action: 'menu:layout'
-
+    - <!i><gray>当前阶段：<white>{phase}</white></gray>
+    - <!i><gray>{players_summary}</gray>
+    - <!i><gray>我的队伍：<white>{squad}</white></gray>
+    - <!i><gray></gray>
+    - <!i><gray>从高空选择落点，争夺星级补给。</gray>
+    - <!i><gray>使用风弹与重锤，在最后的战场存活。</gray>
   stats:
+    material: PAPER
+    slot: 20
+    display_name: <!i><white><shadow:#404040:1>我的战绩</shadow></white>
+    lore:
+    - <!i><gray>胜利 <white>{wins}</white>　击杀 <white>{kills}</white></gray>
+    - <!i><gray>累计场次 <white>{games}</white></gray>
+    - <!i><gray>{currency}：<white>{balance}</white></gray>
+    - <!i><gray></gray>
+    - <!i><gray>点击查看完整生存记录</gray>
+  team:
+    material: PLAYER_HEAD
+    slot: 22
+    display_name: <!i><white><shadow:#404040:1>队伍大厅</shadow></white>
+    lore:
+    - <!i><gray>当前：<white>{squad}</white></gray>
+    - <!i><gray>自由组队，每队最多 <white>{squad_size}</white> 人</gray>
+    - <!i><gray></gray>
+    - <!i><gray>{solo_hint}</gray>
+    - <!i><gray>点击创建或加入队伍</gray>
+  layout:
+    material: CHEST
     slot: 24
-    material: BOOK
-    name: '<#B48EAD>❰ Records ❱'
+    display_name: <!i><white><shadow:#404040:1>快捷栏布局</shadow></white>
     lore:
-      - '<#9AA0A6>Wins, kills and best streaks.'
-      - '<#9AA0A6>Your wins: <#F0C674>{wins}'
-      - '<#9AA0A6>Your kills: <#F0C674>{kills}'
-      - ''
-      - '<#5F6368>Left-click to open.'
-    action: 'menu:stats'
-
+    - <!i><gray>调整你的开局装备位置</gray>
+    - <!i><gray>双重锤、武器与补给分别保存</gray>
+    - <!i><gray></gray>
+    - <!i><gray>点击编辑个人布局</gray>
   spectate:
-    slot: 30
-    material: ENDER_EYE
-    name: '<#E0A45C>❰ Spectate ❱'
+    material: SPYGLASS
+    slot: 31
+    display_name: <!i><white><shadow:#404040:1>观战目标</shadow></white>
     lore:
-      - '<#9AA0A6>Watch the divers still in the fight.'
-      - '<#9AA0A6>Alive: <#F0C674>{alive}'
-      - ''
-      - '<#5F6368>Left-click to open.'
-    action: 'menu:spectate'
-
-  balance:
-    slot: 32
-    material: GOLD_INGOT
-    name: '<#F0C674>❰ Your Purse ❱'
-    lore:
-      - '<#9AA0A6>Wins, kills and taking part all pay out.'
-      - '<#9AA0A6>Balance: <#F0C674>{balance} {currency}'
-      - ''
-      - '<#5F6368>Left-click to refresh.'
-    action: refresh
-
-  # Shown as a back button when menu.close-as-back is on, close otherwise.
+    - <!i><gray>存活玩家：<white>{alive}</white></gray>
+    - <!i><gray>存活队伍：<white>{alive_squads}</white></gray>
+    - <!i><gray></gray>
+    - <!i><gray>仅旁观者可以进入观战列表</gray>
   close:
-    slot: 49
     material: BARRIER
-    name: '<#E05C5C>❰ Close ❱'
+    slot: 49
+    display_name: <!i><white><shadow:#404040:1>关闭菜单</shadow></white>
+    lore: []
+phases:
+  booting: 场地准备
+  waiting: 等待玩家
+  countdown: 即将开始
+  dropping: 高空降落
+  running: 生存对局
+  ending: 本局结算
+labels:
+  solo: 单人生存
+  unteamed: 尚未组队
+  players-lobby: '可参赛人数：<white>{eligible_players}</white> / 最少 {minimum} 人'
+  players-preparing: '准备参赛：<white>{eligible_players}</white> 人'
+  players-round: '存活玩家：<white>{alive}</white> / <white>{alive_squads}</white> 个阵营'
+  solo-allowed: 单人可直接等待开局。
+  solo-disabled: 需加入小队后才能参赛。
+root-back:
+  material: ARROW
+  display_name: <!i><white><shadow:#404040:1>返回服务器主菜单</shadow></white>
+  lore:
+  - <!i><gray>点击返回服务器主菜单</gray>
+hotbar:
+  menu:
+    material: COMPASS
+    display_name: <!i><white><shadow:#404040:1>重锤大逃杀</shadow></white>
     lore:
-      - '<#9AA0A6>Put the menu away.'
-    back-material: ARROW
-    back-name: '<#E0A45C>❰ Back ❱'
-    back-lore:
-      - '<#9AA0A6>Return to the server menu.'
+    - <!i><gray>右键打开玩法菜单</gray>
+  stats:
+    material: PAPER
+    display_name: <!i><white><shadow:#404040:1>我的战绩</shadow></white>
+    lore:
+    - <!i><gray>右键查看累计战绩</gray>
+  team:
+    material: PLAYER_HEAD
+    display_name: <!i><white><shadow:#404040:1>队伍大厅</shadow></white>
+    lore:
+    - <!i><gray>右键创建或加入队伍</gray>
+feedback:
+  round-active: <gray>对局已开始，请在下一局等待阶段调整队伍和布局。</gray>
+  no-permission: <gray>你没有使用这个功能的权限。</gray>
+  cursor-busy: <gray>请先放回鼠标上的物品，再打开布局编辑。</gray>

@@ -1,78 +1,40 @@
 package org.qiyuan.macesurvival.game;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
 /**
- * 一局内的玩家会话。只存本局数据，跨局统计交给 StatsManager。
- * 刻意不持有 Player 引用，避免玩家退出后内存泄漏。
+ * Tracks per-player game data.
  */
 public final class GamePlayer {
 
     private final UUID uuid;
-    private final String name;
-
-    private PlayerRole role = PlayerRole.LOBBY;
-    private String squadId;
-
+    private PlayerRole role;
     private int kills;
-    private int chestsOpened;
-    private int booksApplied;
-    private long joinedAt = System.currentTimeMillis();
-    private long diedAt;
-    private String lastDamager;
+    private int deaths;
+    private int wins;
+    private Squad squad;
+    private int roundKills;
 
-    /** 跳伞阶段用：是否已经开伞，避免重复给伞和重复取消坠落伤害。 */
-    private boolean parachuteOpen;
-    /** 落地判定用，落地后不再接管移动。 */
-    private boolean landed;
-
-    public GamePlayer(Player player) {
-        this.uuid = player.getUniqueId();
-        this.name = player.getName();
+    public GamePlayer(UUID uuid) {
+        this.uuid = uuid;
+        this.role = PlayerRole.PLAYER;
+        this.kills = 0;
+        this.deaths = 0;
+        this.wins = 0;
     }
 
     public UUID uuid() {
         return uuid;
     }
 
-    public String name() {
-        return name;
-    }
-
-    /** 可能为 null，玩家离线时如此。调用方必须判空。 */
-    public Player online() {
-        return Bukkit.getPlayer(uuid);
-    }
-
-    public boolean isOnline() {
-        Player player = online();
-        return player != null && player.isOnline();
-    }
-
     public PlayerRole role() {
         return role;
     }
 
-    public void role(PlayerRole role) {
+    public void setRole(PlayerRole role) {
         this.role = role;
-        if (role == PlayerRole.ELIMINATED && diedAt == 0L) {
-            diedAt = System.currentTimeMillis();
-        }
-    }
-
-    public String squadId() {
-        return squadId;
-    }
-
-    public void squadId(String squadId) {
-        this.squadId = squadId;
-    }
-
-    public boolean hasSquad() {
-        return squadId != null;
     }
 
     public int kills() {
@@ -80,72 +42,57 @@ public final class GamePlayer {
     }
 
     public void addKill() {
-        kills++;
+        this.kills++;
+        this.roundKills++;
     }
 
-    public int chestsOpened() {
-        return chestsOpened;
+    public int deaths() {
+        return deaths;
     }
 
-    public void addChest() {
-        chestsOpened++;
+    public void addDeath() {
+        this.deaths++;
     }
 
-    public int booksApplied() {
-        return booksApplied;
+    public int wins() {
+        return wins;
     }
 
-    public void addBook() {
-        booksApplied++;
+    public void addWin() {
+        this.wins++;
     }
 
-    public long joinedAt() {
-        return joinedAt;
+    public Squad squad() {
+        return squad;
     }
 
-    public void joinedAt(long joinedAt) {
-        this.joinedAt = joinedAt;
+    public void setSquad(Squad squad) {
+        this.squad = squad;
     }
 
-    public long diedAt() {
-        return diedAt;
+    public boolean isAlive() {
+        return role == PlayerRole.PLAYER;
     }
 
-    /** 记录最近一次伤害来源，死亡消息用它来判定凶手。 */
-    public String lastDamager() {
-        return lastDamager;
+    public boolean isSpectator() {
+        return role == PlayerRole.SPECTATOR;
     }
 
-    public void lastDamager(String lastDamager) {
-        this.lastDamager = lastDamager;
+    public Squad getSquad() {
+        return squad;
     }
 
-    public boolean parachuteOpen() {
-        return parachuteOpen;
+    public int getKills() {
+        return kills;
     }
 
-    public void parachuteOpen(boolean parachuteOpen) {
-        this.parachuteOpen = parachuteOpen;
-    }
+    public int roundKills() { return roundKills; }
 
-    public boolean landed() {
-        return landed;
-    }
+    public void resetRound() { roundKills = 0; }
 
-    public void landed(boolean landed) {
-        this.landed = landed;
-    }
-
-    /** 新一局开始时复用同一个会话对象。 */
-    public void resetForRound() {
-        role = PlayerRole.LOBBY;
-        kills = 0;
-        chestsOpened = 0;
-        booksApplied = 0;
-        diedAt = 0L;
-        lastDamager = null;
-        parachuteOpen = false;
-        landed = false;
-        joinedAt = System.currentTimeMillis();
+    public void loadTotals(int kills, int deaths, int wins) {
+        this.kills = kills;
+        this.deaths = deaths;
+        this.wins = wins;
     }
 }

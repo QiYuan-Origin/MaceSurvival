@@ -1,195 +1,203 @@
 package org.qiyuan.macesurvival.arena;
 
+import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
-import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.type.Slab;
 
+import java.util.Queue;
 import java.util.Random;
+import java.util.EnumMap;
+import java.util.Map;
 
-/**
- * 建筑铺设。刻意做成几种简单但有掩体价值的形状：
- * 重锤玩法需要高低差来砸人，所以每种建筑都有可以跳下来的落差。
- */
+/** Small, walkable field landmarks planned once and applied with a per-tick block budget. */
 final class Structures {
+    private static final Map<Material, BlockData> BLOCK_DATA = new EnumMap<>(Material.class);
+    private Structures() { }
 
-    private Structures() {
+    static Location plan(World world, int x, int y, int z, boolean landmark, int style,
+                         Queue<Change> changes, Random random) {
+        int coreX = landmark ? style == 3 ? 4 : 3 : 1;
+        int coreZ = landmark ? style == 2 ? 6 : style == 4 ? 4 : style == 3 ? 4 : 3 : 1;
+        int reach = Math.max(coreX, coreZ) + 4;
+        if (world.getGenerator() instanceof Terrain terrain) terrain.clearTrees(world, x, z, Math.max(coreX, coreZ) + 1, changes);
+        // Only the building footprint is level. Its grassy shoulders blend back into the surveyed slope.
+        for (int dx = -reach; dx <= reach; dx++) {
+            for (int dz = -reach; dz <= reach; dz++) {
+                double edge = Math.hypot(Math.max(0, Math.abs(dx) - coreX), Math.max(0, Math.abs(dz) - coreZ));
+                double feather = 3.2 + Math.sin((x + dx) * 0.43 + (z + dz) * 0.31) * 0.6;
+                if (edge >= feather) continue;
+                int existing = naturalGround(world, x + dx, z + dz);
+                double blend = Math.clamp(1 - edge / feather, 0, 1);
+                blend = blend * blend * (3 - 2 * blend);
+                int target = (int) Math.round(existing + (y - existing) * blend);
+                for (int cy = Math.min(existing, target) - 1; cy < target; cy++)
+                    put(changes, x + dx, cy, z + dz, Material.DIRT);
+                boolean entrance = Math.abs(dx) <= 1 && dz < -1;
+                put(changes, x + dx, target, z + dz, entrance ? Material.DIRT_PATH : Material.GRASS_BLOCK);
+                int clearHeight = edge == 0 ? style == 2 ? 8 : 6 : 3;
+                for (int cy = target + 1; cy <= Math.max(existing + 1, target + clearHeight); cy++)
+                    put(changes, x + dx, cy, z + dz, Material.AIR);
+            }
+        }
+        approach(world, changes, x, y, z, coreZ);
+        int floor = y + 1;
+        if (!landmark) {
+            put(changes, x - 1, floor, z, Material.BARREL);
+            put(changes, x + 1, floor, z + 1, Material.MOSSY_COBBLESTONE);
+            put(changes, x + 1, floor, z, Material.OAK_SLAB);
+        } else {
+            switch (style) {
+                case 0 -> ruin(changes, x, floor, z, random);
+                case 1 -> canopy(changes, x, floor, z);
+                case 2 -> lookout(changes, x, floor, z);
+                case 3 -> courtyard(changes, x, floor, z);
+                default -> camp(changes, x, floor, z);
+            }
+        }
+        // Every chest has a clear two-block approach, including the lookout's ground-floor stash.
+        put(changes, x, floor + 1, z, Material.AIR);
+        put(changes, x, floor + 2, z, Material.AIR);
+        put(changes, x, floor, z - 1, Material.AIR);
+        put(changes, x, floor + 1, z - 1, Material.AIR);
+        BlockData chest = Material.CHEST.createBlockData();
+        ((Directional) chest).setFacing(BlockFace.NORTH);
+        changes.add(new Change(x, floor, z, chest));
+        return new Location(world, x, floor, z);
     }
 
-    private enum Kind {
-        TOWER, RUIN, BUNKER, PILLARS, PLATFORM
+    private static int naturalGround(World world, int x, int z) {
+        int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        while (y > world.getMinHeight() + 1) {
+            Material material = world.getBlockAt(x, y, z).getType();
+            if (material.isSolid() && !Tag.LOGS.isTagged(material) && !Tag.LEAVES.isTagged(material)) break;
+            y--;
+        }
+        return y;
     }
 
-    static void place(World world, Location centre, Random random) {
-        Kind kind = Kind.values()[random.nextInt(Kind.values().length)];
-        Palette palette = Palette.pick(random);
-        switch (kind) {
-            case TOWER -> tower(world, centre, random, palette);
-            case RUIN -> ruin(world, centre, random, palette);
-            case BUNKER -> bunker(world, centre, palette);
-            case PILLARS -> pillars(world, centre, random, palette);
-            case PLATFORM -> platform(world, centre, random, palette);
+    /** A real stepped approach, with three clear columns, joins every level floor to the surrounding slope. */
+    private static void approach(World world, Queue<Change> changes, int x, int y, int z, int coreZ) {
+        int previous = y;
+        // Keep every surveyed column within the site's preloaded neighbouring chunks.
+        for (int step = 1; step <= Math.min(12, 15 - coreZ); step++) {
+            int atZ = z - coreZ - step;
+            int sampled = naturalGround(world, x, atZ);
+            int target = Math.clamp(sampled, previous - 1, previous + 1);
+            for (int dx = -1; dx <= 1; dx++) {
+                int ground = naturalGround(world, x + dx, atZ);
+                for (int cy = Math.min(ground, target) - 1; cy < target; cy++) put(changes, x + dx, cy, atZ, Material.DIRT);
+                put(changes, x + dx, target, atZ, Material.DIRT_PATH);
+                for (int cy = target + 1; cy <= Math.max(ground + 2, target + 3); cy++) put(changes, x + dx, cy, atZ, Material.AIR);
+                if (target != previous) {
+                    BlockData stair = Material.MOSSY_STONE_BRICK_STAIRS.createBlockData();
+                    ((Directional) stair).setFacing(target > previous ? BlockFace.NORTH : BlockFace.SOUTH);
+                    int stairZ = target > previous ? atZ + 1 : atZ;
+                    changes.add(new Change(x + dx, Math.min(previous, target) + 1, stairZ, stair));
+                }
+            }
+            if (step > 3 && target == sampled && previous == target) break;
+            previous = target;
         }
     }
 
-    /** 材质组合。同一栋建筑用同一套材质，看起来才像人造的。 */
-    private record Palette(Material wall, Material accent, Material floor) {
-
-        static Palette pick(Random random) {
-            return switch (random.nextInt(5)) {
-                case 0 -> new Palette(Material.STONE_BRICKS, Material.CHISELED_STONE_BRICKS, Material.SMOOTH_STONE);
-                case 1 -> new Palette(Material.DEEPSLATE_BRICKS, Material.POLISHED_DEEPSLATE, Material.DEEPSLATE_TILES);
-                case 2 -> new Palette(Material.SANDSTONE, Material.CHISELED_SANDSTONE, Material.SMOOTH_SANDSTONE);
-                case 3 -> new Palette(Material.BRICKS, Material.MUD_BRICKS, Material.POLISHED_ANDESITE);
-                default -> new Palette(Material.MOSSY_STONE_BRICKS, Material.CRACKED_STONE_BRICKS, Material.COBBLESTONE);
-            };
-        }
-    }
-
-    /** 塔。高层放高星箱子，爬上去就暴露在所有人视线里。 */
-    private static void tower(World world, Location centre, Random random, Palette palette) {
-        int size = 3 + random.nextInt(2);
-        int height = 12 + random.nextInt(9);
-        int baseX = centre.getBlockX();
-        int baseY = centre.getBlockY();
-        int baseZ = centre.getBlockZ();
-
-        for (int y = 0; y < height; y++) {
-            for (int x = -size; x <= size; x++) {
-                for (int z = -size; z <= size; z++) {
-                    boolean edge = Math.abs(x) == size || Math.abs(z) == size;
-                    if (!edge) {
-                        if (y % 5 == 0) {
-                            set(world, baseX + x, baseY + y, baseZ + z, palette.floor());
-                        }
-                        continue;
-                    }
-                    // 每 5 层开一圈窗，让塔里也能打出去
-                    boolean window = y % 5 == 2 && (x == 0 || z == 0);
-                    set(world, baseX + x, baseY + y, baseZ + z,
-                            window ? Material.AIR : palette.wall());
+    private static void ruin(Queue<Change> changes, int x, int y, int z, Random random) {
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                // Surviving floor remains near the intact rear wall, with grass reclaiming its collapsed entrance.
+                if (dz > 0 || dx < -1) put(changes, x + dx, y - 1, z + dz,
+                    dz >= 2 && dx < 0 ? Material.MOSSY_STONE_BRICKS : Material.STONE_BRICKS);
+                if (dx == -3 || dz == 3 || (dx == 3 && dz >= 1)) {
+                    int height = dx == -3 ? 4 - Math.max(0, -dz) : dz == 3 ? 3 : 1;
+                    if (Math.abs(dx + dz) == 2) height--;
+                    for (int dy = 0; dy < height; dy++) put(changes, x + dx, y + dy, z + dz,
+                        dy == 0 ? Material.MOSSY_STONE_BRICKS : dy == height - 1 ? Material.CRACKED_STONE_BRICKS : Material.STONE_BRICKS);
                 }
             }
         }
-        for (int x = -size; x <= size; x++) {
-            for (int z = -size; z <= size; z++) {
-                set(world, baseX + x, baseY + height, baseZ + z,
-                        Math.abs(x) == size || Math.abs(z) == size ? palette.accent() : palette.floor());
+        put(changes, x - 2, y, z + 1, Material.CHISELED_STONE_BRICKS);
+        put(changes, x - 2, y + 1, z + 1, Material.LANTERN);
+        put(changes, x + 3, y, z - 1, Material.MOSSY_STONE_BRICK_SLAB);
+        put(changes, x + 2, y, z - 2, Material.CRACKED_STONE_BRICKS);
+    }
+
+    private static void canopy(Queue<Change> changes, int x, int y, int z) {
+        for (int dx : new int[]{-3, 3}) for (int dz : new int[]{-3, 3}) {
+            for (int dy = 0; dy < 4; dy++) put(changes, x + dx, y + dy, z + dz, Material.STRIPPED_SPRUCE_LOG);
+        }
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) {
+            int roofY = y + 7 - Math.abs(dx);
+            if (dx == 0) put(changes, x, roofY, z + dz, Material.DARK_OAK_SLAB);
+            else {
+                BlockData roof = (Math.abs(dz) == 4 ? Material.SPRUCE_STAIRS : Material.DARK_OAK_STAIRS).createBlockData();
+                ((Directional) roof).setFacing(dx < 0 ? BlockFace.EAST : BlockFace.WEST);
+                changes.add(new Change(x + dx, roofY, z + dz, roof));
+            }
+        }
+        for (int dx = -3; dx <= 3; dx++) for (int dz : new int[]{-3, 3})
+            put(changes, x + dx, y + 3, z + dz, Material.STRIPPED_SPRUCE_LOG);
+        for (int dx = -2; dx <= 2; dx++) put(changes, x + dx, y, z + 2, Material.SPRUCE_SLAB);
+        put(changes, x - 2, y, z, Material.BARREL);
+        put(changes, x + 2, y, z, Material.CRAFTING_TABLE);
+    }
+
+    private static void lookout(Queue<Change> changes, int x, int y, int z) {
+        for (int dx : new int[]{-2, 2}) for (int dz : new int[]{-2, 2})
+            for (int dy = 0; dy < 4; dy++) put(changes, x + dx, y + dy, z + dz, Material.STRIPPED_OAK_LOG);
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
+            put(changes, x + dx, y + 3, z + dz, Material.OAK_PLANKS);
+            if (Math.abs(dx) == 3 || Math.abs(dz) == 3) put(changes, x + dx, y + 4, z + dz, Material.OAK_FENCE);
+        }
+        // Four ordinary steps form a true walking route; no jump, wind charge or block required.
+        for (int step = 0; step < 4; step++) {
+            int atZ = z - 6 + step;
+            BlockData stair = Material.OAK_STAIRS.createBlockData();
+            ((Directional) stair).setFacing(BlockFace.SOUTH);
+            changes.add(new Change(x, y + step, atZ, stair));
+            for (int below = y - 1; below < y + step; below++) put(changes, x, below, atZ, Material.OAK_PLANKS);
+            put(changes, x, y + step + 1, atZ, Material.AIR);
+            put(changes, x, y + step + 2, atZ, Material.AIR);
+        }
+        put(changes, x, y + 4, z - 3, Material.AIR);
+        put(changes, x + 1, y + 4, z + 1, Material.LANTERN);
+    }
+
+    private static void courtyard(Queue<Change> changes, int x, int y, int z) {
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) {
+            if (Math.abs(dx) == 4 || Math.abs(dz) == 4) {
+                if ((Math.abs(dx) <= 1 && Math.abs(dz) == 4) || (Math.abs(dz) <= 1 && Math.abs(dx) == 4)) continue;
+                put(changes, x + dx, y, z + dz, Material.COBBLESTONE_WALL);
+            }
+            if ((Math.abs(dx) == 3 && Math.abs(dz) == 3)) {
+                put(changes, x + dx, y, z + dz, Material.STONE_BRICKS);
+                put(changes, x + dx, y + 1, z + dz, Material.STONE_BRICK_WALL);
+                put(changes, x + dx, y + 2, z + dz, Material.LANTERN);
             }
         }
     }
 
-    /** 废墟。断墙加碎石，适合近战绕柱。 */
-    private static void ruin(World world, Location centre, Random random, Palette palette) {
-        int radius = 5 + random.nextInt(4);
-        int baseX = centre.getBlockX();
-        int baseY = centre.getBlockY();
-        int baseZ = centre.getBlockZ();
-
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                set(world, baseX + x, baseY - 1, baseZ + z, palette.floor());
-                boolean edge = Math.abs(x) == radius || Math.abs(z) == radius;
-                if (!edge) {
-                    continue;
-                }
-                int height = 1 + random.nextInt(4);
-                for (int y = 0; y < height; y++) {
-                    set(world, baseX + x, baseY + y, baseZ + z,
-                            random.nextInt(6) == 0 ? palette.accent() : palette.wall());
-                }
-            }
+    private static void camp(Queue<Change> changes, int x, int y, int z) {
+        for (int dx = -3; dx <= 3; dx++) {
+            int roof = 3 - Math.abs(dx);
+            for (int dz = 1; dz <= 4; dz++) put(changes, x + dx, y + roof, z + dz, Material.GREEN_TERRACOTTA);
         }
-        for (int i = 0; i < radius; i++) {
-            int x = baseX + random.nextInt(radius * 2 + 1) - radius;
-            int z = baseZ + random.nextInt(radius * 2 + 1) - radius;
-            set(world, x, baseY, z, Material.COBBLESTONE);
+        for (int dx = -2; dx <= 2; dx++) {
+            Slab bench = (Slab) Material.SPRUCE_SLAB.createBlockData();
+            changes.add(new Change(x + dx, y, z - 3, bench));
         }
+        put(changes, x + 3, y, z - 1, Material.HAY_BLOCK);
+        put(changes, x + 3, y, z, Material.BARREL);
+        put(changes, x - 3, y, z, Material.HAY_BLOCK);
     }
 
-    /** 地堡。下沉一层，进去要跳下来，出来要爬楼梯，是个高风险高回报的点。 */
-    private static void bunker(World world, Location centre, Palette palette) {
-        int size = 5;
-        int baseX = centre.getBlockX();
-        int baseY = centre.getBlockY();
-        int baseZ = centre.getBlockZ();
-
-        for (int x = -size; x <= size; x++) {
-            for (int z = -size; z <= size; z++) {
-                for (int y = -4; y <= 0; y++) {
-                    boolean shell = Math.abs(x) == size || Math.abs(z) == size || y == -4;
-                    set(world, baseX + x, baseY + y, baseZ + z,
-                            shell ? palette.wall() : Material.AIR);
-                }
-            }
-        }
-        for (int x = -size + 1; x <= size - 1; x++) {
-            for (int z = -size + 1; z <= size - 1; z++) {
-                set(world, baseX + x, baseY - 3, baseZ + z, palette.floor());
-            }
-        }
-        // 顶盖留一个天井当入口
-        for (int x = -size; x <= size; x++) {
-            for (int z = -size; z <= size; z++) {
-                boolean hole = Math.abs(x) <= 1 && Math.abs(z) <= 1;
-                set(world, baseX + x, baseY + 1, baseZ + z, hole ? Material.AIR : palette.accent());
-            }
-        }
+    private static void put(Queue<Change> changes, int x, int y, int z, Material material) {
+        changes.add(new Change(x, y, z, BLOCK_DATA.computeIfAbsent(material, Material::createBlockData)));
     }
 
-    /** 石柱群。给重锤玩法准备的落差场地。 */
-    private static void pillars(World world, Location centre, Random random, Palette palette) {
-        int count = 5 + random.nextInt(5);
-        int baseX = centre.getBlockX();
-        int baseY = centre.getBlockY();
-        int baseZ = centre.getBlockZ();
-
-        for (int i = 0; i < count; i++) {
-            int ox = random.nextInt(19) - 9;
-            int oz = random.nextInt(19) - 9;
-            int height = 4 + random.nextInt(11);
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x <= 1; x++) {
-                    for (int z = 0; z <= 1; z++) {
-                        set(world, baseX + ox + x, baseY + y, baseZ + oz + z,
-                                y == height - 1 ? palette.accent() : palette.wall());
-                    }
-                }
-            }
-        }
-    }
-
-    /** 悬空平台。用柱子撑起来，是最好的高星箱子摆放点。 */
-    private static void platform(World world, Location centre, Random random, Palette palette) {
-        int size = 4 + random.nextInt(3);
-        int lift = 7 + random.nextInt(6);
-        int baseX = centre.getBlockX();
-        int baseY = centre.getBlockY();
-        int baseZ = centre.getBlockZ();
-
-        for (int x = -size; x <= size; x++) {
-            for (int z = -size; z <= size; z++) {
-                set(world, baseX + x, baseY + lift, baseZ + z,
-                        Math.abs(x) == size || Math.abs(z) == size ? palette.accent() : palette.floor());
-            }
-        }
-        for (int corner = 0; corner < 4; corner++) {
-            int cx = (corner % 2 == 0 ? -1 : 1) * (size - 1);
-            int cz = (corner < 2 ? -1 : 1) * (size - 1);
-            for (int y = 0; y < lift; y++) {
-                set(world, baseX + cx, baseY + y, baseZ + cz, palette.wall());
-            }
-        }
-    }
-
-    private static void set(World world, int x, int y, int z, Material material) {
-        if (y < world.getMinHeight() || y >= world.getMaxHeight()) {
-            return;
-        }
-        Block block = world.getBlockAt(x, y, z);
-        if (material == Material.AIR && block.getType().isAir()) {
-            return;
-        }
-        block.setType(material, false);
-    }
+    record Change(int x, int y, int z, BlockData data) { }
 }

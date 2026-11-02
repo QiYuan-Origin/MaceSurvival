@@ -6,11 +6,19 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.qiyuan.macesurvival.MaceSurvival;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 货币接入。优先级：配置指定的自定义货币 > Vault > 插件内置金币。
  * 内置金币只是没有经济插件时的兜底，落盘在 balances.yml。
  */
-public final class EconomyManager {
+public final class EconomyManager implements Listener {
 
     /** 由配置驱动的自定义货币，靠命令加减，靠 PlaceholderAPI 变量读余额。 */
     private record Custom(String id, String display, String takeCommand,
@@ -28,31 +36,64 @@ public final class EconomyManager {
 
     private final MaceSurvival plugin;
     private final Map<UUID, Double> internal = new ConcurrentHashMap<>();
+    private record Pending(UUID player, String currency) { }
+    private record Snapshot(long sequence, Map<UUID, Double> balances, Map<Pending, Double> rewards) { }
+    private final Map<Pending, Double> pendingRewards = new ConcurrentHashMap<>();
 
     private Economy vault;
     private Custom custom;
     private String currencyName;
     private File file;
+    private long requestedWrite;
+    private long completedWrite;
+    private boolean loaded;
+    private boolean registered;
 
     public EconomyManager(MaceSurvival plugin) {
         this.plugin = plugin;
     }
 
     public void load() {
-        internal.clear();
         file = new File(plugin.getDataFolder(), "balances.yml");
-        YamlConfiguration stored = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration stored = new YamlConfiguration();
+        try {
+            if (file.exists()) stored.load(file);
+        } catch (IOException | org.bukkit.configuration.InvalidConfigurationException exception) {
+            throw new IllegalStateException("Cannot read balances.yml; the existing wallet was left untouched", exception);
+        }
+        internal.clear();
+        pendingRewards.clear();
         ConfigurationSection section = stored.getConfigurationSection("balances");
         if (section != null) {
             for (String rawId : section.getKeys(false)) {
                 try {
-                    internal.put(UUID.fromString(rawId), section.getDouble(rawId));
+                    double amount = section.getDouble(rawId);
+                    if (Double.isFinite(amount) && amount >= 0) internal.put(UUID.fromString(rawId), amount);
                 } catch (IllegalArgumentException ignored) {
                     // 坏 UUID 直接跳过，不要因为一条脏数据整份余额读不出来
                 }
             }
         }
+        for (Map<?, ?> reward : stored.getMapList("pending-rewards")) {
+            try {
+                UUID uuid = UUID.fromString(String.valueOf(reward.get("player")));
+                String currency = String.valueOf(reward.get("currency"));
+                double amount = Double.parseDouble(String.valueOf(reward.get("amount")));
+                if (!currency.isBlank() && Double.isFinite(amount) && amount > 0) pendingRewards.merge(new Pending(uuid, currency), amount, Double::sum);
+            } catch (IllegalArgumentException ignored) {
+                plugin.getLogger().warning("Ignored an invalid pending reward in balances.yml.");
+            }
+        }
+        loaded = true;
+        selectProvider();
+        if (!registered) {
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+            registered = true;
+        }
+        Bukkit.getOnlinePlayers().forEach(this::deliverPending);
+    }
 
+    private void selectProvider() {
         ConfigurationSection economy = plugin.configs().main().getConfigurationSection("economy");
         currencyName = economy == null ? "Coins" : economy.getString("currency-name", "Coins");
         custom = null;
@@ -62,7 +103,7 @@ public final class EconomyManager {
         if (picked != null && picked.getBoolean("enabled", false)) {
             String display = picked.getString("name", "Coins");
             custom = new Custom(
-                    display,
+                    picked.getString("id", display),
                     display,
                     picked.getString("take-command", ""),
                     picked.getString("give-command", ""),
@@ -72,7 +113,7 @@ public final class EconomyManager {
             return;
         }
 
-        if (economy == null || economy.getBoolean("use-vault", true)) {
+        if (Bukkit.getPluginManager().isPluginEnabled("Vault") && (economy == null || economy.getBoolean("use-vault", true))) {
             RegisteredServiceProvider<Economy> provider =
                     Bukkit.getServicesManager().getRegistration(Economy.class);
             if (provider != null) {
@@ -86,6 +127,11 @@ public final class EconomyManager {
 
     public String currencyName() {
         return currencyName;
+    }
+
+    public void reload() {
+        saveSync();
+        load();
     }
 
     public double balance(Player player) {
@@ -122,11 +168,12 @@ public final class EconomyManager {
     }
 
     public void deposit(Player player, double amount) {
-        if (amount <= 0) {
+        if (!Double.isFinite(amount) || amount <= 0) {
             return;
         }
         if (custom != null) {
-            dispatch(player, custom.giveCommand(), amount);
+            if (!Bukkit.isPrimaryThread()) { Bukkit.getScheduler().runTask(plugin, () -> deposit(player, amount)); return; }
+            if (!dispatch(player, custom.giveCommand(), amount)) queueReward(player.getUniqueId(), custom.id(), amount);
             return;
         }
         if (vault != null) {
@@ -139,10 +186,10 @@ public final class EconomyManager {
 
     /**
      * 发奖。结算时玩家可能已经掉线，所以按 UUID 处理：
-     * 在线就走正常入账，离线只能记内置钱包或让 Vault 处理离线账户。
+     * 在线走正常入账；离线自定义货币记待发奖励，下次上线仍按原货币补发。
      */
     public void reward(UUID uuid, double amount) {
-        if (amount <= 0) {
+        if (!Double.isFinite(amount) || amount <= 0) {
             return;
         }
         Player online = Bukkit.getPlayer(uuid);
@@ -151,7 +198,7 @@ public final class EconomyManager {
             return;
         }
         if (custom != null) {
-            // 自定义货币只有命令接口，离线玩家没法安全替换 {player}，交给下次上线补发意义不大，这里直接跳过
+            queueReward(uuid, custom.id(), amount);
             return;
         }
         if (vault != null) {
@@ -160,6 +207,23 @@ public final class EconomyManager {
         }
         internal.merge(uuid, amount, Double::sum);
         saveAsync();
+    }
+
+    private void queueReward(UUID uuid, String currency, double amount) {
+        pendingRewards.merge(new Pending(uuid, currency), amount, Double::sum);
+        saveAsync();
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) { deliverPending(event.getPlayer()); }
+
+    private void deliverPending(Player player) {
+        if (custom == null) return;
+        Pending key = new Pending(player.getUniqueId(), custom.id());
+        Double amount = pendingRewards.get(key);
+        if (amount == null || !dispatch(player, custom.giveCommand(), amount)) return;
+        pendingRewards.computeIfPresent(key, (ignored, balance) -> balance > amount ? balance - amount : null);
+        saveSync();
     }
 
     /** 内置钱包余额，离线也能读，菜单和排行榜用。 */
@@ -196,13 +260,16 @@ public final class EconomyManager {
             command = command.substring(1);
         }
         String finalCommand = command;
-        // 命令必须在主线程派发，扣款有可能从异步的菜单刷新里被调到
-        if (Bukkit.isPrimaryThread()) {
-            return Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand);
+        try {
+            if (Bukkit.isPrimaryThread()) return Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand);
+            return Bukkit.getScheduler().callSyncMethod(plugin, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand)).get();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (RuntimeException | java.util.concurrent.ExecutionException exception) {
+            plugin.getLogger().warning("Custom currency command failed: " + exception.getMessage());
+            return false;
         }
-        Bukkit.getScheduler().runTask(plugin,
-                () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand));
-        return true;
     }
 
     private String applyPlaceholders(Player player, String raw) {
@@ -230,22 +297,34 @@ public final class EconomyManager {
     }
 
     public void saveAsync() {
-        Map<UUID, Double> snapshot = Map.copyOf(internal);
+        if (!loaded) return;
+        Snapshot snapshot = snapshot();
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> write(snapshot));
     }
 
     public void saveSync() {
-        write(Map.copyOf(internal));
+        if (loaded) write(snapshot());
     }
 
-    private synchronized void write(Map<UUID, Double> snapshot) {
-        if (custom != null || vault != null) {
-            return;
-        }
+    private synchronized Snapshot snapshot() { return new Snapshot(++requestedWrite, Map.copyOf(internal), Map.copyOf(pendingRewards)); }
+
+    private synchronized void write(Snapshot snapshot) {
+        if (snapshot.sequence() <= completedWrite) return;
         YamlConfiguration out = new YamlConfiguration();
-        snapshot.forEach((uuid, value) -> out.set("balances." + uuid, value));
+        snapshot.balances().forEach((uuid, value) -> out.set("balances." + uuid, value));
+        List<Map<String, Object>> rewards = new ArrayList<>();
+        snapshot.rewards().forEach((key, value) -> rewards.add(Map.of("player", key.player().toString(), "currency", key.currency(), "amount", value)));
+        out.set("pending-rewards", rewards);
         try {
-            out.save(file);
+            Files.createDirectories(file.toPath().getParent());
+            var temporary = file.toPath().resolveSibling(file.getName() + ".tmp");
+            out.save(temporary.toFile());
+            try {
+                Files.move(temporary, file.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temporary, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            completedWrite = snapshot.sequence();
         } catch (IOException ex) {
             plugin.getLogger().warning("Could not save balances.yml: " + ex.getMessage());
         }

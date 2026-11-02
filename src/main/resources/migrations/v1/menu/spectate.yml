@@ -1,0 +1,84 @@
+# ═══════════════════════════════════════════════════════════
+#              MaceSurvival  ·  Spectate
+#   Heads of everyone still alive. Clicking one teleports the
+#   spectator to that diver. Pages appear only when needed.
+# ═══════════════════════════════════════════════════════════
+
+config_version: 1
+
+title: '<#E0A45C><shadow:#404040:1>Spectate</shadow></#E0A45C>'
+rows: 6
+
+open-sound:
+  - 'BLOCK_VAULT_OPEN_SHUTTER,0.7,1.0,0'
+  - 'BLOCK_AMETHYST_BLOCK_CHIME,0.5,1.2,4'
+
+frame:
+  corner-material: ORANGE_STAINED_GLASS_PANE
+  corner-name: '<#E0A45C>Nothing to see here'
+  corner-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+  filler-material: BLACK_STAINED_GLASS_PANE
+  filler-name: '<#5F6368>Nothing to see here'
+  filler-lore:
+    - '<#5F6368>Clicking does nothing, promise.'
+
+items:
+  header:
+    slot: 4
+    material: ENDER_EYE
+    name: '<#E0A45C>❰ Spectate ❱'
+    lore:
+      - '<#9AA0A6>Alive: <#F0C674>{alive}'
+      - '<#9AA0A6>Squads left: <#F0C674>{squads}'
+      - '<#9AA0A6>Time left: <#F0C674>{time}'
+
+  # Divers are laid out across the middle rows, centred.
+  target-slots: [ 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34 ]
+  target:
+    material: PLAYER_HEAD
+    name: '{colour}❰ {player} ❱'
+    lore:
+      - '<#9AA0A6>Squad: <#F0C674>{squad}'
+      - '<#9AA0A6>Kills: <#F0C674>{kills}'
+      - '<#9AA0A6>Health: <#E05C5C>{health}'
+      - ''
+      - '<#5F6368>Left-click to watch them.'
+  empty:
+    slot: 22
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: '<#9AA0A6>❰ Nobody Is Diving ❱'
+    lore:
+      - '<#5F6368>Wait for the next round to start.'
+
+  # Page buttons are hidden when there is no page to step to.
+  previous-page:
+    slot: 48
+    material: SPECTRAL_ARROW
+    name: '<#7FC9D9>❰ Previous Page ❱'
+    lore:
+      - '<#9AA0A6>Page <#F0C674>{page}</#F0C674><#5F6368>/</#5F6368><#9AA0A6>{pages}'
+  next-page:
+    slot: 50
+    material: SPECTRAL_ARROW
+    name: '<#7FC9D9>❰ Next Page ❱'
+    lore:
+      - '<#9AA0A6>Page <#F0C674>{page}</#F0C674><#5F6368>/</#5F6368><#9AA0A6>{pages}'
+
+  free-camera:
+    slot: 45
+    material: FEATHER
+    name: '<#7FD962>❰ Free Camera ❱'
+    lore:
+      - '<#9AA0A6>Fly the arena on your own.'
+      - ''
+      - '<#5F6368>Left-click to break away.'
+    action: 'spectate:free'
+
+  back:
+    slot: 53
+    material: ARROW
+    name: '<#E0A45C>❰ Back ❱'
+    lore:
+      - '<#9AA0A6>Return to the main menu.'
+    action: 'menu:main'

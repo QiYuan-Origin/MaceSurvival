@@ -1,126 +1,70 @@
 package org.qiyuan.macesurvival.listener;
 
-import org.bukkit.Material;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.entity.Projectile;
+import org.bukkit.event.*;
+import org.bukkit.event.entity.*;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.qiyuan.macesurvival.MaceSurvival;
-import org.qiyuan.macesurvival.game.GamePlayer;
-import org.qiyuan.macesurvival.loot.CombatManager.DeathCause;
+import java.util.Map;
 
-/** 战斗与死亡。宽容期拦伤害，重锤命中扣次数，死亡走 GameManager 的淘汰流程。 */
+/** Damage, elimination and loot use the same participant identity as the game state machine. */
 public final class CombatListener implements Listener {
-
     private final MaceSurvival plugin;
-
-    public CombatListener(MaceSurvival plugin) {
-        this.plugin = plugin;
+    public CombatListener(MaceSurvival plugin) { this.plugin = plugin; }
+    private Player attacker(EntityDamageByEntityEvent e) {
+        if (e.getDamageSource().getCausingEntity() instanceof Player p) return p;
+        if (e.getDamager() instanceof Player p) return p;
+        if (e.getDamager() instanceof Projectile p && p.getShooter() instanceof Player shooter) return shooter;
+        return null;
     }
-
-    /** 宽容期与非对局状态一律不吃伤害，落地前被人白打是最劝退的体验。 */
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-    public void onDamage(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof Player victim)) {
-            return;
-        }
-        GamePlayer gp = plugin.game().of(victim);
-        if (gp == null) {
-            return;
-        }
-        if (!gp.role().isPlaying()) {
-            event.setCancelled(true);
-            return;
-        }
-        if (plugin.game().graceActive() && isPvp(event)) {
-            event.setCancelled(true);
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void damage(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player victim)) return;
+        if (plugin.game().protectedPlayer(victim)) { e.setCancelled(true); return; }
+        if (e instanceof EntityDamageByEntityEvent by) {
+            Player attacker = attacker(by);
+            if (attacker == null) return;
+            if (plugin.game().protectedPlayer(attacker)) { e.setCancelled(true); return; }
+            var a = plugin.game().getPlayer(attacker); var v = plugin.game().getPlayer(victim);
+            if (!attacker.equals(victim) && plugin.configs().main().getBoolean("game.friendly-fire-disabled", true) && a.squad() != null && a.squad() == v.squad()) { e.setCancelled(true); return; }
+            e.setDamage(e.getDamage() * plugin.enchants().damageMultiplier(attacker));
         }
     }
-
-    private boolean isPvp(EntityDamageEvent event) {
-        return event instanceof EntityDamageByEntityEvent byEntity
-                && byEntity.getDamager() instanceof Player;
-    }
-
-    /** 玩家互殴。记下凶手，重锤命中额外扣一次耐久。 */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerHit(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player victim)
-                || !(event.getDamager() instanceof Player attacker)) {
-            return;
-        }
-        GamePlayer victimGp = plugin.game().of(victim);
-        GamePlayer attackerGp = plugin.game().of(attacker);
-        if (victimGp == null || attackerGp == null || !attackerGp.role().isPlaying()) {
-            return;
-        }
-        victimGp.lastDamager(attacker.getName());
-
-        if (attacker.getInventory().getItemInMainHand().getType() != Material.MACE) {
-            return;
-        }
-        // 从高处砸下来才算猛击，落地一击的音效和普通挥砍要分开
-        if (attacker.getFallDistance() > 1.5f) {
-            plugin.combat().playSmash(attacker);
-        }
-        plugin.combat().onMaceHit(attacker);
+    public void recordDamage(EntityDamageByEntityEvent e) {
+        Player attacker = attacker(e);
+        if (attacker != null && e.getEntity() instanceof Player victim && !attacker.equals(victim) && plugin.game().participant(attacker) && plugin.game().participant(victim)) plugin.stats().addDamage(attacker.getUniqueId(), Math.min(victim.getHealth(), e.getFinalDamage()));
     }
-
-    /** 死亡。掉落交给 CombatManager，淘汰判定交给 GameManager。 */
     @EventHandler(priority = EventPriority.HIGH)
-    public void onDeath(PlayerDeathEvent event) {
-        Player victim = event.getEntity();
-        GamePlayer gp = plugin.game().of(victim);
-        if (gp == null || !gp.role().isPlaying()) {
-            return;
-        }
-        // 原版死亡消息一律吃掉，改用自己那套统一句式
-        event.deathMessage(null);
-        event.setKeepInventory(false);
-        event.getDrops().clear();
-
-        plugin.combat().dropGear(victim);
-        plugin.combat().lightning(victim);
-
-        GamePlayer killer = resolveKiller(victim, gp);
-        plugin.combat().announceDeath(gp, killer, causeOf(victim, event));
-        plugin.game().onDeath(gp, killer);
+    public void death(PlayerDeathEvent e) {
+        Player victim = e.getPlayer();
+        if (!plugin.game().active() || !plugin.game().participant(victim)) { e.deathMessage(null); e.getDrops().clear(); e.setDroppedExp(0); return; }
+        Player killer = victim.getKiller();
+        var gp = plugin.game().getPlayer(victim); gp.addDeath(); plugin.stats().addDeath(victim.getUniqueId());
+        e.setKeepInventory(false); e.setKeepLevel(false); e.setDroppedExp(0);
+        if (killer != null && !killer.equals(victim) && plugin.game().participant(killer) && (gp.squad() == null || gp.squad() != plugin.game().getPlayer(killer).squad())) {
+            var winning = plugin.game().getPlayer(killer); winning.addKill();
+            plugin.stats().addKill(killer.getUniqueId(), winning.roundKills());
+            plugin.loot().onKill(killer); plugin.enchants().onKill(killer);
+            plugin.economy().reward(killer.getUniqueId(), plugin.configs().main().getDouble("economy.rewards.kill", 10));
+            e.deathMessage(plugin.messages().prefixed("death.killed", Map.of("victim", victim.getName(), "killer", killer.getName())));
+        } else e.deathMessage(plugin.messages().prefixed("death.other", Map.of("victim", victim.getName())));
+        // Vanilla creates one real item entity for every equipment drop; add scatter, never duplicate it.
+        plugin.game().eliminate(victim); plugin.stats().saveAsync();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> { if (victim.isOnline() && victim.isDead()) victim.spigot().respawn(); }, 2L);
     }
-
-    private GamePlayer resolveKiller(Player victim, GamePlayer gp) {
-        Player direct = victim.getKiller();
-        if (direct != null) {
-            return plugin.game().of(direct);
-        }
-        String last = gp.lastDamager();
-        if (last == null) {
-            return null;
-        }
-        Player fallback = plugin.getServer().getPlayerExact(last);
-        return fallback == null ? null : plugin.game().of(fallback);
-    }
-
-    /** 死因归类。武器炸膛优先，因为它本质上还是玩家自己的操作。 */
-    private DeathCause causeOf(Player victim, PlayerDeathEvent event) {
-        if (plugin.combat().isShattering(victim)) {
-            return DeathCause.EXPLOSION;
-        }
-        EntityDamageEvent last = victim.getLastDamageCause();
-        if (last == null) {
-            return DeathCause.OTHER;
-        }
-        return switch (last.getCause()) {
-            case ENTITY_ATTACK, ENTITY_SWEEP_ATTACK -> victim.getKiller() != null
-                    && victim.getKiller().getInventory().getItemInMainHand().getType() == Material.MACE
-                    ? DeathCause.MACE
-                    : DeathCause.OTHER;
-            case FALL, FLY_INTO_WALL -> DeathCause.FALL;
-            case VOID -> DeathCause.VOID;
-            case BLOCK_EXPLOSION, ENTITY_EXPLOSION -> DeathCause.EXPLOSION;
-            default -> DeathCause.OTHER;
-        };
+    @EventHandler
+    public void respawn(PlayerRespawnEvent e) {
+        boolean spectating = plugin.game().getPlayer(e.getPlayer()).isSpectator() && !plugin.game().lobbyOpen();
+        var center = plugin.arenas().getArenaCenter();
+        e.setRespawnLocation(spectating && center != null ? center.clone().add(0, 20, 0) : plugin.game().getLobbySpawn());
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!e.getPlayer().isOnline()) return;
+            if (spectating && !plugin.game().lobbyOpen()) plugin.game().applySpectator(e.getPlayer());
+            else { e.getPlayer().setGameMode(GameMode.ADVENTURE); plugin.loadouts().giveLobbyItems(e.getPlayer()); }
+        });
     }
 }

@@ -1,223 +1,140 @@
-# ═══════════════════════════════════════════════════════════
-#              MaceSurvival  ·  Messages
-#   Every chat line lives here. The prefix from config.yml is added
-#   automatically, except for help entries which are sent raw.
-#   You may mix &a  §a  &x&F&F&0&0&0&0  <#FF0000>  <gradient>  <shadow>.
-#   {name} style variables are filled by the plugin.
-# ═══════════════════════════════════════════════════════════
-
-config_version: 1
-
-general:
-  no-permission: '<#E05C5C>You do not have permission to do that.'
-  player-only: '<#E05C5C>Only a player can run this.'
-  player-not-found: '<#E05C5C>No player named <#F0C674>{target}</#F0C674> is online.'
-  unknown-command: '<#E05C5C>Unknown argument. Try <#F0C674>/mace help</#F0C674>.'
-  invalid-number: '<#E05C5C>That is not a valid number: <#F0C674>{input}</#F0C674>'
-  reloaded: '<#7FD962>Configuration reloaded in <#F0C674>{ms}ms</#F0C674>.'
-  reloaded-restored: '<#7FD962>Reloaded and restored <#F0C674>{count}</#F0C674> missing file(s): <#9AA0A6>{files}'
-  reload-failed: '<#E05C5C>Reload failed: <#9AA0A6>{error}'
-
-lobby:
-  join: '<#7FD962>{player}</#7FD962> <#9AA0A6>joined the lobby <#5F6368>(<#F0C674>{current}</#F0C674>/<#9AA0A6>{max}</#9AA0A6>)'
-  quit: '<#E0A45C>{player}</#E0A45C> <#9AA0A6>left the lobby <#5F6368>(<#F0C674>{current}</#F0C674>/<#9AA0A6>{max}</#9AA0A6>)'
-  waiting: '<#9AA0A6>Waiting for <#F0C674>{needed}</#F0C674> more player(s) to start.'
-  countdown: '<#C9A227>Match starts in <#F0C674>{seconds}</#F0C674> second(s).'
-  countdown-cancelled: '<#E05C5C>Not enough players. Countdown cancelled.'
-  full: '<#E05C5C>This round is full. You have been placed as a spectator.'
-  already-running: '<#E0A45C>A round is already in progress. Enjoy the show.'
-  force-start: '<#C9A227>{player}</#C9A227> <#9AA0A6>force-started the round.'
-  force-stop: '<#E05C5C>{player}</#E05C5C> <#9AA0A6>force-stopped the round.'
-
-arena:
-  generating: '<#9AA0A6>Forging the arena, hold on...'
-  generated: '<#7FD962>Arena ready. <#9AA0A6>{structures} structures, {chests} chests.'
-  generate-failed: '<#E05C5C>Arena generation failed: <#9AA0A6>{error}'
-  regenerating: '<#C9A227>Rebuilding the arena...'
-
-drop:
-  title: '<#C9A227><shadow:#404040:1>DIVE</shadow></#C9A227>'
-  subtitle: '<#9AA0A6>Look around to steer'
-  parachute: '<#7FD962>Parachute open'
-  parachute-open: '<#7FD962>Parachute deployed. <#9AA0A6>Steer for a soft landing.'
-  landed: '<#7FD962>Feet on the ground. <#9AA0A6>Grab a mace and start hunting.'
-  blackout-title: '<#5F6368><shadow:#101010:1>STAND BY</shadow></#5F6368>'
-  blackout-subtitle: '<#9AA0A6>The arena is being forged'
-  actionbar-diving: '<#7FC9D9>Diving <#5F6368>| <#9AA0A6>Altitude <#F0C674>{altitude}m</#F0C674> <#5F6368>| <#9AA0A6>Look around to steer'
-  actionbar-parachute: '<#7FD962>Parachute <#5F6368>| <#9AA0A6>Altitude <#F0C674>{altitude}m</#F0C674> <#5F6368>| <#9AA0A6>Pick your landing spot'
-
-chest:
-  hologram: '{stars} <#5F6368>| {tier}'
-  tier:
-    one-star: '<#9AA0A6>Scrap Cache'
-    two-star: '<#5FBF6A>Supply Cache'
-    three-star: '<#4C8CE8>Armoury Cache'
-    four-star: '<#C9A227>Siege Cache'
-
+config_version: 2
+# 保留此键兼容旧配置；聊天框消息统一不附加前缀。
+prefix: ''
+join:
+  welcome: '<#B9C6D4>欢迎来到重锤大逃杀。右键指南针查看玩法与准备选项。</#B9C6D4>'
+  spectator-mode: '<#B9C6D4>本局已经开始，你将以旁观者身份加入。</#B9C6D4>'
+  full: '<#B9C6D4>本局等待席已满，你将旁观并等待下一局。</#B9C6D4>'
+  broadcast: '<#E8EEF4>{player}</#E8EEF4> <#8FA1B3>加入了竞技场。</#8FA1B3>'
+quit:
+  broadcast: '<#E8EEF4>{player}</#E8EEF4> <#8FA1B3>离开了竞技场。</#8FA1B3>'
+countdown:
+  remaining: '<#B9C6D4>距离出发还有 <#E9C876>{seconds}</#E9C876> 秒。</#B9C6D4>'
+  cancelled: '<#D9B86F>人数或对抗队伍不足，已暂停倒计时。</#D9B86F>'
+  title: '<#FFFFFF><shadow:#404040:1>{seconds}</shadow></#FFFFFF>'
+  subtitle: '<#B9C6D4>准备降落战场</#B9C6D4>'
 game:
-  start-title: '<#C9A227><shadow:#404040:1>MACE SURVIVAL</shadow></#C9A227>'
-  start-subtitle: '<#9AA0A6>Last squad standing takes it'
-  grace-over: '<#E05C5C>Grace period over. <#9AA0A6>PvP is live.'
-  time-remaining: '<#9AA0A6>Time remaining: <#F0C674>{time}'
-  players-remaining: '<#9AA0A6>Squads alive: <#F0C674>{squads}</#F0C674> <#5F6368>| <#9AA0A6>Players: <#F0C674>{players}'
-  spectator-mode: '<#9AA0A6>You are spectating. Use <#F0C674>/mace menu</#F0C674> to look around.'
-  not-in-game: '<#E05C5C>You are not in an active round.'
-
-kill:
-  # Death messages stay in the vanilla "A did X to B" shape on purpose.
-  by-mace: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>was flattened by</#9AA0A6> <#E05C5C>{killer}</#E05C5C><#9AA0A6>''s mace'
-  by-smash: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>was driven into the ground by</#9AA0A6> <#E05C5C>{killer}</#E05C5C>'
-  by-explosion: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>was shattered when their weapon gave out'
-  by-fall: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>misjudged the drop'
-  by-void: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>fell out of the arena'
-  by-other: '<#5F6368>[<#C9A227>☠</#C9A227>]</#5F6368> <#F0C674>{victim}</#F0C674> <#9AA0A6>is out'
-  killer-feedback: '<#7FD962>You took down <#F0C674>{victim}</#F0C674>. <#9AA0A6>Kills: <#F0C674>{kills}'
-  victim-feedback: '<#E05C5C>You were eliminated by <#F0C674>{killer}</#F0C674>.'
-
-loadout:
-  mace-name: '<#C9A227>❰ Siege Mace ❱'
-  mace-lore:
-    - '<#9AA0A6>Heavy strikes scale with the height you fall from.'
-    - '<#9AA0A6>Charge: <#7FD962>{remaining}</#7FD962><#5F6368>/</#5F6368><#9AA0A6>{max}'
-    - '<#5F6368>Runs dry and the head detonates.'
-  food-name: '<#E0A45C>❰ Field Ration ❱'
-  food-lore:
-    - '<#9AA0A6>Keeps the bar full between fights.'
-  block-name: '<#8FB86B>❰ Scaffold Stack ❱'
-  block-lore:
-    - '<#9AA0A6>Stack it up, then bring the hammer down.'
-  wind-charge-name: '<#7FC9D9>❰ Wind Charge ❱'
-  wind-charge-lore:
-    - '<#9AA0A6>Launch yourself skyward for a heavier hit.'
-  lobby-info-name: '<#C9A227>❰ Round Brief ❱'
-  lobby-info-lore:
-    - '<#9AA0A6>Drop in, loot the caches, hold the last ground.'
-    - '<#9AA0A6>Players: <#F0C674>{players}</#F0C674><#5F6368>/</#5F6368><#9AA0A6>{max}'
-    - '<#5F6368>Squads are drawn when the countdown ends.'
-  lobby-stats-name: '<#7FD962>❰ Your Record ❱'
-  lobby-stats-lore:
-    - '<#9AA0A6>Wins: <#F0C674>{wins}'
-    - '<#9AA0A6>Kills: <#F0C674>{kills}'
-    - '<#9AA0A6>Best streak: <#F0C674>{streak}'
-  lobby-menu-name: '<#B48EAD>❰ Navigator ❱'
-  lobby-menu-lore:
-    - '<#9AA0A6>Leaderboards, squad tools and settings.'
-
+  preparing: '<#B9C6D4>正在准备本局战场，请稍候。</#B9C6D4>'
+  prepare-failed: '<#F29691>战场准备失败，已安全返回等待大厅。</#F29691>'
+  drop-failed: '<#D9B86F>降落未能完成，本局已转为旁观；你的场次不会计入死亡。</#D9B86F>'
+  started: '<#B4D8C0>所有玩家已落地。保护时间剩余 {seconds} 秒。</#B4D8C0>'
+  pvp-enabled: '<#E9C876>保护期结束，战斗开始！</#E9C876>'
+  border-shrinking: '<#E9C876>边界开始收缩，请向安全区域转移。</#E9C876>'
+  aborted: '<#B9C6D4>本局已由管理员中止，不结算胜场；等待管理员重新开启。</#B9C6D4>'
+  no-winners: '<#B9C6D4>本局结束，没有幸存者。</#B9C6D4>'
+  time-limit: '<#D9B86F>本局达到时间上限，按平局结束。</#D9B86F>'
+  winner-solo: '<#E9C876>{player}</#E9C876> <#B9C6D4>成为最后的幸存者！</#B9C6D4>'
+  winner-squad: '<#E9C876>{squad}</#E9C876> <#B9C6D4>小队获得本局胜利！</#B9C6D4>'
+  finished-title: '<#FFFFFF><shadow:#404040:1>本局结束</shadow></#FFFFFF>'
+  finished-subtitle: '<#B9C6D4>获胜者 · <#E9C876>{winner}</#E9C876></#B9C6D4>'
+drop:
+  starting: '<#B9C6D4>转动视角调整水平飞行方向，准备降落。</#B9C6D4>'
+  parachute-opened: '<#B4D8C0>缓降已展开。</#B4D8C0>'
+  landed: '<#E9C876>已降落，搜索物资并生存到最后。</#E9C876>'
 loot:
-  chest-opened: '<#9AA0A6>Opened a <#F0C674>{stars}</#F0C674> <#9AA0A6>cache.'
-  chest-empty: '<#9AA0A6>This cache has already been picked clean.'
-  durability-merged: '<#7FD962>Durability merged. <#9AA0A6>Your {item} is now at <#F0C674>{durability}</#F0C674>.'
-  durability-low: '<#E0A45C>Your {item} is about to give out <#5F6368>(<#E05C5C>{durability}</#E05C5C>)'
-  durability-broke: '<#E05C5C>Your {item} exploded in your hands.'
-  book-applied: '<#7FD962>Applied <#F0C674>{enchant} {level}</#F0C674> <#9AA0A6>to your {item}.'
-  book-no-weapon: '<#E0A45C>Hold a weapon to bind that book.'
-  book-incompatible: '<#E05C5C>That book does not fit this weapon.'
-  book-max-level: '<#E0A45C>{enchant} is already at its ceiling on this weapon.'
-
-team:
-  created: '<#7FD962>Squad created. <#9AA0A6>Invite with <#F0C674>/mace team invite <player>'
-  disbanded: '<#E0A45C>Squad disbanded.'
-  invited: '<#7FD962>Invited <#F0C674>{target}</#F0C674> to your squad.'
-  invite-received: '<#F0C674>{player}</#F0C674> <#9AA0A6>invited you. <#7FD962>/mace team accept {player}'
-  joined: '<#7FD962>{player}</#7FD962> <#9AA0A6>joined the squad <#5F6368>(<#F0C674>{current}</#F0C674>/<#9AA0A6>{max}</#9AA0A6>)'
-  left: '<#E0A45C>{player}</#E0A45C> <#9AA0A6>left the squad.'
-  full: '<#E05C5C>That squad is full.'
-  not-in-team: '<#E05C5C>You are not in a squad.'
-  already-in-team: '<#E0A45C>You are already in a squad.'
-  no-invite: '<#E05C5C>You have no pending invite from that player.'
-  mate-down: '<#E05C5C>{player}</#E05C5C> <#9AA0A6>is down.'
-  wiped: '<#E05C5C>Your squad has been wiped.'
-  label-solo: '<#9AA0A6>Diving solo'
-  label-formed: '<#7FD962>Formed'
-  role-you: '<#7FD962>You'
-  role-mate: '<#7FC9D9>Squadmate'
-
-# ─────────────── Leaderboards ───────────────
-# Board names shown on the cycling button in the records menu.
-leaderboard:
-  board:
-    wins: 'Wins'
-    kills: 'Kills'
-    kd: 'K/D'
-    streak: 'Best streak'
-    games: 'Rounds played'
-  unranked: '<#5F6368>Unranked'
-
-# ─────────────── Squads (broadcast) ───────────────
+  merged: '<#B4D8C0>已合并耐久，当前耐久：{durability}。</#B4D8C0>'
+  exploded: '<#F29691>物品耐久耗尽并爆裂！</#F29691>'
+  enchant-applied: '<#B4D8C0>附魔已应用到目标装备。</#B4D8C0>'
+  item-durability: '<#8FA1B3>耐久 <#E8EEF4>{durability}</#E8EEF4> / {max}</#8FA1B3>'
+enchant:
+  auto-applied: '<#B4D8C0>已自动激活增益。</#B4D8C0>'
+  passive-applied: '<#B4D8C0>{book}</#B4D8C0> <#B9C6D4>已激活 · 等级 {level}</#B9C6D4>'
+  kill-boost: '<#E9C876>击杀增益已触发，剩余 {charges} 层。</#E9C876>'
+  incompatible: '<#F29691>这本书无法继续强化该物品。</#F29691>'
+death:
+  killed: '<#F29691>✕</#F29691> <#E8EEF4>{victim}</#E8EEF4> <#8FA1B3>被</#8FA1B3> <#E9C876>{killer}</#E9C876> <#8FA1B3>淘汰。</#8FA1B3>'
+  other: '<#F29691>✕</#F29691> <#E8EEF4>{victim}</#E8EEF4> <#8FA1B3>已被淘汰。</#8FA1B3>'
+victory:
+  title: '<#E9C876><shadow:#404040:1>胜 利</shadow></#E9C876>'
+  subtitle: '<#B4D8C0>你赢得了本局重锤大逃杀</#B4D8C0>'
+  defeat-title: '<#F29691><shadow:#404040:1>已 淘 汰</shadow></#F29691>'
+  defeat-subtitle: '<#B9C6D4>继续观战，等待下一局</#B9C6D4>'
+spectator:
+  joined-mid-game: '<#B9C6D4>本局进行中，使用观战菜单查看幸存者。</#B9C6D4>'
 squad:
-  wiped: '<#E05C5C>Squad {squad}</#E05C5C> <#9AA0A6>has been wiped out.'
-
-# ─────────────── Round state labels ───────────────
-# Used by menus and the scoreboard. One label per GameState value.
-state:
-  booting: '<#9AA0A6>Preparing'
-  waiting: '<#7FC9D9>Waiting'
-  countdown: '<#F0C674>Starting'
-  dropping: '<#E0A45C>Dropping'
-  running: '<#7FD962>In progress'
-  ending: '<#B48EAD>Wrapping up'
-
-end:
-  win-title: '<#C9A227><shadow:#404040:1>VICTORY</shadow></#C9A227>'
-  win-subtitle: '<#9AA0A6>Last squad standing'
-  lose-title: '<#E05C5C><shadow:#404040:1>DEFEATED</shadow></#E05C5C>'
-  lose-subtitle: '<#9AA0A6>Better luck next drop'
-  draw-title: '<#9AA0A6><shadow:#404040:1>NO WINNER</shadow></#9AA0A6>'
-  draw-subtitle: '<#5F6368>Time ran out'
-  broadcast-winner: '<#C9A227>{winner}</#C9A227> <#9AA0A6>wins the round with <#F0C674>{kills}</#F0C674> <#9AA0A6>kill(s).'
-  broadcast-timeout: '<#9AA0A6>Time is up. No squad could close it out.'
-  reward: '<#7FD962>+{amount}</#7FD962> <#9AA0A6>{currency}'
-  restarting: '<#9AA0A6>Restarting in <#F0C674>{seconds}</#F0C674>s to reset the arena.'
-
-stats:
-  header: '<#C9A227><shadow:#404040:1>Stats · {player}</shadow></#C9A227>'
-  wins: '<#9AA0A6>Wins: <#F0C674>{wins}'
-  kills: '<#9AA0A6>Kills: <#F0C674>{kills}'
-  deaths: '<#9AA0A6>Deaths: <#F0C674>{deaths}'
-  kdr: '<#9AA0A6>K/D: <#F0C674>{kdr}'
-  played: '<#9AA0A6>Rounds played: <#F0C674>{played}'
-
-spectate:
-  now-watching: '<#7FC9D9>Now watching <#F0C674>{player}</#F0C674>.'
-  free-camera: '<#7FD962>Free camera. <#9AA0A6>Fly wherever you like.'
-  target-offline: '<#E05C5C>That diver just went offline.'
-  nobody-alive: '<#9AA0A6>Nobody is diving right now.'
-  not-spectator: '<#E05C5C>Only spectators can do that.'
-
+  create-prompt: '<#B9C6D4>请在聊天框输入队名；输入 cancel 或蹲下取消。</#B9C6D4>'
+  join-prompt: '<#B9C6D4>在队伍列表选择要加入的小队。</#B9C6D4>'
+  left: '<#B9C6D4>你已离开小队。</#B9C6D4>'
+  created: '<#B4D8C0>已创建小队：{name}。</#B4D8C0>'
+  joined: '<#B4D8C0>已加入小队：{name}。</#B4D8C0>'
+  full: '<#F29691>这支小队已满。</#F29691>'
+  not-found: '<#F29691>找不到这支小队。</#F29691>'
+  already-in-team: '<#D9B86F>你已有小队，请先离开当前小队。</#D9B86F>'
+  not-in-team: '<#D9B86F>你当前没有小队。</#D9B86F>'
+  invalid-name: '<#D9B86F>队名须为 1～20 个中文、字母、数字、空格或下划线。</#D9B86F>'
+  name-exists: '<#D9B86F>这个队名已被使用。</#D9B86F>'
+  leader-only: '<#D9B86F>只有小队队长可以邀请玩家。</#D9B86F>'
+  invite-invalid: '<#D9B86F>无法邀请该玩家，请确认对方尚未加入小队。</#D9B86F>'
+  invited: '<#B4D8C0>{player} 邀请你加入 {name}，输入 /mace team accept 接受。</#B4D8C0>'
+  invite-sent: '<#B4D8C0>已向 {player} 发送邀请。</#B4D8C0>'
+  no-invite: '<#D9B86F>你目前没有有效的小队邀请。</#D9B86F>'
+  empty: '<#8FA1B3>还没有小队。</#8FA1B3>'
+  list-entry: '<#E9C876>#{id}</#E9C876> <#E8EEF4>{name}</#E8EEF4> <#8FA1B3>· {size} 人</#8FA1B3>'
 input:
-  prompt-title: '<#C9A227>Type it in chat'
-  prompt-subtitle: '<#9AA0A6>Sneak to confirm · type cancel to abort'
-  cancelled: '<#E0A45C>Input cancelled.'
-  timeout: '<#E0A45C>Input timed out.'
-  accepted: '<#7FD962>Got it.'
-  waiting: '<#C9A227>Waiting for your message <#5F6368>(<#F0C674>{seconds}s</#F0C674>)'
-
-# ─────────────── Help ───────────────
-# Help lines are sent WITHOUT the prefix. Admin blocks are only shown
-# to players holding macesurvival.admin.
-help:
-  header:
-    - ''
-    - '  <#C9A227><shadow:#404040:1>✦ MACE SURVIVAL</shadow></#C9A227> <#5F6368>v{version}'
-    - '  <#9AA0A6>Drop in, loot up, be the last squad standing.'
-    - ''
-  player:
-    - '  <#F0C674>/mace</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>open the main menu'
-    - '  <#F0C674>/mace help</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>show this page'
-    - '  <#F0C674>/mace menu</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>open the navigation menu'
-    - '  <#F0C674>/mace stats [player]</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>view round stats'
-    - '  <#F0C674>/mace team</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>squad menu and invites'
-    - '  <#F0C674>/mace spectate</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>watch the current round'
-    - ''
-  admin:
-    - '  <#E0A45C><shadow:#404040:1>Admin</shadow></#E0A45C>'
-    - '  <#F0C674>/mace start</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>force-start the round'
-    - '  <#F0C674>/mace stop</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>force-stop the round'
-    - '  <#F0C674>/mace reload</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>reload configs and restore missing files'
-    - '  <#F0C674>/mace map regen</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>rebuild the arena'
-    - '  <#F0C674>/mace map info</#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>arena size, structures, chests'
-    - '  <#F0C674>/mace loot test <stars></#F0C674> <#5F6368>·</#5F6368> <#9AA0A6>roll a loot table'
-    - ''
-  footer:
-    - '  <#5F6368>Aliases: /macesurvival · /mace · /ms'
-    - ''
+  prompt-title: '<#FFFFFF><shadow:#404040:1>请输入文字</shadow></#FFFFFF>'
+  prompt-subtitle: '<#B9C6D4>聊天输入队名 · 蹲下或 cancel 取消</#B9C6D4>'
+  cancelled: '<#8FA1B3>已取消输入。</#8FA1B3>'
+  timeout: '<#D9B86F>输入已超时。</#D9B86F>'
+menu:
+  unavailable: '<#F29691>暂时无法打开这个界面，请重新尝试。</#F29691>'
+  lobby-only: '<#D9B86F>请在等待大厅内进行这项操作。</#D9B86F>'
+command:
+  usage: '<#B9C6D4>输入 /mace help 查看可用命令。</#B9C6D4>'
+  unknown: '<#D9B86F>未知命令，请输入 /mace help。</#D9B86F>'
+  no-permission: '<#F29691>你没有执行该操作的权限。</#F29691>'
+  player-only: '<#D9B86F>此命令只能由玩家执行。</#D9B86F>'
+  player-not-found: '<#D9B86F>找不到该玩家。</#D9B86F>'
+  invalid-number: '<#D9B86F>请输入有效数字。</#D9B86F>'
+  help:
+    header: '<#FFFFFF><shadow:#404040:1>重锤大逃杀</shadow></#FFFFFF> <#8FA1B3>帮助 {page}/{pages}</#8FA1B3>'
+    footer: '<#8FA1B3>/mace help [页码] · {page}/{pages}</#8FA1B3>'
+    menu: '<#E9C876>/mace menu</#E9C876> <#B9C6D4>打开主菜单</#B9C6D4>'
+    stats: '<#E9C876>/mace stats [玩家]</#E9C876> <#B9C6D4>查看累计战绩</#B9C6D4>'
+    team: '<#E9C876>/mace team [create|join|invite|accept|leave|list]</#E9C876> <#B9C6D4>管理小队</#B9C6D4>'
+    layout: '<#E9C876>/mace layout</#E9C876> <#B9C6D4>调整开局物品位置</#B9C6D4>'
+    spectate: '<#E9C876>/mace spectate</#E9C876> <#B9C6D4>选择观战目标</#B9C6D4>'
+    leaderboard: '<#E9C876>/mace leaderboard [wins|kills|kd|streak|games]</#E9C876> <#B9C6D4>查看排行榜</#B9C6D4>'
+    start: '<#D99587>/mace start</#D99587> <#B9C6D4>开始等待倒计时</#B9C6D4>'
+    stop: '<#D99587>/mace stop</#D99587> <#B9C6D4>安全中止本局</#B9C6D4>'
+    reload: '<#D99587>/mace reload</#D99587> <#B9C6D4>重载配置并补回缺失文件</#B9C6D4>'
+    map: '<#D99587>/mace map [info|regen]</#D99587> <#B9C6D4>查看或准备竞技场</#B9C6D4>'
+    loot: '<#D99587>/mace loot test [1-3]</#D99587> <#B9C6D4>检查星级箱子的实际物资</#B9C6D4>'
+  start:
+    success: '<#B4D8C0>开局倒计时已开始。</#B4D8C0>'
+    failed: '<#D9B86F>无法开始：需要至少两个对抗方及足够玩家，且处于等待状态。</#D9B86F>'
+  stop:
+    success: '<#B4D8C0>本局已中止，玩家已返回大厅。</#B4D8C0>'
+    failed: '<#D9B86F>当前没有可以中止的对局。</#D9B86F>'
+  reload:
+    success: '<#B4D8C0>配置重载完成，缺失文件已补齐。</#B4D8C0>'
+    failed: '<#F29691>配置未能重载，请检查控制台给出的文件与错误位置。</#F29691>'
+  stats:
+    summary: '<#E9C876>{player}</#E9C876> <#B9C6D4>· {games} 场 · {wins} 胜 · {kills} 击杀 · {deaths} 死亡</#B9C6D4>'
+  team:
+    usage: '<#B9C6D4>/mace team create [队名] | join [编号] | invite [玩家] | accept | leave | list</#B9C6D4>'
+  leaderboard:
+    usage: '<#B9C6D4>/mace leaderboard [wins|kills|kd|streak|games]</#B9C6D4>'
+  map:
+    info: '<#B9C6D4>竞技场：{world} · 箱子：{chests} · 状态：{state}</#B9C6D4>'
+    ready-on-start: '<#B9C6D4>下一局将生成全新的随机竞技场。</#B9C6D4>'
+    preparing: '<#B9C6D4>正在准备竞技场，请稍候。</#B9C6D4>'
+    ready: '<#B4D8C0>竞技场已准备完成，下一局将使用这张地图。</#B4D8C0>'
+    busy: '<#D9B86F>请在无倒计时、无对局且地图空闲时重新生成。</#D9B86F>'
+  loot:
+    usage: '<#B9C6D4>/mace loot test [1-3]</#B9C6D4>'
+    title: '<#FFFFFF><shadow:#404040:1>战利品检查</shadow></#FFFFFF>'
+leaderboard:
+  header: '<#E9C876>{board} 排行榜</#E9C876>'
+  empty: '<#8FA1B3>暂无战绩记录。</#8FA1B3>'
+  entry: '<#E9C876>#{rank}</#E9C876> <#E8EEF4>{player}</#E8EEF4> <#8FA1B3>· {value}</#8FA1B3>'
+  board:
+    wins: 胜场
+    kills: 击杀
+    kd: 击杀死亡比
+    streak: 单局最高击杀
+    games: 场次
+chest:
+  one-star: '<#D1D8DF><shadow:#404040:1>★</shadow></#D1D8DF>'
+  two-star: '<#91C7B1><shadow:#404040:1>★★</shadow></#91C7B1>'
+  three-star: '<#E9C876><shadow:#404040:1>★★★</shadow></#E9C876>'
+  four-star: '<#E9C876><shadow:#404040:1>★★★</shadow></#E9C876>'

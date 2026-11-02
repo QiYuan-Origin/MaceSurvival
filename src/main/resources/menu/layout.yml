@@ -1,101 +1,97 @@
-# ═══════════════════════════════════════════════════════════
-#              MaceSurvival  ·  Hotbar Layout
-#   Players pick which hotbar slot each starting item lands in.
-#   Left-click moves an item right, right-click moves it left,
-#   and both wrap around the nine hotbar slots.
-# ═══════════════════════════════════════════════════════════
-
-config_version: 1
-
-title: '<#7FC9D9><shadow:#404040:1>Hotbar Layout</shadow></#7FC9D9>'
-rows: 5
-
-open-sound:
-  - 'BLOCK_SMITHING_TABLE_USE,0.7,1.0,0'
-  - 'BLOCK_GRINDSTONE_USE,0.4,1.2,5'
-
-frame:
-  corner-material: CYAN_STAINED_GLASS_PANE
-  corner-name: '<#7FC9D9>Nothing to see here'
-  corner-lore:
-    - '<#5F6368>Clicking does nothing, promise.'
-  filler-material: BLACK_STAINED_GLASS_PANE
-  filler-name: '<#5F6368>Nothing to see here'
-  filler-lore:
-    - '<#5F6368>Clicking does nothing, promise.'
-
+config_version: 2
+title: <!i><white><shadow:#404040:1>重锤大逃杀 · 快捷栏布局</shadow></white>
+size: 45
+open_sound:
+  enabled: true
+  sound: block.chest.open
+  volume: 0.4
+  pitch: 1.0
+click_sound:
+  enabled: true
+  sound: ui.button.click
+  volume: 0.35
+  pitch: 1.0
 items:
-  header:
+  border:
+    material: GRAY_STAINED_GLASS_PANE
+    slots:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+    display_name: ' '
+  info:
+    material: BOOK
     slot: 4
-    material: CHEST
-    name: '<#7FC9D9>❰ Hotbar Layout ❱'
+    display_name: <!i><white><shadow:#404040:1>让装备顺手</shadow></white>
     lore:
-      - '<#9AA0A6>Four items, nine slots, your call.'
-      - '<#5F6368>Two items may share a slot, the mace wins.'
-
-  # Every entry shows the nine slots with the chosen one marked.
-  slot-list-line: '<#5F6368>- </#5F6368>{marker}'
-  slot-list-selected: '<#7FD962>[ Slot {slot} ] ✔'
-  slot-list-idle: '<#9AA0A6>[ Slot {slot} ]'
-
-  mace:
-    slot: 19
-    material: MACE
-    name: '<#C9A227>❰ Siege Mace ❱'
-    lore:
-      - '<#9AA0A6>The whole point of the round.'
-      - '{slots}'
-      - ''
-      - '<#5F6368>Left-click next slot, right-click previous.'
-    action: 'cycle:mace-slot'
-
-  food:
-    slot: 21
-    material: COOKED_BEEF
-    name: '<#E0A45C>❰ Field Ration ❱'
-    lore:
-      - '<#9AA0A6>Keeps the bar full between fights.'
-      - '{slots}'
-      - ''
-      - '<#5F6368>Left-click next slot, right-click previous.'
-    action: 'cycle:food-slot'
-
-  blocks:
-    slot: 23
-    material: OAK_PLANKS
-    name: '<#8FB86B>❰ Scaffold Stack ❱'
-    lore:
-      - '<#9AA0A6>Stack it up, then bring the hammer down.'
-      - '{slots}'
-      - ''
-      - '<#5F6368>Left-click next slot, right-click previous.'
-    action: 'cycle:block-slot'
-
-  wind-charge:
-    slot: 25
-    material: WIND_CHARGE
-    name: '<#7FC9D9>❰ Wind Charge ❱'
-    lore:
-      - '<#9AA0A6>Launch yourself skyward for a heavier hit.'
-      - '{slots}'
-      - ''
-      - '<#5F6368>Left-click next slot, right-click previous.'
-    action: 'cycle:wind-charge-slot'
-
-  reset:
-    slot: 31
-    material: GRINDSTONE
-    name: '<#E05C5C>❰ Reset Layout ❱'
-    lore:
-      - '<#9AA0A6>Put the four items back where they started.'
-      - ''
-      - '<#5F6368>Left-click to reset.'
-    action: 'layout:reset'
-
+    - <!i><gray>下方一行对应快捷栏第 1 至 9 格。</gray>
+    - <!i><gray>左键拿起预览，点击另一格交换。</gray>
+    - <!i><gray>也可以把预览拖到空槽位。</gray>
+    - <!i><gray></gray>
+    - <!i><gray>只调整预览，不会移动真实背包物品。</gray>
+    - <!i><gray>完成交换或关闭菜单时自动保存。</gray>
   back:
-    slot: 40
     material: ARROW
-    name: '<#E0A45C>❰ Back ❱'
-    lore:
-      - '<#9AA0A6>Return to the main menu.'
-    action: 'menu:main'
+    slot: 40
+    display_name: <!i><white><shadow:#404040:1>保存并返回</shadow></white>
+    lore: []
+edit-slots:
+- 18
+- 19
+- 20
+- 21
+- 22
+- 23
+- 24
+- 25
+- 26
+preview-lore:
+- <!i><gray>开局数量：<white>{amount}</white></gray>
+- <!i><gray>左键拿起，点击其他格交换</gray>
+- <!i><gray>可拖动至空槽位</gray>
+- ''
+- <!i><gray>这是布局预览，不是真实装备</gray>
+saved:
+  material: LIME_DYE
+  slot: 31
+  display_name: <!i><white><shadow:#404040:1>布局已保存</shadow></white>
+  lore:
+  - <!i><gray>下一局开局装备将使用这个顺序。</gray>
+save-error:
+  material: RED_DYE
+  slot: 31
+  display_name: <!i><white><shadow:#404040:1>保存失败</shadow></white>
+  lore:
+  - <!i><gray>本次调整尚未写入磁盘。</gray>
+  - <!i><gray>请稍后重试；上次保存的布局仍然保留。</gray>
+feedback:
+  save-error: <gray>布局保存失败，已保留上次保存的布局，请联系管理员。</gray>
+loadout-items:
+  sword: <!i><white><shadow:#404040:1>战斗之刃</shadow></white>
+  axe: <!i><white><shadow:#404040:1>破甲战斧</shadow></white>
+  mace_1: <!i><white><shadow:#404040:1>重锤 · 主武器</shadow></white>
+  mace_2: <!i><white><shadow:#404040:1>重锤 · 备用</shadow></white>
+  food: <!i><white><shadow:#404040:1>生存口粮</shadow></white>
+  blocks: <!i><white><shadow:#404040:1>搭建方块</shadow></white>
+  wind_charge: <!i><white><shadow:#404040:1>风弹</shadow></white>
+ready:
+  material: GRAY_DYE
+  slot: 31
+  display_name: <!i><white><shadow:#404040:1>当前快捷栏</shadow></white>
+  lore:
+  - <!i><gray>完成交换或关闭菜单时自动保存。</gray>

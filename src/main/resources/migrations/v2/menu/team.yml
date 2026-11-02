@@ -1,0 +1,12 @@
+# Previous bundled v2 text, compared exactly to preserve owner-customized lore.
+config_version: 2
+items:
+  leave:
+    lore:
+    - <!i><gray>离队后以单人生存身份参与</gray>
+    - <!i><gray></gray>
+    - <!i><gray>点击离开当前队伍</gray>
+empty:
+  lore:
+  - <!i><gray>现在还没有队伍。</gray>
+  - <!i><gray>你可以创建队伍，或直接单人生存。</gray>

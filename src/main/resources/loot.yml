@@ -1,156 +1,224 @@
-# ═══════════════════════════════════════════════════════════
-#              MaceSurvival  ·  Loot tables
-#   One table per chest tier. Higher stars roll more slots and
-#   unlock the heavier gear.
-#
-#   Entry format:
-#     material: vanilla material name, or MACE for a weapon that
-#               carries the plugin durability counter
-#     weight:   relative chance inside the table
-#     min/max:  stack size rolled per pick
-#     durability: only read for MACE, sets the charge counter
-#     enchant:  ENCHANT_KEY:LEVEL, applied straight to the item
-#     book:     ENCHANT_KEY:LEVEL, produces an enchanted book
-# ═══════════════════════════════════════════════════════════
+# Weighted loot for one, two and three star caches. Every rolled item receives
+# an independently shuffled chest slot. A larger weight makes an entry likelier.
+# Original tables.* lists and legacy one-star/two-star/three-star maps are read.
+# Durability is a custom remaining-use counter, mirrored on the native item bar.
+config_version: 3
 
-config_version: 1
-
-# Slots rolled per chest. A slot may come up empty on the low tiers,
-# which is what makes a one-star cache feel like a gamble.
 rolls:
-  one-star: 3
-  two-star: 4
-  three-star: 5
-  four-star: 6
-
-# Chance for a rolled slot to come up empty, percent.
+  one-star: 5
+  two-star: 7
+  three-star: 9
 empty-chance:
-  one-star: 30
-  two-star: 15
-  three-star: 5
-  four-star: 0
+  one-star: 5
+  two-star: 0
+  three-star: 0
+
+mending:
+  # A confirmed player kill restores this fraction of every carried Mending item.
+  kill-repair-fraction: 0.25
+
+passive-books:
+  # Effects last until the end of the current round. Capped books stay as items.
+  max-level: 10
+  damage-boost:
+    per-level: 0.10
+    name: '<!i><#FF8D85>战斗本能'
+    lore:
+      - '<!i><#B6BEC9>被动附魔书 · 拾取后激活'
+      - '<!i><#FFFFFF>获得 {level} 层伤害增益。'
+      - '<!i><#B6BEC9>每层提升 {damage_percent}% 伤害，持续至本局结束。'
+      - '<!i><#B6BEC9>最多叠加 {max_level} 层。'
+  healing-boost:
+    per-level: 0.10
+    name: '<!i><#8CD9AC>复苏之风'
+    lore:
+      - '<!i><#B6BEC9>被动附魔书 · 拾取后激活'
+      - '<!i><#FFFFFF>获得 {level} 层治疗增益。'
+      - '<!i><#B6BEC9>每层提升 {healing_percent}% 治疗，持续至本局结束。'
+      - '<!i><#B6BEC9>最多叠加 {max_level} 层。'
+  kill-boost:
+    heal: 4
+    name: '<!i><#E5BC76>乘胜追击'
+    lore:
+      - '<!i><#B6BEC9>被动附魔书 · 拾取后激活'
+      - '<!i><#FFFFFF>储存 {level} 次击杀增益。'
+      - '<!i><#B6BEC9>击杀敌人时消耗一层储备，'
+      - '<!i><#B6BEC9>获得一层伤害与治疗增益，'
+      - '<!i><#B6BEC9>并恢复 {hearts} 颗心（受治疗增益影响）。'
 
 tables:
   one-star:
     - material: COOKED_BEEF
-      weight: 20
-      min: 2
-      max: 5
+      weight: 22
+      min: 3
+      max: 6
     - material: OAK_PLANKS
-      weight: 18
-      min: 8
+      weight: 16
+      min: 12
       max: 24
     - material: WIND_CHARGE
-      weight: 14
-      min: 1
-      max: 3
-    - material: LEATHER_HELMET
+      weight: 18
+      min: 2
+      max: 5
+    - material: ENDER_PEARL
       weight: 8
-    - material: LEATHER_CHESTPLATE
-      weight: 8
-    - material: GOLDEN_APPLE
-      weight: 6
       min: 1
-      max: 1
+      max: 2
     - material: MACE
-      weight: 5
-      durability: 18
+      weight: 12
+      durability: 24
+    - material: SHIELD
+      weight: 7
+      durability: 40
+    - material: SPLASH_POTION
+      weight: 12
+      potion: HEALING
+    - material: GOLDEN_APPLE
+      weight: 8
     - material: BOOK
-      weight: 4
-      book: KNOCKBACK:1
+      weight: 7
+      book: SHARPNESS:1
+    - material: BOOK
+      weight: 7
+      book: UNBREAKING:1
+    - material: BOOK
+      weight: 5
+      passive: damage-boost
+    - material: BOOK
+      weight: 5
+      passive: healing-boost
 
   two-star:
     - material: COOKED_BEEF
-      weight: 16
-      min: 4
-      max: 8
-    - material: OAK_PLANKS
-      weight: 14
-      min: 16
-      max: 32
-    - material: WIND_CHARGE
-      weight: 16
-      min: 3
-      max: 6
-    - material: CHAINMAIL_HELMET
-      weight: 9
-    - material: CHAINMAIL_CHESTPLATE
-      weight: 9
-    - material: CHAINMAIL_LEGGINGS
-      weight: 8
-    - material: GOLDEN_APPLE
-      weight: 8
-      min: 1
-      max: 2
-    - material: MACE
-      weight: 8
-      durability: 32
-    - material: BOOK
-      weight: 6
-      book: DENSITY:2
-    - material: BOOK
-      weight: 6
-      book: FIRE_ASPECT:1
-
-  three-star:
-    - material: GOLDEN_APPLE
-      weight: 14
-      min: 2
-      max: 3
-    - material: WIND_CHARGE
-      weight: 14
-      min: 6
-      max: 10
-    - material: IRON_HELMET
-      weight: 10
-    - material: IRON_CHESTPLATE
-      weight: 10
-    - material: IRON_LEGGINGS
-      weight: 9
-    - material: IRON_BOOTS
-      weight: 9
-    - material: MACE
       weight: 12
-      durability: 55
-      enchant: DENSITY:2
-    - material: BOOK
-      weight: 8
-      book: BREACH:2
-    - material: BOOK
-      weight: 8
-      book: WIND_BURST:1
-    - material: ENDER_PEARL
+      min: 5
+      max: 10
+    - material: OAK_PLANKS
       weight: 10
+      min: 24
+      max: 40
+    - material: WIND_CHARGE
+      weight: 18
+      min: 5
+      max: 9
+    - material: ENDER_PEARL
+      weight: 12
       min: 2
       max: 4
-
-  four-star:
-    - material: ENCHANTED_GOLDEN_APPLE
+    - material: ELYTRA
+      weight: 9
+      durability: 90
+    - material: IRON_SPEAR
+      weight: 10
+      durability: 50
+      enchant: LUNGE:1
+    - material: MACE
       weight: 12
+      durability: 42
+    - material: SHIELD
+      weight: 6
+      durability: 65
+    - material: TOTEM_OF_UNDYING
+      weight: 4
+    - material: GOLDEN_APPLE
+      weight: 10
       min: 1
       max: 2
-    - material: WIND_CHARGE
+    - material: SPLASH_POTION
       weight: 12
-      min: 10
-      max: 16
-    - material: DIAMOND_HELMET
-      weight: 10
-    - material: DIAMOND_CHESTPLATE
-      weight: 10
-    - material: DIAMOND_LEGGINGS
-      weight: 9
-    - material: DIAMOND_BOOTS
-      weight: 9
-    - material: MACE
-      weight: 16
-      durability: 80
-      enchant: DENSITY:4
+      potion: STRONG_HEALING
+    - material: POTION
+      weight: 7
+      potion: REGENERATION
+    - material: POTION
+      weight: 6
+      potion: SWIFTNESS
     - material: BOOK
       weight: 8
-      book: WIND_BURST:3
+      book: DENSITY:2
     - material: BOOK
-      weight: 8
-      book: BREACH:4
+      weight: 7
+      book: BREACH:1
     - material: BOOK
       weight: 6
-      book: DENSITY:5
+      book: SHARPNESS:2
+    - material: BOOK
+      weight: 6
+      book: UNBREAKING:2
+    - material: BOOK
+      weight: 4
+      book: MENDING:1
+    - material: BOOK
+      weight: 5
+      passive: kill-boost
+
+  three-star:
+    - material: WIND_CHARGE
+      weight: 18
+      min: 8
+      max: 14
+    - material: ENDER_PEARL
+      weight: 12
+      min: 3
+      max: 5
+    - material: ELYTRA
+      weight: 10
+      durability: 150
+    - material: DIAMOND_SPEAR
+      weight: 10
+      durability: 80
+      enchant: LUNGE:2
+    - material: MACE
+      weight: 14
+      durability: 65
+      enchant: DENSITY:2
+    - material: SHIELD
+      weight: 6
+      durability: 100
+    - material: TOTEM_OF_UNDYING
+      weight: 8
+    - material: GOLDEN_APPLE
+      weight: 12
+      min: 2
+      max: 4
+    - material: ENCHANTED_GOLDEN_APPLE
+      weight: 2
+    - material: SPLASH_POTION
+      weight: 14
+      potion: STRONG_HEALING
+    - material: POTION
+      weight: 8
+      potion: STRONG_REGENERATION
+    - material: POTION
+      weight: 6
+      potion: STRENGTH
+    - material: BOOK
+      weight: 9
+      book: WIND_BURST:2
+    - material: BOOK
+      weight: 9
+      book: DENSITY:4
+    - material: BOOK
+      weight: 8
+      book: BREACH:3
+    - material: BOOK
+      weight: 8
+      book: SHARPNESS:4
+    - material: BOOK
+      weight: 6
+      book: UNBREAKING:3
+    - material: BOOK
+      weight: 7
+      book: MENDING:1
+    - material: BOOK
+      weight: 6
+      book: LUNGE:3
+    - material: BOOK
+      weight: 6
+      passive: damage-boost
+    - material: BOOK
+      weight: 6
+      passive: healing-boost
+    - material: BOOK
+      weight: 8
+      passive: kill-boost

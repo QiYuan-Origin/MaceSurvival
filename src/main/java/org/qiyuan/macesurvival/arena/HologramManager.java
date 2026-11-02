@@ -1,74 +1,75 @@
 package org.qiyuan.macesurvival.arena;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.TextDisplay;
-import org.bukkit.util.Transformation;
 import org.qiyuan.macesurvival.MaceSurvival;
-import org.qiyuan.macesurvival.config.MessageManager;
 import org.qiyuan.macesurvival.text.Text;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
- * 箱子上方的星级悬浮文本。用 TextDisplay 而不是盔甲架，
- * 因为 TextDisplay 支持面向玩家和背景透明，实体数量也少一半。
+ * Manages floating text holograms above chests using TextDisplay entities.
  */
 public final class HologramManager {
 
     private final MaceSurvival plugin;
-    private final Map<Location, TextDisplay> displays = new LinkedHashMap<>();
+    private final Map<Location, TextDisplay> holograms = new HashMap<>();
 
     public HologramManager(MaceSurvival plugin) {
         this.plugin = plugin;
     }
 
-    /** 在箱子上方生成星级文本。必须在主线程调用。 */
-    public void spawn(Location chest, double height, ChestTier tier) {
-        if (chest.getWorld() == null) {
-            return;
-        }
-        Location at = chest.clone().add(0.5, height, 0.5);
-        TextDisplay display = chest.getWorld().spawn(at, TextDisplay.class, entity -> {
-            entity.text(label(tier));
-            entity.setBillboard(Display.Billboard.CENTER);
-            entity.setSeeThrough(false);
-            entity.setShadowed(false);
+    /**
+     * Create a hologram displaying chest tier
+     */
+    public void create(Location location, ChestTier tier) {
+        var world = location.getWorld();
+        if (world == null) return;
+
+        // Get hologram text from messages
+        var text = plugin.messages().get("chest." + tier.name().toLowerCase().replace('_', '-'));
+
+        // Spawn TextDisplay entity
+        TextDisplay display = world.spawn(location, TextDisplay.class, entity -> {
+            entity.text(text);
+            entity.setBillboard(Display.Billboard.VERTICAL);
             entity.setDefaultBackground(false);
-            entity.setBackgroundColor(org.bukkit.Color.fromARGB(0));
-            entity.setViewRange(0.45f);
-            entity.setPersistent(false);
-            entity.setInvulnerable(true);
-            Transformation transformation = entity.getTransformation();
-            transformation.getScale().set(0.9f, 0.9f, 0.9f);
-            entity.setTransformation(transformation);
+            entity.setBackgroundColor(org.bukkit.Color.fromARGB(70, 12, 15, 20));
+            entity.setShadowed(true);
+            entity.setAlignment(TextDisplay.TextAlignment.CENTER);
+            entity.setLineWidth(140);
+            entity.setPersistent(false);  // Don't save to disk
+            entity.setViewRange(0.65f);
+            entity.setSeeThrough(false);
         });
-        displays.put(chest, display);
+
+        holograms.put(location, display);
     }
 
-    private Component label(ChestTier tier) {
-        String raw = plugin.messages().raw("chest.hologram", MessageManager.vars(
-                "stars", tier.starBar(),
-                "tier", plugin.messages().raw("chest.tier." + tier.configKey())));
-        return Text.parse(raw);
-    }
-
-    /** 箱子被开走后清掉对应文本。 */
-    public void remove(Location chest) {
-        TextDisplay display = displays.remove(chest);
+    /**
+     * Remove hologram at specific location
+     */
+    public void remove(Location location) {
+        TextDisplay display = holograms.remove(location);
         if (display != null && display.isValid()) {
             display.remove();
         }
     }
 
-    public void clearAll() {
-        displays.values().forEach(display -> {
+    /**
+     * Remove all holograms
+     */
+    public void removeAll() {
+        for (TextDisplay display : holograms.values()) {
             if (display.isValid()) {
                 display.remove();
             }
-        });
-        displays.clear();
+        }
+        holograms.clear();
+    }
+
+    public int count() {
+        return holograms.size();
     }
 }

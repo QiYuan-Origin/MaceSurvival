@@ -19,3 +19,24 @@ out/
 
 .DS_Store
 Thumbs.db
+
+# Local AI settings, process state and generated validation environments.
+/AI-config.txt
+*.pid
+__pycache__/
+*.py[cod]
+node_modules/
+/mvn-output.txt
+/mvn-error.txt
+
+# Superseded local assistant reports; the maintained project guide is README.md.
+/BUILD_INSTRUCTIONS.txt
+/CLAUDE_FRONTEND_REPORT.txt
+/CLAUDE_FRONTEND_FINAL_REPORT.txt
+/DEVELOPER_GUIDE.md
+/IMPLEMENTATION_STATUS.md
+/PROJECT_SUMMARY.md
+/QUICKSTART.md
+/TESTING.md
+/verify-fixes.md
+/.github/PROJECT_INFO.yml

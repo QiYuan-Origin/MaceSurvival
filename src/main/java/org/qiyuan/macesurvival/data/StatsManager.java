@@ -1,11 +1,13 @@
 package org.qiyuan.macesurvival.data;
 
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Player;
 import org.qiyuan.macesurvival.MaceSurvival;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -15,7 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 玩家战绩。单端玩法每局结束会重启并重置地图，但战绩必须跨局保留，
+ * 玩家战绩。地图与对局状态会重置，但战绩必须跨局保留，
  * 所以落盘到 stats.yml，异步写，主线程只碰内存。
  */
 public final class StatsManager {
@@ -81,45 +83,68 @@ public final class StatsManager {
     private final MaceSurvival plugin;
     private final Map<UUID, Record> records = new ConcurrentHashMap<>();
     private File file;
-    private YamlConfiguration data;
+    private long requestedWrite;
+    private long completedWrite;
+    private long loadGeneration;
+    private boolean loaded;
+    private record Snapshot(long sequence, long generation, Map<String, Object> values) { }
 
     public StatsManager(MaceSurvival plugin) {
         this.plugin = plugin;
     }
 
-    public void load() {
-        file = new File(plugin.getDataFolder(), "stats.yml");
-        if (!file.exists()) {
-            try {
-                if (file.getParentFile().mkdirs() || file.getParentFile().exists()) {
-                    file.createNewFile();
+    public synchronized void load() {
+        // Block both future saves and already-queued snapshots before attempting to read.
+        // Failed loads retain the previous in-memory records and never authorize an empty overwrite.
+        loaded = false;
+        loadGeneration++;
+        File candidate = new File(plugin.getDataFolder(), "stats.yml");
+        YamlConfiguration data = new YamlConfiguration();
+        Map<UUID, Record> parsed = new LinkedHashMap<>();
+        try {
+            Files.createDirectories(candidate.toPath().getParent());
+            if (!Files.notExists(candidate.toPath())) data.load(candidate);
+            if (data.contains("players") && !data.isConfigurationSection("players"))
+                throw new InvalidConfigurationException("players must be a mapping");
+            var players = data.getConfigurationSection("players");
+            if (players != null) for (String rawId : players.getKeys(false)) {
+                UUID uuid;
+                try { uuid = UUID.fromString(rawId); }
+                catch (IllegalArgumentException exception) {
+                    throw new InvalidConfigurationException("Invalid player UUID: " + rawId, exception);
                 }
-            } catch (IOException ex) {
-                plugin.getLogger().warning("Could not create stats.yml: " + ex.getMessage());
+                String path = "players." + rawId + ".";
+                if (!data.isConfigurationSection("players." + rawId))
+                    throw new InvalidConfigurationException("Player record must be a mapping: " + rawId);
+                Record record = new Record(uuid, data.getString(path + "name", "Unknown"));
+                record.wins = count(data, path + "wins");
+                record.kills = count(data, path + "kills");
+                record.deaths = count(data, path + "deaths");
+                record.games = count(data, path + "games");
+                record.bestStreak = count(data, path + "best-streak");
+                Object damage = data.get(path + "damage");
+                if (damage != null && (!(damage instanceof Number number) || !Double.isFinite(number.doubleValue()) || number.doubleValue() < 0))
+                    throw new InvalidConfigurationException("Invalid nonnegative damage: " + path + "damage");
+                record.damage = damage instanceof Number number ? number.doubleValue() : 0D;
+                parsed.put(uuid, record);
             }
+        } catch (IOException | InvalidConfigurationException exception) {
+            throw new IllegalStateException("Cannot read stats.yml; existing records and file were left untouched", exception);
         }
-        data = YamlConfiguration.loadConfiguration(file);
+        file = candidate;
         records.clear();
-        if (data.getConfigurationSection("players") == null) {
-            return;
-        }
-        for (String rawId : data.getConfigurationSection("players").getKeys(false)) {
-            UUID uuid;
-            try {
-                uuid = UUID.fromString(rawId);
-            } catch (IllegalArgumentException ex) {
-                continue;
-            }
-            String path = "players." + rawId + ".";
-            Record record = new Record(uuid, data.getString(path + "name", "Unknown"));
-            record.wins = data.getInt(path + "wins");
-            record.kills = data.getInt(path + "kills");
-            record.deaths = data.getInt(path + "deaths");
-            record.games = data.getInt(path + "games");
-            record.bestStreak = data.getInt(path + "best-streak");
-            record.damage = data.getDouble(path + "damage");
-            records.put(uuid, record);
-        }
+        records.putAll(parsed);
+        loaded = true;
+    }
+
+    private static int count(YamlConfiguration data, String path) throws InvalidConfigurationException {
+        Object value = data.get(path);
+        if (value == null) return 0;
+        if (!(value instanceof Number number) || !Double.isFinite(number.doubleValue())
+                || number.doubleValue() < 0 || number.doubleValue() > Integer.MAX_VALUE
+                || number.doubleValue() != Math.rint(number.doubleValue()))
+            throw new InvalidConfigurationException("Invalid nonnegative integer: " + path);
+        return number.intValue();
     }
 
     public Record of(UUID uuid, String name) {
@@ -134,6 +159,10 @@ public final class StatsManager {
     public Record of(UUID uuid) {
         Player online = plugin.getServer().getPlayer(uuid);
         return of(uuid, online == null ? null : online.getName());
+    }
+
+    public Record get(UUID uuid) {
+        return of(uuid);
     }
 
     public Record of(Player player) {
@@ -229,23 +258,25 @@ public final class StatsManager {
 
     // ─────────────── 落盘 ───────────────
 
-    /** 结算时调用。单端模式马上就要重启，这里走异步但立刻提交。 */
+    /** 结算时调用，提交当前战绩快照。 */
     public void saveAll() {
         saveAsync();
     }
 
     /** 异步保存。玩家退出和整局结束时各存一次，防止服务端重启丢数据。 */
     public void saveAsync() {
-        Map<String, Object> snapshot = snapshot();
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> writeSnapshot(snapshot));
+        Snapshot snapshot = snapshot();
+        if (snapshot != null) plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> writeSnapshot(snapshot));
     }
 
     /** onDisable 时必须同步写，异步任务在关服时不会被执行。 */
     public void saveSync() {
-        writeSnapshot(snapshot());
+        Snapshot snapshot = snapshot();
+        if (snapshot != null) writeSnapshot(snapshot);
     }
 
-    private Map<String, Object> snapshot() {
+    private synchronized Snapshot snapshot() {
+        if (!loaded) return null;
         Map<String, Object> out = new LinkedHashMap<>();
         for (Record record : records.values()) {
             String path = "players." + record.uuid() + ".";
@@ -257,14 +288,22 @@ public final class StatsManager {
             out.put(path + "best-streak", record.bestStreak());
             out.put(path + "damage", record.damage());
         }
-        return out;
+        return new Snapshot(++requestedWrite, loadGeneration, out);
     }
 
-    private synchronized void writeSnapshot(Map<String, Object> snapshot) {
+    private synchronized void writeSnapshot(Snapshot snapshot) {
+        if (!loaded || snapshot.generation() != loadGeneration || snapshot.sequence() <= completedWrite) return;
         YamlConfiguration out = new YamlConfiguration();
-        snapshot.forEach(out::set);
+        snapshot.values().forEach(out::set);
         try {
-            out.save(file);
+            var temp = file.toPath().resolveSibling(file.getName() + ".tmp");
+            out.save(temp.toFile());
+            try {
+                java.nio.file.Files.move(temp, file.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.nio.file.AtomicMoveNotSupportedException ignored) {
+                java.nio.file.Files.move(temp, file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            completedWrite = snapshot.sequence();
         } catch (IOException ex) {
             plugin.getLogger().warning("Could not save stats.yml: " + ex.getMessage());
         }
